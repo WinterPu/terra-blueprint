@@ -1,3 +1,4 @@
+# get json data
 parsers:
   # CXXParser should always put first
   - name: CXXParser
@@ -9,5 +10,11 @@ parsers:
         include:
           - '@agoraio-extensions/terra_shared_configs:headers/rtc_4.3.0/include/*.h'
         exclude:
-          - '@agoraio-extensions/terra_shared_configs:headers/rtc_4.3.0/include/time_utils.h'
-          - '@agoraio-extensions/terra_shared_configs:headers/rtc_4.3.0/include/IAgoraMediaComponentFactory.h'
+          - ''
+
+## from config folder
+renderers:
+  - path: ../renderer/index.ts
+
+## rtc version
+version: 4.3.0

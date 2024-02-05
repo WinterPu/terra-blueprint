@@ -1,0 +1,18 @@
+{{#user_data.isCallback}}
+
+export interface {{name}} {{#base_clazzs}}extends {{.}}{{/base_clazzs}}{
+{{#methods}}
+
+  {{name}}({{#parameters}}{{name}}: {{{type.name}}},{{/parameters}}): {{#return_type}}{{{name}}}{{/return_type}};
+{{/methods}}
+}
+{{/user_data.isCallback}}
+{{^user_data.isCallback}}
+
+export interface {{name}}{
+{{#methods}}
+  {{name}}({{user_data.input}}): CallApiReturnType;
+  
+{{/methods}}
+}
+{{/user_data.isCallback}}
