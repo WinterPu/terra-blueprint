@@ -1,5 +1,15 @@
+.ccls-cache/
+.dist/
+.idea/
+.vscode/
 .DS_Store
+
+build/
+coverage/
 node_modules/
-output/
+
+dump_json.json
+**/package-lock.json
+
+
 .terra/
-yarn.lock
