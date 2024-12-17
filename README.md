@@ -156,3 +156,15 @@ npm exec terra -- run --config my_terra_config.yaml --output-dir=<YOUR_OUTPUT_PA
 ## License
 
 The project is under the MIT license.
+
+
+
+
+
+## Usage
+
+```
+bash build.sh
+// or use: quick build
+bash qbuild.sh 
+```

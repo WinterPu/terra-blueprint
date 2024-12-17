@@ -19,3 +19,4 @@ parsers:
 renderers:
 #   # Configuration for the first renderer
   - path: ../renders/blueprint-renderer.ts
+  - path: ../renders/cpp-header-renderer.ts
