@@ -16,6 +16,16 @@ type CXXFileUserData = {
   fileName: string;
 };
 
+type TerraNodeUserData = {
+    isStruct: boolean;
+    isEnumz: boolean;
+    isClazz: boolean;
+    isCallback: boolean;
+    hasBaseClazzs: boolean;
+    hasSupportApi: boolean;
+    prefix_name: string;
+};
+
 export default function (
   terraContext: TerraContext,
   args: any,
@@ -37,6 +47,16 @@ export default function (
   view = view.filter((cxxfile) => {
     return (
       cxxfile.nodes.filter((node) => {
+
+        const terraNodeUserData: TerraNodeUserData = {
+            isStruct: node.__TYPE === CXXTYPE.Struct,
+            isEnumz: node.__TYPE === CXXTYPE.Enumz,
+            isClazz: node.__TYPE === CXXTYPE.Clazz,
+            ...node.user_data,
+          };
+        node.user_data = terraNodeUserData;
+
+
         return (
           node.__TYPE === CXXTYPE.Clazz ||
           node.__TYPE === CXXTYPE.Enumz ||
@@ -45,6 +65,7 @@ export default function (
       }).length > 0
     );
   });
+  
   return renderWithConfiguration({
     fileNameTemplatePath: path.join(
       __dirname,

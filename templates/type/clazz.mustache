@@ -1,18 +1,11 @@
-{{#user_data.isCallback}}
+UCLASS()
+class FUABT_{{name}} ; public UObject{
+  GENERATED_BODY()
+public:
 
-export interface {{name}} {{#base_clazzs}}extends {{.}}{{/base_clazzs}}{
 {{#methods}}
-
-  {{name}}({{#parameters}}{{name}}: {{{type.name}}},{{/parameters}}): {{#return_type}}{{{name}}}{{/return_type}};
-{{/methods}}
-}
-{{/user_data.isCallback}}
-{{^user_data.isCallback}}
-
-export interface {{name}}{
-{{#methods}}
-  {{name}}({{user_data.input}}): CallApiReturnType;
+UFUNCTION(BlueprintCallable,Category = "Agora|{{name}}")
+  CallApiReturnType {{name}}({{user_data.input}});
   
 {{/methods}}
-}
-{{/user_data.isCallback}}
+};

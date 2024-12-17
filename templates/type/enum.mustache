@@ -1,8 +1,12 @@
 
 {{#name}}
-export enum {{name}} {
+UENUM(BlueprintType)
+enum class EUABT_{{name}} : uint8 {
 {{#enum_constants}}
   {{name}} = {{{value}}},
 {{/enum_constants}}
 }
 {{/name}}
+
+
+
