@@ -1,0 +1,78 @@
+//  Copyright (c) 2024 Agora.io. All rights reserved.
+
+#pragma once
+
+// AgoraHeaderBase should be included first.
+
+#include "AgoraHeaderBase.h"
+#include <mutex>
+#include "Templates/SharedPointer.h"
+
+
+namespace agora {
+	namespace rtc {
+		namespace ue {
+
+			// there would be some naming conflicts:
+			// Ex. Unreal has already define Rectangle as a function
+			class VideoFrameRenderManager;
+			class AgoraUEVideoFrameObserver;
+
+
+
+			// This is a ue singleton wrapper for Agora Rtc Engine.
+			class AGORAPLUGIN_API AgoraUERtcEngine : public agora::rtc::IRtcEngineEx {
+
+			public:
+				AgoraUERtcEngine();
+				~AgoraUERtcEngine();
+
+				static AgoraUERtcEngine* Get();
+				static agora::rtc::IRtcEngine* NativeRtcEnginePtr();
+				static FString GetSDKVersion();
+				static void EnableIOSAudioSession(bool bEnable);
+				static void Release(bool sync = false);
+				static AgoraAppType RtcEngineAppType;
+
+
+			protected:
+				//static variables
+				static AgoraUERtcEngine* Instance;
+				static std::mutex MutexLock;
+
+				// member variables
+				agora::rtc::IRtcEngine* RtcEngine;
+				agora::util::AutoPtr<agora::media::IMediaEngine> MediaEngine;
+
+#if AGORA_UESDK_ENABLE_VIDEO
+				TSharedPtr<VideoFrameRenderManager> _VideoFrameRenderManager;
+				TSharedPtr< AgoraUEVideoFrameObserver>_VideoObserver;
+#endif
+
+			private:
+				void CreateEngine();
+				void DestroyEngine(bool sync = false);
+
+
+			public:
+
+{{#nodes}}
+            {{#methods}}
+				{{#user_data.hasConditionalDirective}}
+
+				{{{conditional_compilation_directives_infos}}}
+				{{/user_data.hasConditionalDirective}}
+                virtual {{#return_type}}{{{source}}}{{/return_type}} {{name}} ({{#parameters}}{{{type.source}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}}) override;
+				{{#user_data.hasConditionalDirective}}
+				#endif
+
+				{{/user_data.hasConditionalDirective}}
+			{{/methods}}
+{{/nodes}}
+
+
+            };
+		}
+	}
+}
+

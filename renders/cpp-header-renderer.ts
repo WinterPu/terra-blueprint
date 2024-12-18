@@ -8,14 +8,15 @@ import {
 } from '@agoraio-extensions/terra-core';
 
 import {
-  IrisApiIdParserUserData,
   renderWithConfiguration,
   MustacheRenderConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
 
 import {
   genGeneralTerraData,
+  FilterTerraNodeFunction,
   UESDK_GetFailureReturnVal,
+  mergeAllNodesToOneCXXFile,
 } from './utility/helper';
 
 import {
@@ -37,8 +38,17 @@ export function prepareTerraData(
   parseResult: ParseResult
 ): any {
 
-  return genGeneralTerraData(terraContext,args,parseResult);
+  const func_node_filter : FilterTerraNodeFunction = (cxxfile: CXXFile) =>{
+            // 筛选Node: IRtcEngine
+          let nodes = cxxfile.nodes.filter((node: CXXTerraNode) => {
+              return node.__TYPE === CXXTYPE.Clazz && (node.name === 'IRtcEngine' || node.name == "IRtcEngineEx");
+          });
+          return nodes;
+  }
 
+  let view = genGeneralTerraData(terraContext,args,parseResult,func_node_filter);
+
+  return mergeAllNodesToOneCXXFile(view);
 }
 
 
@@ -60,18 +70,17 @@ export default function (
       __dirname,
       '..',
       'templates',
-      'type',
-      'file_name.mustache'
+      'cppplugin',
+      'AgoraUERtcEngine_filename.mustache'
     ),
     fileContentTemplatePath: path.join(
       __dirname,
       '..',
       'templates',
-      'type',
-      'file_content.mustache'
+      'cppplugin',
+      'AgoraUERtcEngine_filecontent.mustache'
     ),
     view,
-  
   };
 
   return renderWithConfiguration(one_render_config);
