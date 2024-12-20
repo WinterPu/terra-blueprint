@@ -147,7 +147,7 @@ namespace agora {
 
 {{#nodes}}
             {{#methods}}
-
+                {{^user_data.isExcluded}}
 				{{#user_data.hasConditionalDirective}}
 
 				{{{conditional_compilation_directives_infos}}}
@@ -166,7 +166,7 @@ namespace agora {
 				#endif
 
 				{{/user_data.hasConditionalDirective}}
-
+                {{/user_data.isExcluded}}
 			{{/methods}}
 {{/nodes}}
 

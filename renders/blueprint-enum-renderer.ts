@@ -9,6 +9,7 @@ import {
 } from '@agoraio-extensions/terra-core';
 
 import {
+  IrisApiIdParserUserData,
   renderWithConfiguration,
   MustacheRenderConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
@@ -16,7 +17,6 @@ import {
 import * as UECodeRender from './utility/helper';
 
 import * as Logger from './utility/logger';
-
 // prepare terra data for rendering
 
 export function prepareTerraData(
@@ -25,22 +25,10 @@ export function prepareTerraData(
   parseResult: ParseResult
 ): any {
 
-  const func_node_filter : UECodeRender.FilterTerraNodeFunction = (cxxfile: CXXFile) =>{
-            // 筛选Node: IRtcEngine
-          let nodes = cxxfile.nodes.filter((node: CXXTerraNode) => {
-              return node.__TYPE === CXXTYPE.Clazz && (node.name === 'IRtcEngine' || node.name == "IRtcEngineEx");
-          });
-          return nodes;
-  }
+  let view = UECodeRender.genGeneralTerraData(terraContext,args,parseResult);
 
-  const func_api_exclude : UECodeRender.ExcludeApiFunction = (method_name : string) => {
-    return UECodeRender.UESDK_CheckIfApiExcluded(method_name);
-  }
+  return UECodeRender.mergeAllNodesToOneCXXFile(view)
 
-  let view = UECodeRender.genGeneralTerraData(terraContext,args,parseResult,func_node_filter,func_api_exclude);
-
-
-  return UECodeRender.mergeAllNodesToOneCXXFile(view);
 }
 
 
@@ -48,7 +36,7 @@ export function prepareTerraData(
 export default function (
   terraContext: TerraContext,
   args: any,
-  parseResult: ParseResult
+  parseResult: ParseResult,
 ): RenderResult[] {
 
   let name_renderer = __filename;
@@ -63,17 +51,18 @@ export default function (
       __dirname,
       '..',
       'templates',
-      'cppplugin',
-      'AgoraUERtcEngine_filename.mustache'
+      'bpplugin',
+      'bpenum_filename.mustache'
     ),
     fileContentTemplatePath: path.join(
       __dirname,
       '..',
       'templates',
-      'cppplugin',
-      'AgoraUERtcEngine_filecontent.mustache'
+      'bpplugin',
+      'bpenum_filecontent.mustache'
     ),
     view,
+  
   };
 
   return renderWithConfiguration(one_render_config);

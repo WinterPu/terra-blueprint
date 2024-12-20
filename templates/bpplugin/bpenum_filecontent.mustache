@@ -1,0 +1,51 @@
+// Copyright(c) 2024 Agora.io. All rights reserved.
+
+{{#nodes}}
+{{#user_data.isEnumz}}
+
+
+{{{user_data.commentCppStyle}}}
+{{#name}}
+UENUM(BlueprintType)
+enum class EUABT_{{name}} : uint8 {
+{{#enum_constants}}
+{{{user_data.commentCppStyle}}}
+    {{#user_data.isFirst}}
+        {{#user_data.isLast}}
+            {{name}} = 0
+        {{/user_data.isLast}}
+        {{^user_data.isLast}}
+            {{name}} = 0,
+        {{/user_data.isLast}}
+    {{/user_data.isFirst}}
+    {{^user_data.isFirst}}
+        {{#user_data.isLast}}
+            {{name}}
+        {{/user_data.isLast}}
+        {{^user_data.isLast}}
+            {{name}},
+        {{/user_data.isLast}}
+    {{/user_data.isFirst}}
+
+{{/enum_constants}}
+}
+{{/name}}
+
+
+{{user_data.bpGenEnumConversionFunction}}(
+    EUABT_{{name}},
+  	{{user_data.fullTypeWithNamespace}},
+    {{#enum_constants}}
+    {{#user_data.isLast}}
+    {{name}}
+    {{/user_data.isLast}}
+    {{^user_data.isLast}}
+    {{name}},
+    {{/user_data.isLast}}
+    {{/enum_constants}}
+)
+
+
+
+{{/user_data.isEnumz}}
+{{/nodes}}

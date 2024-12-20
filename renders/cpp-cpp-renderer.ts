@@ -1,4 +1,5 @@
 import * as path from 'path';
+import _ from 'lodash';
 
 import { CXXFile, CXXTYPE, CXXTerraNode } from '@agoraio-extensions/cxx-parser';
 import {
@@ -13,24 +14,9 @@ import {
   MustacheRenderConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
 
-import {
-  genGeneralTerraData,
-  FilterTerraNodeFunction,
-  UESDK_GetFailureReturnVal,
-  mergeAllNodesToOneCXXFile,
-} from './utility/helper';
+import * as UECodeRender from './utility/helper';
 
-import {
-  CXXFileUserData,
-  ClazzMethodUserData,
-  ParameterUserData,
-  TerraNodeUserData,
-} from './utility/additional_parsedata';
-
-import {
-  PrintStageLog,
-} from './utility/logger';
-
+import * as Logger from './utility/logger';
 // prepare terra data for rendering
 
 export function prepareTerraData(
@@ -39,7 +25,7 @@ export function prepareTerraData(
   parseResult: ParseResult
 ): any {
 
-  const func_node_filter : FilterTerraNodeFunction = (cxxfile: CXXFile) =>{
+  const func_node_filter : UECodeRender.FilterTerraNodeFunction = (cxxfile: CXXFile) =>{
           // 筛选Node: IRtcEngine
         let nodes = cxxfile.nodes.filter((node: CXXTerraNode) => {
             return node.__TYPE === CXXTYPE.Clazz && (node.name === 'IRtcEngine' || node.name == "IRtcEngineEx");
@@ -47,9 +33,13 @@ export function prepareTerraData(
         return nodes;
   }
 
-  let view =  genGeneralTerraData(terraContext,args,parseResult,func_node_filter);
+  const func_api_exclude : UECodeRender.ExcludeApiFunction = (method_name : string) => {
+      return UECodeRender.UESDK_CheckIfApiExcluded(method_name);
+  }
 
-  return mergeAllNodesToOneCXXFile(view);
+  let view =  UECodeRender.genGeneralTerraData(terraContext,args,parseResult,func_node_filter,func_api_exclude);
+
+  return UECodeRender.mergeAllNodesToOneCXXFile(view);
 
 }
 
@@ -62,9 +52,10 @@ export default function (
 ): RenderResult[] {
 
   let name_renderer = __filename;
-  PrintStageLog(name_renderer);
+  Logger.PrintStageLog(name_renderer);
 
-  let view = prepareTerraData(terraContext,args,parseResult);
+  let originalParseResult = _.cloneDeep(parseResult);
+  let view = prepareTerraData(terraContext,args,originalParseResult);
 
   const one_render_config : MustacheRenderConfiguration = {
 

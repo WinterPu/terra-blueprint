@@ -1,4 +1,5 @@
 import * as path from 'path';
+import _ from 'lodash';
 
 import { CXXFile, CXXTYPE, CXXTerraNode } from '@agoraio-extensions/cxx-parser';
 import {
@@ -13,21 +14,10 @@ import {
   MustacheRenderConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
 
-import {
-  genGeneralTerraData,
-  UESDK_GetFailureReturnVal,
-} from './utility/helper';
 
-import {
-  CXXFileUserData,
-  ClazzMethodUserData,
-  ParameterUserData,
-  TerraNodeUserData,
-} from './utility/additional_parsedata';
+import * as UECodeRender from './utility/helper';
 
-import {
-  PrintStageLog,
-} from './utility/logger';
+import * as Logger from './utility/logger';
 
 // prepare terra data for rendering
 
@@ -37,7 +27,7 @@ export function prepareTerraData(
   parseResult: ParseResult
 ): any {
 
-  return genGeneralTerraData(terraContext,args,parseResult);
+  return UECodeRender.genGeneralTerraData(terraContext,args,parseResult);
 
 }
 
@@ -46,13 +36,14 @@ export function prepareTerraData(
 export default function (
   terraContext: TerraContext,
   args: any,
-  parseResult: ParseResult
+  parseResult: ParseResult,
 ): RenderResult[] {
 
   let name_renderer = __filename;
-  PrintStageLog(name_renderer);
+  Logger.PrintStageLog(name_renderer);
 
-  let view = prepareTerraData(terraContext,args,parseResult);
+  let originalParseResult = _.cloneDeep(parseResult);
+  let view = prepareTerraData(terraContext,args,originalParseResult);
 
   const one_render_config : MustacheRenderConfiguration = {
 

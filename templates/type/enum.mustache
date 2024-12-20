@@ -1,12 +1,29 @@
+// Copyright(c) 2024 Agora.io. All rights reserved.
 
+/*
+{{comment}}
+*/
 {{#name}}
 UENUM(BlueprintType)
 enum class EUABT_{{name}} : uint8 {
 {{#enum_constants}}
-  {{name}} = {{{value}}},
+  /*
+
+  {{comment}}
+  */
+  {{name}} = 0 ,
 {{/enum_constants}}
 }
 {{/name}}
+
+
+GEN_UABTFUNC_SIGNATURE_ENUMCONVERSION_5_ENTRIES(
+    EUABT_{{name}},
+  	{{user_data.fullTypeWithNamespace}},
+{{#enum_constants}}
+    {{name}},
+{{/enum_constants}}
+)
 
 
 

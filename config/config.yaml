@@ -18,6 +18,7 @@ parsers:
 # List of renderer configurations
 renderers:
 #   # Configuration for the first renderer
+  - path: ../renders/blueprint-enum-renderer.ts
   - path: ../renders/blueprint-renderer.ts
   - path: ../renders/cpp-header-renderer.ts
   - path: ../renders/cpp-cpp-renderer.ts

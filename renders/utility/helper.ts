@@ -11,16 +11,11 @@ import {
   MustacheRenderConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
 
-import {
-    CXXFileUserData,
-    ClazzMethodUserData,
-    ParameterUserData,
-    TerraNodeUserData,
-  } from './additional_parsedata';
+import * as CustomUserData from './additional_parsedata';
 
-import {
-    PrintError,
-} from './logger';
+import * as Logger from './logger';
+
+import * as BPHelper from './blueprint_special/bp_helper';
 
 
 const map_failure_return_val: Record<string, string> = {
@@ -38,33 +33,69 @@ const map_failure_return_val: Record<string, string> = {
     'agora_refptr<agora::rtc::IMediaRecorder>' : 'nullptr',
     'void' : '',
 
+};
+
+const list_custom_impl_methods = [
+    'initialize',
+    'setupRemoteVideo',
+    'setupLocalVideo',
+    'setupRemoteVideoEx',
+];
+
+export function UESDK_CheckIfApiExcluded(method_name:string):boolean{
+    // console.log(`method_name: ${method_name} is excluded: ${list_custom_impl_methods.includes(method_name)}`);
+    return list_custom_impl_methods.includes(method_name);
 }
 
 export function UESDK_GetFailureReturnVal(return_type:string):string | undefined{
     const returnValue = map_failure_return_val[return_type];
 
     if (returnValue === undefined) {
-        PrintError(`Error: No value found for return type "${return_type}"`);
+        Logger.PrintError(`Error: No value found for return type "${return_type}"`);
     }
 
     return returnValue;
 }
 
+const regMap: { [key: string]: string } = {
+    isCallback: '.*(Observer|Handler|Callback|Receiver|Sink).*',
+};
+  
+export function isMatch(str: string, type: string): boolean {
+    let result = false;
+    if (regMap[type]) {
+      result = new RegExp(regMap[type]).test(str);
+    }
+    return result;
+}
+
+export function formatAsCppComment(input: string): string {
+    // 去掉首尾空格和换行
+    const trimmedInput = input.trim();
+
+    // 将每行前加 *，并包裹在 /* 和 */
+    const commentLines = trimmedInput.split('\n').map(line => ` * ${line}`).join('\n');
+
+    return `/*\n${commentLines}\n */`;
+}
 
 
 export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[]
+
+export type ExcludeApiFunction = (method_name : string) => boolean
 
 export function genGeneralTerraData(
     terraContext: TerraContext,
     args: any,
     parseResult: ParseResult,
     func_filter_terrnode ?: FilterTerraNodeFunction,
+    func_exclude_api ?: ExcludeApiFunction
   ): any {
 
     let cxxfiles = parseResult.nodes as CXXFile[];
     //let custom_nodes= 
     let view = cxxfiles.map((cxxfile: CXXFile) => {
-        const cxxUserData: CXXFileUserData = {
+        const cxxUserData: CustomUserData.CXXFileUserData = {
             fileName: path.basename(
                 cxxfile.file_path,
                 path.extname(cxxfile.file_path)
@@ -79,38 +110,108 @@ export function genGeneralTerraData(
 
         cxxfile.nodes = nodes.map((node: CXXTerraNode) => {
             if (node.__TYPE == CXXTYPE.Clazz) {
-
+          
+                // Only For Clazz
                 let hasSupportApi = false;
-                node.asClazz().methods.map((method) => {
-                    
-                    const clazzMethodUserData: ClazzMethodUserData = {
+                node.asClazz().methods.map((method,index) => {
+                    let bIsCallbackMethod = isMatch(node.name, 'isCallback');
+
+                    const clazzMethodUserData: CustomUserData.ClazzMethodUserData = {
                     hasConditionalDirective: method.conditional_compilation_directives_infos.length > 0,
+                    isExcluded: (func_exclude_api ? func_exclude_api(method.name) : false),
                     failureReturnVal: UESDK_GetFailureReturnVal(method.return_type.source),
                     hasReturnVal:method.return_type.source.toLowerCase() != "void",
+                    
+                    commentCppStyle: formatAsCppComment(method.comment),
+                    isFirst: index === 0,
+                    isLast: index === node.asClazz().methods.length - 1,
+
+
+                    // bp
+                    bpReturnType: BPHelper.genBPReturnType(method.return_type),
+
+                    bpMethodName: BPHelper.genBPMethodName(method.name),
+
+                    bpIsCallback: bIsCallbackMethod,
+                    bpCallbackDelegateMacroName: bIsCallbackMethod? BPHelper.genbpCallbackDelegateMacroName(method.parameters.length) : "NotCallbackMethod",
+                    bpCallbackDelegateTypeName: bIsCallbackMethod? BPHelper.genbpCallbackDelegateTypeName(method.name) : "NotCallbackMethod",
+                    bpCallbackDelegateVarName: bIsCallbackMethod? BPHelper.genbpCallbackDelegateVarName(method.name) : "NotCallbackMethod",
+                    bpIsNoParamCallback: bIsCallbackMethod && method.parameters.length === 0,
+
                     ...method.user_data,
                     };
+
                     method.user_data = clazzMethodUserData;
                     method.parameters.map((parameter,index) => {
-                        const parameterUserData: ParameterUserData = {
+                        const parameterUserData: CustomUserData.ParameterUserData = {
+                            lenParameters: method.parameters.length,
+                            commentCppStyle: formatAsCppComment(parameter.comment),
+                            isFirst: index === 0,
                             isLast: index === method.parameters.length - 1,
+
+                            // bp
+                            bpParameterType: BPHelper.genBPParameterType(parameter.type),
                             ...parameter.user_data,
                         };
                         parameter.user_data = parameterUserData;
                     });
                 });
         
-                const terraNodeUserData: TerraNodeUserData = {
+                const terraNodeUserData: CustomUserData.TerraNodeUserData = {
                     // isStruct: node.__TYPE === CXXTYPE.Struct,
                     // isEnumz: node.__TYPE === CXXTYPE.Enumz,
                     isClazz: node.__TYPE === CXXTYPE.Clazz,
                     prefix_name: node.name.replace(new RegExp('^I(.*)'), '$1'),
+                    isCallback: isMatch(node.name, 'isCallback'),
                     hasBaseClazzs: node.asClazz().base_clazzs.length > 0,
                     hasSupportApi: hasSupportApi,
+
+   
                     ...node.user_data,
                 };
                 node.user_data = terraNodeUserData;
     
             }
+            else if (node.__TYPE == CXXTYPE.Enumz) {
+                let valLenEnumConstants = node.asEnumz().enum_constants.length;
+                const terraNodeUserData: CustomUserData.TerraNodeUserData = {
+                    isEnumz: node.__TYPE === CXXTYPE.Enumz,
+                    lenEnumConstants: valLenEnumConstants,
+                    bpGenEnumConversionFunction: (node.asEnumz().enum_constants.length === 1 ? "GEN_UABTFUNC_SIGNATURE_ENUMCONVERSION_1_ENTRY" : "GEN_UABTFUNC_SIGNATURE_ENUMCONVERSION_" + valLenEnumConstants + "_ENTRIES"),
+                    ...node.user_data,
+                };
+                node.user_data = terraNodeUserData;
+
+                // Only For Enumz
+                node.asEnumz().enum_constants.map((enum_constant,index) => {
+                    const enumConstantsUserData: CustomUserData.EnumConstantsUserData = {
+                        commentCppStyle: formatAsCppComment(enum_constant.comment),
+
+                        isFirst: index === 0,
+
+                        isLast: index === node.asEnumz().enum_constants.length - 1,
+
+                        ...enum_constant.user_data,
+                    };
+                    enum_constant.user_data = enumConstantsUserData;
+                });
+            }
+            else if (node.__TYPE == CXXTYPE.Struct){
+                // Only For Struct
+                node.asStruct().member_variables.map((member_variable,index) => {
+                    const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData = {
+                        commentCppStyle: formatAsCppComment(member_variable.comment),
+                        isFirst: index === 0,
+                        isLast: index === node.asStruct().member_variables.length - 1,
+
+                        bpType: BPHelper.convertToBPType(member_variable.type),
+                        ...member_variable.user_data,
+                    }
+                    member_variable.user_data = structMemberVariableUserData;
+                });
+            
+            }
+
 
             return node;
         });
@@ -124,15 +225,22 @@ export function genGeneralTerraData(
         return (
             cxxfile.nodes.filter((node) => {
 
-                const terraNodeUserData: TerraNodeUserData = {
+                const terraNodeUserData: CustomUserData.TerraNodeUserData = {
                     isStruct: node.__TYPE === CXXTYPE.Struct,
                     isEnumz: node.__TYPE === CXXTYPE.Enumz,
                     isClazz: node.__TYPE === CXXTYPE.Clazz,
+
+                      
+                    fullTypeWithNamespace:node.namespaces.join("::") + "::" + node.name,
+
+                    commentCppStyle: formatAsCppComment(node.comment),
+
+
                     ...node.user_data,
                 };
                 node.user_data = terraNodeUserData;
 
-
+                
                 return (
                         node.__TYPE === CXXTYPE.Clazz ||
                         node.__TYPE === CXXTYPE.Enumz ||

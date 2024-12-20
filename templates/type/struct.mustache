@@ -1,7 +1,38 @@
 
-export class {{name}}{
+{{{user_data.commentCppStyle}}}
+USTRUCT(BlueprintType)
+
+struct FUABT_{{name}}{
+
+	GENERATED_BODY()
+public:
+
 {{#member_variables}}
-  {{name}}?: {{#type}}{{{name}}}{{/type}};
-  
+{{{user_data.commentCppStyle}}}
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Agora|{{parent_name}}")
+  {{user_data.bpType}} {{name}} = ;
 {{/member_variables}}
+
+
+	FUABT_{{name}}(){}
+	FUABT_{{name}}(const {{user_data.fullTypeWithNamespace}} & AgoraData){
+    {{#member_variables}}
+    {{name}} = AgoraData.{{name}};
+    {{/member_variables}}
+
+    qualityAdaptIndication = UABTEnum::WrapWithUE(AgoraData.qualityAdaptIndication);
+	}
+
+	{{user_data.fullTypeWithNamespace}} CreateRawData() const {
+		{{user_data.fullTypeWithNamespace}} AgoraData;
+    {{#member_variables}}
+    AgoraData.{{name}} = {{name}};
+    {{/member_variables}}
+		return AgoraData;
+	}
+
+	void FreeRawData({{user_data.fullTypeWithNamespace}} & AgoraData) const
+	{
+
+	}
 }

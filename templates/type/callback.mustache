@@ -1,0 +1,22 @@
+/// OKOK 
+
+{{#methods}}
+{{user_data.bpCallbackDelegateMacroName}}({{user_data.bpCallbackDelegateTypeName}}{{#user_data.bpIsNoParamCallback}}{{/user_data.bpIsNoParamCallback}}{{^user_data.bpIsNoParamCallback}}, {{/user_data.bpIsNoParamCallback}}{{#parameters}}{{{type.source}}}, {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
+{{/methods}}
+
+
+
+// this is a blueprint callback executor which you could add to the target handler
+UCLASS(Blueprintable,Meta = (ShowWorldContextPin))
+class AGORAPLUGIN_API UAgoraBPu{{name}}CBExecutor : public UObject {
+	GENERATED_BODY()
+
+public:
+
+    {{#methods}}
+{{{user_data.commentCppStyle}}}
+    UFUNCTION(BlueprintNativeEvent, Category = "Agora|Event")
+    {{user_data.bpReturnType}} {{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+    
+    {{/methods}}
+};
