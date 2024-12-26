@@ -16,6 +16,7 @@ import * as CustomUserData from './additional_parsedata';
 import * as Logger from './logger';
 
 import * as BPHelper from './blueprint_special/bp_helper';
+import { map } from 'lodash';
 
 
 const map_failure_return_val: Record<string, string> = {
@@ -80,6 +81,36 @@ export function formatAsCppComment(input: string): string {
 }
 
 
+
+
+export function preProcessNode(
+    cxxfiles :CXXFile[]
+  ){
+
+    BPHelper.initMapRegisteredData();
+
+    cxxfiles.map((cxxfile: CXXFile) => {
+        cxxfile.nodes.map((node) => {
+            if (node.__TYPE == CXXTYPE.Clazz) {
+                // Only For Clazz
+                BPHelper.registerBPNameForAgora_Class(node.name, BPHelper.genBPNameForAgora_Class(node.name));
+            }
+            else if (node.__TYPE == CXXTYPE.Struct){
+                // Only For Struct
+                BPHelper.registerBPNameForAgora_Struct(node.name, BPHelper.genBPNameForAgora_Struct(node.name));
+            }
+            else if (node.__TYPE == CXXTYPE.Enumz) {
+                // Only For Enumz
+                BPHelper.registerBPNameForAgora_Enum(node.name, BPHelper.genBPNameForAgora_Enum(node.name));
+            }
+        });
+    });
+
+  }
+
+
+
+
 export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[]
 
 export type ExcludeApiFunction = (method_name : string) => boolean
@@ -93,6 +124,10 @@ export function genGeneralTerraData(
   ): any {
 
     let cxxfiles = parseResult.nodes as CXXFile[];
+
+    // bp preprocess: register data
+    preProcessNode(cxxfiles);
+
     //let custom_nodes= 
     let view = cxxfiles.map((cxxfile: CXXFile) => {
         const cxxUserData: CustomUserData.CXXFileUserData = {
@@ -107,6 +142,8 @@ export function genGeneralTerraData(
         if(func_filter_terrnode){
             nodes = func_filter_terrnode(cxxfile);
         }
+
+        
 
         cxxfile.nodes = nodes.map((node: CXXTerraNode) => {
             if (node.__TYPE == CXXTYPE.Clazz) {
@@ -165,7 +202,6 @@ export function genGeneralTerraData(
                     isCallback: isMatch(node.name, 'isCallback'),
                     hasBaseClazzs: node.asClazz().base_clazzs.length > 0,
                     hasSupportApi: hasSupportApi,
-
    
                     ...node.user_data,
                 };
@@ -199,12 +235,21 @@ export function genGeneralTerraData(
             else if (node.__TYPE == CXXTYPE.Struct){
                 // Only For Struct
                 node.asStruct().member_variables.map((member_variable,index) => {
+                    const [bNeededFrom,valFrom] = BPHelper.genBPConvertFromRawType(member_variable.type);
+                    const [bNeededTo,valTo] = BPHelper.genBPConvertToRawType(member_variable.type);
+                    const valBPType =  BPHelper.convertToBPType(member_variable.type);
                     const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData = {
                         commentCppStyle: formatAsCppComment(member_variable.comment),
                         isFirst: index === 0,
                         isLast: index === node.asStruct().member_variables.length - 1,
 
-                        bpType: BPHelper.convertToBPType(member_variable.type),
+                        bpType: valBPType,
+                        bpIsUStruct: BPHelper.checkIsUStruct(valBPType),
+                        bpNeedFromRawTypeConversion: bNeededFrom,
+                        bpConvertFromRawType: valFrom,
+                        bpNeedToRawTypeConversion: bNeededTo,
+                        bpConvertToRawType: valTo,
+                        
                         ...member_variable.user_data,
                     }
                     member_variable.user_data = structMemberVariableUserData;
@@ -224,7 +269,7 @@ export function genGeneralTerraData(
     view = view.filter((cxxfile) => {
         return (
             cxxfile.nodes.filter((node) => {
-
+                const [typeCategoryName, valBPNodeName] = BPHelper.getRegisteredBPType(node.name);
                 const terraNodeUserData: CustomUserData.TerraNodeUserData = {
                     isStruct: node.__TYPE === CXXTYPE.Struct,
                     isEnumz: node.__TYPE === CXXTYPE.Enumz,
@@ -235,7 +280,8 @@ export function genGeneralTerraData(
 
                     commentCppStyle: formatAsCppComment(node.comment),
 
-
+                    bpNodeName: valBPNodeName,
+                    bpHasRegistered: typeCategoryName !== CXXTYPE.Unknown,
                     ...node.user_data,
                 };
                 node.user_data = terraNodeUserData;

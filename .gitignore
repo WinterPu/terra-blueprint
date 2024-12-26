@@ -13,3 +13,8 @@ dump_json.json
 
 
 .terra/
+
+.yarn/install-state.gz
+## temp for now
+packages/*
+output.txt

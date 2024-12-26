@@ -18,6 +18,8 @@ export type TerraNodeUserData = {
     commentCppStyle: string;
 
     // bp
+    bpNodeName: string;
+    bpHasRegistered: boolean; // if the node is class, struct, enum, it would be registered first.
     lenEnumConstants: number;
     bpIsCallback: boolean;
     bpGenEnumConversionFunction: string;
@@ -62,6 +64,11 @@ export type StructMemberVariableUserData = {
     isLast: boolean;
 
     bpType: string;
+    bpIsUStruct: boolean;
+    bpNeedToRawTypeConversion: boolean;
+    bpConvertToRawType: string;
+    bpNeedFromRawTypeConversion: boolean;
+    bpConvertFromRawType: string;
 };
 
 export type ParameterUserData = {

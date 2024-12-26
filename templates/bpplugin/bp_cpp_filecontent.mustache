@@ -1,0 +1,10 @@
+// Copyright(c) 2024 Agora.io. All rights reserved.
+
+{{#nodes}}
+{{#user_data.isCallback}}
+{{> bp_callback_impl}}
+{{/user_data.isCallback}}
+{{#user_data.isClazz}}
+{{> bp_clazz_impl}}
+{{/user_data.isClazz}}
+{{/nodes}}

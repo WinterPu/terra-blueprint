@@ -1,6 +1,6 @@
 {{{user_data.commentCppStyle}}}
 UCLASS()
-class AGORAPLUGIN_API UAgoraBPu_{{name}} ; public UObject{
+class AGORAPLUGIN_API {{user_data.bpNodeName}} ; public UObject{
   GENERATED_BODY()
 public:
 {{#user_data.isCallback}}
@@ -40,7 +40,7 @@ private:
 {{^user_data.isCallback}}
 {{#methods}}
 {{{user_data.commentCppStyle}}}
-UFUNCTION(BlueprintCallable,Category = "Agora|{{parent_name}}")
+  UFUNCTION(BlueprintCallable,Category = "Agora|{{parent_name}}")
   {{user_data.bpReturnType}} {{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
   
 {{/methods}}
