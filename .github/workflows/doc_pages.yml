@@ -38,7 +38,7 @@ jobs:
         with:
           name: book
           path: 'docs/book'
-          workflow: build.yml
+          workflow: doc_build.yml
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
