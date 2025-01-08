@@ -28,6 +28,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
+    permissions:
+      actions: read   # 用于读取 artifacts
+      contents: write # 用于写入仓库内容
+      pages: write    # 用于部署到 GitHub Pages
+      id-token: write # 用于更新部署状态
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v3
