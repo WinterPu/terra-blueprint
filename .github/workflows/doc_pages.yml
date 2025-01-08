@@ -28,7 +28,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -38,14 +37,14 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           name: book
-          path: docs/book/
+          path: book/
           workflow: doc_build.yml
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: docs/book/
+          path: book
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
