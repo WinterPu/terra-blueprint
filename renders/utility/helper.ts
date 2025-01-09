@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { CXXFile, CXXTYPE, CXXTerraNode } from '@agoraio-extensions/cxx-parser';
+import { CXXFile, CXXTYPE, CXXTerraNode,ConstructorInitializer} from '@agoraio-extensions/cxx-parser';
 import {
   ParseResult,
   RenderResult,
@@ -233,11 +233,25 @@ export function genGeneralTerraData(
                 });
             }
             else if (node.__TYPE == CXXTYPE.Struct){
+                
+                const dict_variable_initializer: BPHelper.BPDictInitializer = {};
+                
+                node.asStruct().constructors.map((constructor,index) => {
+                    
+                    if(constructor.parameters.length == 0){
+                        //default constructor
+                        constructor.initializerList.map((initializer) => {
+                            dict_variable_initializer[initializer.name] = initializer;
+                        });
+                    }
+
+                });
+
                 // Only For Struct
                 node.asStruct().member_variables.map((member_variable,index) => {
-                    const [bNeededFrom,valFrom] = BPHelper.genBPConvertFromRawType(member_variable.type);
-                    const [bNeededTo,valTo] = BPHelper.genBPConvertToRawType(member_variable.type);
+                    const conversion = BPHelper.getCppBPConversion(member_variable.type);
                     const valBPType =  BPHelper.convertToBPType(member_variable.type);
+                    const [bValNeedDefaultVal,valDefaultVal] = BPHelper.getBPMemberVariableDefaultValue(dict_variable_initializer,member_variable);
                     const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData = {
                         commentCppStyle: formatAsCppComment(member_variable.comment),
                         isFirst: index === 0,
@@ -245,11 +259,20 @@ export function genGeneralTerraData(
 
                         bpType: valBPType,
                         bpIsUStruct: BPHelper.checkIsUStruct(valBPType),
-                        bpNeedFromRawTypeConversion: bNeededFrom,
-                        bpConvertFromRawType: valFrom,
-                        bpNeedToRawTypeConversion: bNeededTo,
-                        bpConvertToRawType: valTo,
+
+                        bpNeedConvTo: conversion.bNeedConvTo,
+                        bpNameConvFuncTo: conversion.nameConvFuncTo,
+                    
+                        bpNeedConvFrom: conversion.bNeedConvFrom,
+                        bpNeedConvFromMemoAlloc: conversion.bNeedConvFromMemoAlloc,
+                        bpNeedConvFromSetData: conversion.bNeedConvFromSetData,
+                        bpNameConvFuncFrom: conversion.nameConvFuncFrom,
+                        bpNameConvFuncFromAdditional: conversion.nameConvFuncFromAdditional,
                         
+                        
+                        bpNeedDefaultValue: bValNeedDefaultVal,
+                        bpDefaultValue: valDefaultVal,
+
                         ...member_variable.user_data,
                     }
                     member_variable.user_data = structMemberVariableUserData;

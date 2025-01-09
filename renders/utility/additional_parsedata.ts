@@ -63,12 +63,22 @@ export type StructMemberVariableUserData = {
     isFirst: boolean;
     isLast: boolean;
 
+    // bp
     bpType: string;
     bpIsUStruct: boolean;
-    bpNeedToRawTypeConversion: boolean;
-    bpConvertToRawType: string;
-    bpNeedFromRawTypeConversion: boolean;
-    bpConvertFromRawType: string;
+
+    bpNeedConvTo: boolean;
+    bpNameConvFuncTo: string;
+
+    bpNeedConvFrom: boolean;
+    bpNeedConvFromMemoAlloc: boolean;
+    bpNeedConvFromSetData: boolean;
+    bpNameConvFuncFrom: string;
+    bpNameConvFuncFromAdditional: string;
+
+
+    bpNeedDefaultValue: boolean;
+    bpDefaultValue: string;
 };
 
 export type ParameterUserData = {
@@ -80,5 +90,6 @@ export type ParameterUserData = {
     // bp
     bpParameterType: string;
 };
+
 
 //////// Define Custom UserData

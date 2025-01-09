@@ -41,7 +41,7 @@ private:
 {{#methods}}
 {{{user_data.commentCppStyle}}}
   UFUNCTION(BlueprintCallable,Category = "Agora|{{parent_name}}")
-  {{user_data.bpReturnType}} {{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+  {{{user_data.bpReturnType}}} {{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
   
 {{/methods}}
 {{/user_data.isCallback}}

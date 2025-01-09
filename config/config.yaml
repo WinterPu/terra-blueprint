@@ -15,6 +15,13 @@ parsers:
           - '@agoraio-extensions/terra_shared_configs:headers/rtc_4.4.0/include/IAgoraMediaComponentFactory.h'
 
 
+  - name: RemoveNodeParser
+    path: ../renders/parser/remove_node_parser.ts
+    args:
+      ignoreDefaultConfig: true
+      configFilePath: ../renders/parser_config/remove_node_list_parser.ts
+
+
 # List of renderer configurations
 renderers:
 #   # Configuration for the first renderer

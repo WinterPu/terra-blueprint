@@ -24,3 +24,6 @@ npm exec terra -- run \
 # node scripts/terra/export-types-file-generate.js output-path=packages/@iris/rtc/index.ts
 
 # npm run lint:fix
+
+## Copy CxxParser Code To Dest
+python SyncTerraCode.py

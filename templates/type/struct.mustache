@@ -10,7 +10,12 @@ public:
 {{#member_variables}}
 {{{user_data.commentCppStyle}}}
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Agora|{{parent_name}}")
-  {{user_data.bpType}} {{name}} = ;
+	{{#user_data.bpNeedDefaultValue}}
+  	{{{user_data.bpType}}} {{name}} = {{{user_data.bpDefaultValue}}};
+	{{/user_data.bpNeedDefaultValue}}
+	{{^user_data.bpNeedDefaultValue}}
+	{{{user_data.bpType}}}  {{name}};
+	{{/user_data.bpNeedDefaultValue}}
 {{/member_variables}}
 
 
@@ -18,29 +23,39 @@ public:
 	FUABT_{{name}}(const {{user_data.fullTypeWithNamespace}} & AgoraData){
     {{#member_variables}}
     
-		{{#user_data.bpNeedFromRawTypeConversion}}
-			{{name}} = {{user_data.bpConvertFromRawType}}(AgoraData.{{name}});
-		{{/user_data.bpNeedFromRawTypeConversion}}
-		{{^user_data.bpNeedFromRawTypeConversion}}
+		{{#user_data.bpNeedConvTo}}
+			{{name}} = {{user_data.bpNameConvFuncTo}}(AgoraData.{{name}});
+		{{/user_data.bpNeedConvTo}}
+		{{^user_data.bpNeedConvTo}}
 			{{name}} = AgoraData.{{name}};
-		{{/user_data.bpNeedFromRawTypeConversion}}
+		{{/user_data.bpNeedConvTo}}
     {{/member_variables}}
 	}
 
 	{{user_data.fullTypeWithNamespace}} CreateRawData() const {
 		{{user_data.fullTypeWithNamespace}} AgoraData;
     {{#member_variables}}
-		{{#user_data.bpNeedFromRawTypeConversion}}
-				AgoraData.{{name}} = {{user_data.bpConvertToRawType}}({{name}});
-		{{/user_data.bpNeedFromRawTypeConversion}}
-		{{^user_data.bpNeedFromRawTypeConversion}}
-			{{#user_data.bpIsUStruct}}
-				AgoraData.{{name}} = {{name}}.CreateRawData();
-			{{/user_data.bpIsUStruct}}
-			{{^user_data.bpIsUStruct}}
-				AgoraData.{{name}} = {{name}};
-			{{/user_data.bpIsUStruct}}
-		{{/user_data.bpNeedFromRawTypeConversion}}
+		{{#user_data.bpNeedConvFrom}}
+				AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
+		{{/user_data.bpNeedConvFrom}}
+		{{^user_data.bpNeedConvFrom}}
+			{{#user_data.bpNeedConvFromMemoAlloc}}
+				AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
+			{{/user_data.bpNeedConvFromMemoAlloc}}
+			{{^user_data.bpNeedConvFromMemoAlloc}}
+				{{#user_data.bpNeedConvFromSetData}}
+				{{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
+				{{/user_data.bpNeedConvFromSetData}}
+				{{^user_data.bpNeedConvFromSetData}}
+		{{#user_data.bpIsUStruct}}
+			AgoraData.{{name}} = {{name}}.CreateRawData();
+		{{/user_data.bpIsUStruct}}
+		{{^user_data.bpIsUStruct}}
+			AgoraData.{{name}} = {{name}};
+		{{/user_data.bpIsUStruct}}
+				{{/user_data.bpNeedConvFromSetData}}
+			{{/user_data.bpNeedConvFromMemoAlloc}}
+		{{/user_data.bpNeedConvFrom}}
     {{/member_variables}}
 		return AgoraData;
 	}
@@ -48,13 +63,11 @@ public:
 	void FreeRawData({{user_data.fullTypeWithNamespace}} & AgoraData) const
 	{
 		{{#member_variables}}
-		{{^user_data.bpNeedFromRawTypeConversion}}
-		{{#user_data.bpIsUStruct}}
+		{{#user_data.bpNeedConvFromMemoAlloc}}
 		
 		{{name}}.FreeRawData(AgoraData.{{name}});
 		
-		{{/user_data.bpIsUStruct}}
-		{{/user_data.bpNeedFromRawTypeConversion}}
+		{{/user_data.bpNeedConvFromMemoAlloc}}
 		{{/member_variables}}
 	}
 }

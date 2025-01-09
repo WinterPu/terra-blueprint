@@ -15,7 +15,7 @@ void UAgoraBPu_{{name}}::AddBlueprintCallbackExecutor(UAgoraBPu{{name}}CBExecuto
 void UAgoraBPu_{{name}}::RemoveAllBlueprintCallbackExecutors(){
 
     {{#methods}}
-    {{user_data.bpCallbackDelegateVarName}}..Clear();
+    {{user_data.bpCallbackDelegateVarName}}.Clear();
     {{/methods}}
 
 }

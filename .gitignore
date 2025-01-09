@@ -18,3 +18,4 @@ dump_json.json
 ## temp for now
 packages/*
 output.txt
+split_output/*
