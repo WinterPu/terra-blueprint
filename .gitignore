@@ -19,3 +19,7 @@ dump_json.json
 packages/*
 output.txt
 split_output/*
+
+## config
+config/blueprint_config.yaml
+config/cpp_config.yaml
