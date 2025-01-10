@@ -26,5 +26,5 @@ parsers:
 # List of renderer configurations
 renderers:
 #   # Configuration for the first renderer
-  - path: ../renders/cpp-header-renderer.ts
-  - path: ../renders/cpp-cpp-renderer.ts
+  - path: ../renders/cpp/cpp-header-renderer.ts
+  - path: ../renders/cpp/cpp-impl-renderer.ts

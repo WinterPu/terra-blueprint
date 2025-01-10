@@ -15,9 +15,9 @@ import {
 } from '@agoraio-extensions/terra_shared_configs';
 
 
-import * as UECodeRender from './utility/helper';
+import * as UECodeRender from '../utility/helper';
 
-import * as Logger from './utility/logger';
+import * as Logger from '../utility/logger';
 
 // prepare terra data for rendering
 
@@ -50,12 +50,14 @@ export default function (
     fileNameTemplatePath: path.join(
       __dirname,
       '..',
+      '..',
       'templates',
       'type',
       'file_name.mustache'
     ),
     fileContentTemplatePath: path.join(
       __dirname,
+      '..',
       '..',
       'templates',
       'type',

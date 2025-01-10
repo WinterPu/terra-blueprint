@@ -56,22 +56,38 @@ namespace agora {
 
 			public:
 
+
+#pragma region Agora API Wrapper
+				virtual int initialize(const agora::rtc::RtcEngineContext& context) override;
+
+				// Use Unreal Rendering
+				virtual int setupRemoteVideo(const agora::rtc::VideoCanvas& canvas) override;
+				virtual int setupLocalVideo(const agora::rtc::VideoCanvas& canvas) override;
+				virtual int setupRemoteVideoEx(const agora::rtc::VideoCanvas& canvas, const agora::rtc::RtcConnection& connection) override;
+
+				// Set Parameter
+
+				// Audio Dump
+
+				// WITH_AGORA_CALLBACKS
+
+#pragma endregion Agora API Wrapper
+
+
+#pragma region Other Native APIs
+
 {{#nodes}}
             {{#methods}}
 				{{^user_data.isExcluded}}
-				{{#user_data.hasConditionalDirective}}
+{{{user_data.macro_scope_start}}}
+					virtual {{#return_type}}{{{source}}}{{/return_type}} {{name}} ({{#parameters}}{{{type.source}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}}) override;
+{{{user_data.macro_scope_end}}}
 
-				{{{conditional_compilation_directives_infos}}}
-				{{/user_data.hasConditionalDirective}}
-                virtual {{#return_type}}{{{source}}}{{/return_type}} {{name}} ({{#parameters}}{{{type.source}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}}) override;
-				{{#user_data.hasConditionalDirective}}
-				#endif
-
-				{{/user_data.hasConditionalDirective}}
 				{{/user_data.isExcluded}}
 			{{/methods}}
 {{/nodes}}
 
+#pragma endregion Other Native APIs
 
             };
 		}

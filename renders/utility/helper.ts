@@ -110,6 +110,24 @@ export function preProcessNode(
 
 
 
+  export function createCompilationDirectivesContent(
+    node: CXXTerraNode,
+    isStart: boolean = true
+  ): string {
+    let directives = node.conditional_compilation_directives_infos;
+    if (directives.length == 0) {
+      return "";
+    }
+  
+    let startIf = directives.join("\n");
+    if (isStart) {
+      return startIf;
+    }
+  
+    let endIf = directives.map((it) => "#endif").join("\n");
+  
+    return endIf;
+  }
 
 export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[]
 
@@ -153,15 +171,25 @@ export function genGeneralTerraData(
                 node.asClazz().methods.map((method,index) => {
                     let bIsCallbackMethod = isMatch(node.name, 'isCallback');
 
+                    let bDebug = method.name === "getScreenCaptureSources";
+                    if (bDebug){
+                        debugger
+                    }
+
                     const clazzMethodUserData: CustomUserData.ClazzMethodUserData = {
                     hasConditionalDirective: method.conditional_compilation_directives_infos.length > 0,
                     isExcluded: (func_exclude_api ? func_exclude_api(method.name) : false),
                     failureReturnVal: UESDK_GetFailureReturnVal(method.return_type.source),
                     hasReturnVal:method.return_type.source.toLowerCase() != "void",
                     
+
+                    macro_scope_start: createCompilationDirectivesContent(method),
+                    macro_scope_end: createCompilationDirectivesContent(method, false),
                     commentCppStyle: formatAsCppComment(method.comment),
                     isFirst: index === 0,
                     isLast: index === node.asClazz().methods.length - 1,
+                    isExMethod: method.parent_name === "IRtcEngineEx",
+                    callerInstanceName: method.parent_name === "IRtcEngineEx" ? "((IRtcEngineEx*)RtcEngine)" : "RtcEngine", 
 
 
                     // bp

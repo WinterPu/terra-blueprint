@@ -37,9 +37,13 @@ export type ClazzMethodUserData = {
     bindingEventExtension: [];
     bindingExtension: [];
 
+    macro_scope_start: string;
+    macro_scope_end: string;
     commentCppStyle: string;
     isFirst: boolean;
     isLast: boolean;
+    isExMethod:boolean;
+    callerInstanceName:string;
 
 
     // bp

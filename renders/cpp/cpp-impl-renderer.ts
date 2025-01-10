@@ -14,9 +14,9 @@ import {
   MustacheRenderConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
 
-import * as UECodeRender from './utility/helper';
+import * as UECodeRender from '../utility/helper';
 
-import * as Logger from './utility/logger';
+import * as Logger from '../utility/logger';
 // prepare terra data for rendering
 
 export function prepareTerraData(
@@ -62,17 +62,19 @@ export default function (
     fileNameTemplatePath: path.join(
       __dirname,
       '..',
+      '..',
       'templates',
       'cppplugin',
-      'AgoraUERtcEngine_CppFileHeader.mustache'
+      'AgoraUERtcEngine_impl_filename.mustache'
     ),
 
     fileContentTemplatePath: path.join(
       __dirname,
       '..',
+      '..',
       'templates',
       'cppplugin',
-      'AgoraUERtcEngine_CppFileContent.mustache'
+      'AgoraUERtcEngine_impl_filecontent.mustache'
     ),
     view,
   };

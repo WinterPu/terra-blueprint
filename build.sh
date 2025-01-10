@@ -15,8 +15,16 @@ rm yarn.lock
 #     --config ${MY_PATH}/config/types_configs.yaml \
 #     --output-dir=${PROJECT_ROOT}/packages/@iris/rtc/generate \
 
+
+## Cpp Generation
 npm exec terra -- run \
-    --config ${MY_PATH}/config/config.yaml \
+    --config ${MY_PATH}/config/cpp_config.yaml \
+    --output-dir=${PROJECT_ROOT}/packages/cpp \
+
+
+## BP Generation
+npm exec terra -- run \
+    --config ${MY_PATH}/config/blueprint_config.yaml \
     --output-dir=${PROJECT_ROOT}/packages/blueprint \
 
 # cd ${PROJECT_ROOT}    

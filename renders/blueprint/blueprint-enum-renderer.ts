@@ -14,11 +14,9 @@ import {
   MustacheRenderConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
 
+import * as UECodeRender from '../utility/helper';
 
-import * as UECodeRender from './utility/helper';
-
-import * as Logger from './utility/logger';
-
+import * as Logger from '../utility/logger';
 // prepare terra data for rendering
 
 export function prepareTerraData(
@@ -27,7 +25,9 @@ export function prepareTerraData(
   parseResult: ParseResult
 ): any {
 
-  return UECodeRender.genGeneralTerraData(terraContext,args,parseResult);
+  let view = UECodeRender.genGeneralTerraData(terraContext,args,parseResult);
+
+  return UECodeRender.mergeAllNodesToOneCXXFile(view)
 
 }
 
@@ -41,7 +41,7 @@ export default function (
 
   let name_renderer = __filename;
   Logger.PrintStageLog(name_renderer);
-  debugger;
+
   let originalParseResult = _.cloneDeep(parseResult);
   let view = prepareTerraData(terraContext,args,originalParseResult);
 
@@ -50,16 +50,18 @@ export default function (
     fileNameTemplatePath: path.join(
       __dirname,
       '..',
+      '..',
       'templates',
       'bpplugin',
-      'bp_cpp_filename.mustache'
+      'bpenum_filename.mustache'
     ),
     fileContentTemplatePath: path.join(
       __dirname,
       '..',
+      '..',
       'templates',
       'bpplugin',
-      'bp_cpp_filecontent.mustache'
+      'bpenum_filecontent.mustache'
     ),
     view,
   
