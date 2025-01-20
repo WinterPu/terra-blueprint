@@ -1,6 +1,3 @@
-
-export function IsAgoraProject() : boolean {
-    return true;
+export function IsAgoraProject(): boolean {
+  return true;
 }
-
-

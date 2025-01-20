@@ -1,5 +1,4 @@
 import * as path from 'path';
-import _ from 'lodash';
 
 import { CXXFile, CXXTYPE, CXXTerraNode } from '@agoraio-extensions/cxx-parser';
 import {
@@ -10,10 +9,10 @@ import {
 
 import {
   IrisApiIdParserUserData,
-  renderWithConfiguration,
   MustacheRenderConfiguration,
+  renderWithConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
-
+import _ from 'lodash';
 
 import * as UECodeRender from '../utility/helper';
 
@@ -26,27 +25,22 @@ export function prepareTerraData(
   args: any,
   parseResult: ParseResult
 ): any {
-
-  return UECodeRender.genGeneralTerraData(terraContext,args,parseResult);
-
+  return UECodeRender.genGeneralTerraData(terraContext, args, parseResult);
 }
 
-
-// call api to render 
+// call api to render
 export default function (
   terraContext: TerraContext,
   args: any,
-  parseResult: ParseResult,
+  parseResult: ParseResult
 ): RenderResult[] {
-
   let name_renderer = __filename;
   Logger.PrintStageLog(name_renderer);
 
   let originalParseResult = _.cloneDeep(parseResult);
-  let view = prepareTerraData(terraContext,args,originalParseResult);
+  let view = prepareTerraData(terraContext, args, originalParseResult);
 
-  const one_render_config : MustacheRenderConfiguration = {
-
+  const one_render_config: MustacheRenderConfiguration = {
     fileNameTemplatePath: path.join(
       __dirname,
       '..',
@@ -64,9 +58,7 @@ export default function (
       'file_content.mustache'
     ),
     view,
-  
   };
 
   return renderWithConfiguration(one_render_config);
-
 }

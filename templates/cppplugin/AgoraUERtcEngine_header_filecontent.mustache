@@ -80,7 +80,7 @@ namespace agora {
             {{#methods}}
 				{{^user_data.isExcluded}}
 {{{user_data.macro_scope_start}}}
-					virtual {{#return_type}}{{{source}}}{{/return_type}} {{name}} ({{#parameters}}{{{type.source}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}}) override;
+					virtual {{#return_type}}{{{source}}}{{/return_type}} {{name}} ({{#parameters}}{{{type.clang_qualtype}}} {{name}}{{{user_data.defaultValue}}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}}) override;
 {{{user_data.macro_scope_end}}}
 
 				{{/user_data.isExcluded}}
