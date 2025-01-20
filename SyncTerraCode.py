@@ -3,7 +3,7 @@ from pathlib import Path
 
 # 定义源路径和目标路径
 src_path = Path("./node_modules/@agoraio-extensions/cxx-parser")
-dest_path = Path.home() / Path("Documents/Github/terra/cxx-parser")
+dest_path = Path.home() / Path("Documents/terra/cxx-parser")
 
 # 检查目标路径是否存在，如果存在则删除
 if dest_path.exists():
