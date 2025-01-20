@@ -116,8 +116,8 @@ def split_json_file(
 if __name__ == "__main__":
     # 拆分文件
     split_json_file(
-        input_file_path= Path("/Users/winterpu/Documents/Github/terra-blueprint/.terra/cxx_parser/dump_clang_ast_IAgoraRtcEngine.h_4f2a426cbeddb5a7fc0eb5580f03415c.json"),
-        num_parts=20,
+        input_file_path= Path("/Users/admin/Documents/terra-blueprint/.terra/cxx_parser/dump_clang_ast_IAgoraRtcEngine.h_d09817fd3e3119bd59292c070c381e80.json"),
+        num_parts=30,
         inner_key="inner",
         output_dir= Path("./split_output")
     )

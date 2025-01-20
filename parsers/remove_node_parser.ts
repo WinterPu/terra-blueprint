@@ -1,9 +1,8 @@
 import { CXXFile, CXXTYPE, CXXTerraNode } from '@agoraio-extensions/cxx-parser';
 import { ParseResult, TerraContext } from '@agoraio-extensions/terra-core';
 
+import { BaseParserArgs } from '@agoraio-extensions/terra_shared_configs';
 import { getConfigs } from '@agoraio-extensions/terra_shared_configs/src/utils/parser_utils';
-
-import { BaseParserArgs }from '@agoraio-extensions/terra_shared_configs';
 
 const defaultConfig = require('@agoraio-extensions/terra_shared_configs/configs/rtc/remove_node_list');
 

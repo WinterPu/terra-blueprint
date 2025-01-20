@@ -4,4 +4,3 @@ module.exports = [
   'agora::rtc::IRtcEngine.setupLocalVideo',
   'agora::rtc::IRtcEngineEx.setupRemoteVideoEx',
 ];
-  

@@ -1,3 +1,14 @@
+# Terra - Blueprint
+
+
+## Before committing
+```
+npm run test // unit test
+npm run lint // format
+```
+
+
+
 # terra
 
 terra is a shell of the code-gen flow: Parse AST -> Generate codes.
