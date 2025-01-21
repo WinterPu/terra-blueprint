@@ -15,6 +15,7 @@ import {
 import _ from 'lodash';
 
 import * as UECodeRender from '../utility/helper';
+import * as UECodeFilter from '../utility/filter_helper';
 
 import * as Logger from '../utility/logger';
 // prepare terra data for rendering
@@ -40,7 +41,7 @@ export function prepareTerraData(
   const func_api_exclude: UECodeRender.ExcludeApiFunction = (
     method_name: string
   ) => {
-    return UECodeRender.UESDK_CheckIfApiExcluded(method_name);
+    return UECodeFilter.UESDK_CheckIfApiExcluded(method_name);
   };
 
   let view = UECodeRender.genGeneralTerraData(

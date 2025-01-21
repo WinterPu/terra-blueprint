@@ -8,6 +8,7 @@ import {
   SimpleType,
   Variable,
 } from '@agoraio-extensions/cxx-parser';
+
 import {
   ParseResult,
   RenderResult,
@@ -19,53 +20,13 @@ import {
   renderWithConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
 
-import { map } from 'lodash';
-
 import * as CustomUserData from './additional_parsedata';
 
 import * as BPHelper from './blueprint_special/bp_helper';
 import * as Logger from './logger';
 
-const map_failure_return_val: Record<string, string> = {
-  'int': 'AGORA_UE_ERR_CODE(ERROR_NULLPTR)',
-  'char const*': 'nullptr',
-  'bool': 'false',
-  'agora_refptr': 'nullptr',
-  'agora::rtc::video_track_id_t': '0',
-  'float': '0.0f',
-  'agora::rtc::IScreenCaptureSourceList*': 'nullptr',
-  'agora::rtc::CONNECTION_STATE_TYPE':
-    'agora::rtc::CONNECTION_STATE_TYPE::CONNECTION_STATE_FAILED',
-  'int64_t': '0',
-  'uint64_t': '0',
-  'agora_refptr<agora::rtc::IMediaPlayer>': 'nullptr',
-  'agora_refptr<agora::rtc::IMediaRecorder>': 'nullptr',
-  'void': '',
-};
-
-const list_custom_impl_methods = [
-  'initialize',
-  'setupRemoteVideo',
-  'setupLocalVideo',
-  'setupRemoteVideoEx',
-];
-
-export function UESDK_CheckIfApiExcluded(method_name: string): boolean {
-  // console.log(`method_name: ${method_name} is excluded: ${list_custom_impl_methods.includes(method_name)}`);
-  return list_custom_impl_methods.includes(method_name);
-}
-
-export function UESDK_GetFailureReturnVal(
-  return_type: string
-): string | undefined {
-  const returnValue = map_failure_return_val[return_type];
-
-  if (returnValue === undefined) {
-    Logger.PrintError(`Error: No value found for return type "${return_type}"`);
-  }
-
-  return returnValue;
-}
+import * as CppHelper from './cpp_helper';
+import * as FilterHelper from './filter_helper';
 
 const regMap: { [key: string]: string } = {
   isCallback: '.*(Observer|Handler|Callback|Receiver|Sink).*',
@@ -79,19 +40,8 @@ export function isMatch(str: string, type: string): boolean {
   return result;
 }
 
-export function formatAsCppComment(input: string): string {
-  // 去掉首尾空格和换行
-  const trimmedInput = input.trim();
 
-  // 将每行前加 *，并包裹在 /* 和 */
-  const commentLines = trimmedInput
-    .split('\n')
-    .map((line) => ` * ${line}`)
-    .join('\n');
-
-  return `/*\n${commentLines}\n */`;
-}
-
+// preprocess the nodes
 export function preProcessNode(cxxfiles: CXXFile[]) {
   BPHelper.initMapRegisteredData();
 
@@ -120,60 +70,13 @@ export function preProcessNode(cxxfiles: CXXFile[]) {
   });
 }
 
-export function createCompilationDirectivesContent(
-  node: CXXTerraNode,
-  isStart: boolean = true
-): string {
-  let directives = node.conditional_compilation_directives_infos;
-  if (directives.length == 0) {
-    return '';
-  }
-
-  let startIf = directives.join('\n');
-  if (isStart) {
-    return startIf;
-  }
-
-  let endIf = directives.map((it) => '#endif').join('\n');
-
-  return endIf;
-}
 
 export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[];
 
 export type ExcludeApiFunction = (method_name: string) => boolean;
 
-function prettyDefaultValue(
-  parseResult: ParseResult,
-  defaultValueType: SimpleType,
-  defaultValue: string
-): string {
-  let out = defaultValue;
-  if (defaultValue.length == 0) {
-    return out;
-  }
-  let tmpDefaultValueNode = parseResult.resolveNodeByType(defaultValueType);
-  if (
-    tmpDefaultValueNode.__TYPE == CXXTYPE.Struct ||
-    tmpDefaultValueNode.__TYPE == CXXTYPE.Clazz
-  ) {
-    out = `${tmpDefaultValueNode.fullName}()`;
-  } else if (tmpDefaultValueNode.__TYPE == CXXTYPE.Enumz) {
-    let tmpName = defaultValue
-      .replaceAll('(', '')
-      .replaceAll(')', '')
-      .split('::')
-      .pop();
-    out = `${tmpDefaultValueNode.fullName}::${tmpName}`;
-  }
 
-  if (out == '__null') {
-    out = 'nullptr';
-  }
-
-  return out;
-}
-
+// main function
 export function genGeneralTerraData(
   terraContext: TerraContext,
   args: any,
@@ -219,14 +122,14 @@ export function genGeneralTerraData(
             isExcluded: func_exclude_api
               ? func_exclude_api(method.name)
               : false,
-            failureReturnVal: UESDK_GetFailureReturnVal(
+            failureReturnVal: FilterHelper.UESDK_GetFailureReturnVal(
               method.return_type.source
             ),
             hasReturnVal: method.return_type.source.toLowerCase() != 'void',
 
-            macro_scope_start: createCompilationDirectivesContent(method),
-            macro_scope_end: createCompilationDirectivesContent(method, false),
-            commentCppStyle: formatAsCppComment(method.comment),
+            macro_scope_start: CppHelper.createCompilationDirectivesContent(method),
+            macro_scope_end: CppHelper.createCompilationDirectivesContent(method, false),
+            commentCppStyle: CppHelper.formatAsCppComment(method.comment),
             isFirst: index === 0,
             isLast: index === node.asClazz().methods.length - 1,
             isExMethod: method.parent_name === 'IRtcEngineEx',
@@ -268,7 +171,7 @@ export function genGeneralTerraData(
             method.parameters.push(param_variadic)
           }
           method.parameters.map((parameter, index) => {
-            let valDefaultVal = prettyDefaultValue(
+            let valDefaultVal = CppHelper.prettyDefaultValue(
               parseResult,
               parameter.type,
               parameter.default_value
@@ -278,7 +181,7 @@ export function genGeneralTerraData(
             valDefaultVal = valDefaultVal !== '' ? ' = ' + valDefaultVal : '';
             const parameterUserData: CustomUserData.ParameterUserData = {
               lenParameters: method.parameters.length,
-              commentCppStyle: formatAsCppComment(parameter.comment),
+              commentCppStyle: CppHelper.formatAsCppComment(parameter.comment),
               isFirst: index === 0,
               isLast: index === method.parameters.length - 1,
               defaultValue: valDefaultVal,
@@ -322,7 +225,7 @@ export function genGeneralTerraData(
         // Only For Enumz
         node.asEnumz().enum_constants.map((enum_constant, index) => {
           const enumConstantsUserData: CustomUserData.EnumConstantsUserData = {
-            commentCppStyle: formatAsCppComment(enum_constant.comment),
+            commentCppStyle: CppHelper.formatAsCppComment(enum_constant.comment),
 
             isFirst: index === 0,
 
@@ -355,7 +258,7 @@ export function genGeneralTerraData(
             );
           const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData =
             {
-              commentCppStyle: formatAsCppComment(member_variable.comment),
+              commentCppStyle: CppHelper.formatAsCppComment(member_variable.comment),
               isFirst: index === 0,
               isLast: index === node.asStruct().member_variables.length - 1,
 
@@ -401,7 +304,7 @@ export function genGeneralTerraData(
 
           fullTypeWithNamespace: node.namespaces.join('::') + '::' + node.name,
 
-          commentCppStyle: formatAsCppComment(node.comment),
+          commentCppStyle: CppHelper.formatAsCppComment(node.comment),
 
           bpNodeName: valBPNodeName,
           bpHasRegistered: typeCategoryName !== CXXTYPE.Unknown,
@@ -420,6 +323,7 @@ export function genGeneralTerraData(
 
   return view;
 }
+
 
 export function mergeAllNodesToOneCXXFile(view: CXXFile[]): CXXFile {
   const allNodesFile = new CXXFile();
