@@ -64,6 +64,7 @@ namespace agora {
 				virtual int setupRemoteVideo(const agora::rtc::VideoCanvas& canvas) override;
 				virtual int setupLocalVideo(const agora::rtc::VideoCanvas& canvas) override;
 				virtual int setupRemoteVideoEx(const agora::rtc::VideoCanvas& canvas, const agora::rtc::RtcConnection& connection) override;
+				virtual int writeLog (commons::LOG_LEVEL level, const char * fmt,  ...) override;
 
 				// Set Parameter
 

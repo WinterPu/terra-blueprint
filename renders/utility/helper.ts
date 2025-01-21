@@ -6,6 +6,7 @@ import {
   CXXTerraNode,
   ConstructorInitializer,
   SimpleType,
+  Variable,
 } from '@agoraio-extensions/cxx-parser';
 import {
   ParseResult,
@@ -258,6 +259,14 @@ export function genGeneralTerraData(
           };
 
           method.user_data = clazzMethodUserData;
+          if(method.is_variadic){
+            let param_variadic = new Variable();
+            param_variadic.name = '...';
+            param_variadic.source = '...';
+            param_variadic.type = new SimpleType();
+            param_variadic.type.clang_qualtype = '';
+            method.parameters.push(param_variadic)
+          }
           method.parameters.map((parameter, index) => {
             let valDefaultVal = prettyDefaultValue(
               parseResult,

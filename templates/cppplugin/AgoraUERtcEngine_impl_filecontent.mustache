@@ -259,6 +259,33 @@ namespace agora {
 #endif
 			}
 
+			int AgoraUERtcEngine::writeLog(commons::LOG_LEVEL level, const char* fmt, ...)
+			{
+				if (RtcEngine != nullptr) {
+
+					va_list args;
+					va_start(args, fmt);
+
+					// to get the length
+					int length = std::vsnprintf(nullptr, 0, fmt, args);
+					va_end(args);
+
+					std::vector<char> buffer(length + 1); // +1 for null terminator
+					buffer.clear();
+
+					va_start(args, fmt);
+					std::vsnprintf(buffer.data(), buffer.size(), fmt, args);
+					va_end(args);
+
+					std::string Content = (buffer.data());
+
+					int result = RtcEngine->writeLog(level, Content.c_str());
+					return result;
+					
+				}
+				return AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+			}
+
 #pragma endregion Agora API Wrapper
 
 #pragma region Other Native APIs
