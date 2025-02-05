@@ -4,6 +4,8 @@
 ref:
 * https://stackoverflow.com/questions/25231080/what-are-canonical-types-in-clang
 * usage: https://clang.llvm.org/docs/LibClang.html
+	* https://clang.llvm.net.cn/docs/LibClang.html
+* example: https://blog.csdn.net/qq_45335399/article/details/113727548
 
 
 ```
@@ -110,7 +112,18 @@ return CXChildVisit_Continue;
 &visitNode);
 
 };
+
 ```
+
+```
+// 从根节点开始访问
+
+CXCursor root = clang_getTranslationUnitCursor(tu.get());
+visitNode(root);
+
+
+```
+
 
 ```
 // output result
