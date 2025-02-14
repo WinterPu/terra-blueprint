@@ -23,10 +23,10 @@ import {
 import * as CustomUserData from './additional_parsedata';
 
 import * as BPHelper from './blueprint_special/bp_helper';
-import * as Logger from './logger';
 
 import * as CppHelper from './cpp_helper';
 import * as FilterHelper from './filter_helper';
+import * as Logger from './logger';
 
 const regMap: { [key: string]: string } = {
   isCallback: '.*(Observer|Handler|Callback|Receiver|Sink).*',
@@ -39,7 +39,6 @@ export function isMatch(str: string, type: string): boolean {
   }
   return result;
 }
-
 
 // preprocess the nodes
 export function preProcessNode(cxxfiles: CXXFile[]) {
@@ -70,11 +69,9 @@ export function preProcessNode(cxxfiles: CXXFile[]) {
   });
 }
 
-
 export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[];
 
 export type ExcludeApiFunction = (method_name: string) => boolean;
-
 
 // main function
 export function genGeneralTerraData(
@@ -127,9 +124,14 @@ export function genGeneralTerraData(
             ),
             hasReturnVal: method.return_type.source.toLowerCase() != 'void',
 
-            macro_scope_start: CppHelper.createCompilationDirectivesContent(method),
-            macro_scope_end: CppHelper.createCompilationDirectivesContent(method, false),
+            macro_scope_start:
+              CppHelper.createCompilationDirectivesContent(method),
+            macro_scope_end: CppHelper.createCompilationDirectivesContent(
+              method,
+              false
+            ),
             commentCppStyle: CppHelper.formatAsCppComment(method.comment),
+            suffix_attribute: CppHelper.genSuffixAttribute(method.attributes),
             isFirst: index === 0,
             isLast: index === node.asClazz().methods.length - 1,
             isExMethod: method.parent_name === 'IRtcEngineEx',
@@ -162,13 +164,13 @@ export function genGeneralTerraData(
           };
 
           method.user_data = clazzMethodUserData;
-          if(method.is_variadic){
+          if (method.is_variadic) {
             let param_variadic = new Variable();
             param_variadic.name = '...';
             param_variadic.source = '...';
             param_variadic.type = new SimpleType();
             param_variadic.type.clang_qualtype = '';
-            method.parameters.push(param_variadic)
+            method.parameters.push(param_variadic);
           }
           method.parameters.map((parameter, index) => {
             let valDefaultVal = CppHelper.prettyDefaultValue(
@@ -225,7 +227,9 @@ export function genGeneralTerraData(
         // Only For Enumz
         node.asEnumz().enum_constants.map((enum_constant, index) => {
           const enumConstantsUserData: CustomUserData.EnumConstantsUserData = {
-            commentCppStyle: CppHelper.formatAsCppComment(enum_constant.comment),
+            commentCppStyle: CppHelper.formatAsCppComment(
+              enum_constant.comment
+            ),
 
             isFirst: index === 0,
 
@@ -258,7 +262,9 @@ export function genGeneralTerraData(
             );
           const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData =
             {
-              commentCppStyle: CppHelper.formatAsCppComment(member_variable.comment),
+              commentCppStyle: CppHelper.formatAsCppComment(
+                member_variable.comment
+              ),
               isFirst: index === 0,
               isLast: index === node.asStruct().member_variables.length - 1,
 
@@ -323,7 +329,6 @@ export function genGeneralTerraData(
 
   return view;
 }
-
 
 export function mergeAllNodesToOneCXXFile(view: CXXFile[]): CXXFile {
   const allNodesFile = new CXXFile();

@@ -14,8 +14,8 @@ import {
 } from '@agoraio-extensions/terra_shared_configs';
 import _ from 'lodash';
 
-import * as UECodeRender from '../utility/helper';
 import * as UECodeFilter from '../utility/filter_helper';
+import * as UECodeRender from '../utility/helper';
 
 import * as Logger from '../utility/logger';
 // prepare terra data for rendering

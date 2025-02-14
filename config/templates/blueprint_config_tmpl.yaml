@@ -4,6 +4,7 @@ parsers:
   - name: CXXParser
     package: '@agoraio-extensions/cxx-parser'
     args:
+      preprocessParseFiles: true
       parseClangQualType: true
       includeHeaderDirs:
         - '@agoraio-extensions/terra_shared_configs:headers/{{SDK_VERSION}}/include'

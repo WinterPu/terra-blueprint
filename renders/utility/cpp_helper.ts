@@ -12,9 +12,13 @@ import {
   RenderResult,
   TerraContext,
 } from '@agoraio-extensions/terra-core';
-import { map } from 'lodash';
+import { List, map } from 'lodash';
 
 export function formatAsCppComment(input: string): string {
+  if (input == '' || input == undefined) {
+    return '';
+  }
+
   // 去掉首尾空格和换行
   const trimmedInput = input.trim();
 
@@ -75,4 +79,16 @@ export function createCompilationDirectivesContent(
   let endIf = directives.map((it) => '#endif').join('\n');
 
   return endIf;
+}
+
+export function genSuffixAttribute(input: string[]): string {
+  if (input.length <= 0) return '';
+
+  let str_attribute = '';
+  input.forEach((attr) => {
+    if (attr === '__deprecated__' || attr === 'deprecated') {
+      str_attribute = '__deprecated';
+    }
+  });
+  return str_attribute;
 }

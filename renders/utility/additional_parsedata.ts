@@ -43,6 +43,8 @@ export type ClazzMethodUserData = {
   isExMethod: boolean;
   callerInstanceName: string;
 
+  suffix_attribute: string;
+
   // bp
   bpReturnType: string;
   bpMethodName: string;
