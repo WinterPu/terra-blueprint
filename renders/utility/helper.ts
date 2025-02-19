@@ -73,7 +73,7 @@ export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[];
 
 export type ExcludeApiFunction = (method_name: string) => boolean;
 
-const STR_NO_CALLBACK : string = 'NotCallbackMethod';
+const STR_NO_CALLBACK: string = 'NotCallbackMethod';
 
 // main function
 export function genGeneralTerraData(
@@ -192,7 +192,10 @@ export function genGeneralTerraData(
               defaultValueComment: commentDefaultValue,
 
               // bp
-              bpParameterType: BPHelper.genBPParameterType(parameter.type, parameter.is_output),
+              bpParameterType: BPHelper.genBPParameterType(
+                parameter.type,
+                parameter.is_output
+              ),
               ...parameter.user_data,
             };
             parameter.user_data = parameterUserData;
@@ -242,10 +245,11 @@ export function genGeneralTerraData(
           enum_constant.user_data = enumConstantsUserData;
         });
       } else if (node.__TYPE == CXXTYPE.Struct) {
-        
-        const dictInitializer = BPHelper.prepareBPStructInitializerDict(node.asStruct());
+        const dictInitializer = BPHelper.prepareBPStructInitializerDict(
+          node.asStruct()
+        );
 
-        const contextStruct = BPHelper.genContext_BPStruct(node.asStruct(),"		");
+        const contextStruct = BPHelper.genContext_BPStruct(node.asStruct(), '		');
 
         const structUserData: CustomUserData.StructUserData = {
           contextConstructor: contextStruct.contextConstructor,
@@ -262,13 +266,16 @@ export function genGeneralTerraData(
           };
           member_variable.type.user_data = simpleTypeUserData;
 
-          const formatDefaultVal = BPHelper.getBPStructData_DefaultVal(dictInitializer, member_variable);
+          const formatDefaultVal = BPHelper.getBPStructData_DefaultVal(
+            dictInitializer,
+            member_variable
+          );
           const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData =
             {
               commentCppStyle: CppHelper.formatAsCppComment(
                 member_variable.comment
               ),
-              
+
               bpFormatDefaultVal: formatDefaultVal,
 
               ...member_variable.user_data,

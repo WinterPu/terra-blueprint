@@ -96,5 +96,3 @@ export function genSuffixAttribute(input: string[]): string {
   });
   return str_attribute;
 }
-
-

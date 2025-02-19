@@ -12,7 +12,7 @@ import {
 
 import * as Logger from '../logger';
 
-import {BPConvFromCppWayType, UEBPType} from './bptype_helper';
+import { BPConvFromCppWayType, UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
 
@@ -21,7 +21,10 @@ export function genBPReturnType(return_type: SimpleType): string {
   return bp_type.source;
 }
 
-export function genBPParameterType(return_type: SimpleType, is_output?: boolean): string {
+export function genBPParameterType(
+  return_type: SimpleType,
+  is_output?: boolean
+): string {
   const bp_type = BPTypeHelper.convertToBPType(return_type, is_output);
   return bp_type.source;
 }
@@ -67,7 +70,6 @@ export function genbpCallbackDelegateVarName(method_name: string): string {
   let BPMethodName = genBPMethodName(method_name);
   return `${BPMethodName}`;
 }
-
 
 export function getBPType(type: SimpleType): UEBPType {
   return BPTypeHelper.convertToBPType(type);
@@ -153,9 +155,9 @@ export function getRegisteredBPType(node_name: string): [CXXTYPE, string] {
   return [typeCategory, bpTypeName];
 }
 
-
-
-export function prepareBPStructInitializerDict(node_struct : Struct): BPTypeHelper.BPDictInitializer{
+export function prepareBPStructInitializerDict(
+  node_struct: Struct
+): BPTypeHelper.BPDictInitializer {
   const dict_variable_initializer: BPTypeHelper.BPDictInitializer = {};
 
   node_struct.constructors.map((constructor, index) => {
@@ -170,109 +172,129 @@ export function prepareBPStructInitializerDict(node_struct : Struct): BPTypeHelp
   return dict_variable_initializer;
 }
 
-
-export function getBPStructData_DefaultVal(dict_variable_initializer: BPTypeHelper.BPDictInitializer, member_variable: MemberVariable): string {
+export function getBPStructData_DefaultVal(
+  dict_variable_initializer: BPTypeHelper.BPDictInitializer,
+  member_variable: MemberVariable
+): string {
   let bNeedDefaultVal = false;
   let defaultVal = '';
   let outputfomatDefaultVal = '';
 
-  [bNeedDefaultVal, defaultVal] = BPTypeHelper.getBPMemberVariableDefaultValue(dict_variable_initializer, member_variable);
+  [bNeedDefaultVal, defaultVal] = BPTypeHelper.getBPMemberVariableDefaultValue(
+    dict_variable_initializer,
+    member_variable
+  );
 
-  if(bNeedDefaultVal){
+  if (bNeedDefaultVal) {
     outputfomatDefaultVal = `= ${defaultVal}`;
   }
 
   return outputfomatDefaultVal;
 }
 
-
-export class BPStructContext{
+export class BPStructContext {
   contextConstructor = '';
   contextCreateRawData = '';
   contextFreeRawData = '';
 
-  constructor(){
+  constructor() {
     this.contextConstructor = '';
     this.contextCreateRawData = '';
     this.contextFreeRawData = '';
   }
-};
+}
 
-
-export function genContext_BPStruct(node_struct : Struct, prefix_indent: string = ''): BPStructContext {
+export function genContext_BPStruct(
+  node_struct: Struct,
+  prefix_indent: string = ''
+): BPStructContext {
   let context = '';
 
   let contextConstructor = '';
   let contextCreateRawData = '';
   let contextFreeRawData = '';
 
-  const STR_AGORA_DATA= 'AgoraData';
+  const STR_AGORA_DATA = 'AgoraData';
   const STR_CREATE_RAW_DATA = 'CreateRawData';
   const STR_FREE_RAW_DATA = 'FreeRawData';
 
   const addOneLineFunc = function addOneLineIndent(line: string): string {
-    return prefix_indent + line + "\n";
-  }
-  
+    return prefix_indent + line + '\n';
+  };
+
   node_struct.member_variables.map((member_variable, index) => {
     let type = member_variable.type;
     let bpType = BPTypeHelper.convertToBPType(type);
 
     // **** Constructor Context ****
-    if(bpType.bpNeedConvFuncToCpp){
-      contextConstructor += addOneLineFunc(`${member_variable.name} = ${bpType.bpNameConvFuncTo}(${STR_AGORA_DATA}.${member_variable.name});`);
-    }else{
-      contextConstructor += addOneLineFunc(`${member_variable.name} = ${STR_AGORA_DATA}.${member_variable.name};`);
+    if (bpType.bpNeedConvFuncToCpp) {
+      contextConstructor += addOneLineFunc(
+        `${member_variable.name} = ${bpType.bpNameConvFuncTo}(${STR_AGORA_DATA}.${member_variable.name});`
+      );
+    } else {
+      contextConstructor += addOneLineFunc(
+        `${member_variable.name} = ${STR_AGORA_DATA}.${member_variable.name};`
+      );
     }
 
-
     // **** CreateRawData Context ****
-    if(bpType.bpNeedConvFuncFromCpp){
+    if (bpType.bpNeedConvFuncFromCpp) {
       // Ex. {{user_data.fullTypeWithNamespace}} AgoraData;
       context += addOneLineFunc(`${type} ${STR_AGORA_DATA};`);
 
-      if(bpType.bpNeedConvFuncFromCpp){
-        if(bpType.bpConvFromCppWayType === BPConvFromCppWayType.Basic || bpType.bpConvFromCppWayType === BPConvFromCppWayType.NewFreeData){
+      if (bpType.bpNeedConvFuncFromCpp) {
+        if (
+          bpType.bpConvFromCppWayType === BPConvFromCppWayType.Basic ||
+          bpType.bpConvFromCppWayType === BPConvFromCppWayType.NewFreeData
+        ) {
           // Ex. AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
-          context += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${bpType.bpNameConvFuncFrom}}(${member_variable.name});`);
-        }
-        else if (bpType.bpConvFromCppWayType === BPConvFromCppWayType.SetData){
+          context += addOneLineFunc(
+            `${STR_AGORA_DATA}.${member_variable.name} = ${bpType.bpNameConvFuncFrom}}(${member_variable.name});`
+          );
+        } else if (
+          bpType.bpConvFromCppWayType === BPConvFromCppWayType.SetData
+        ) {
           // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
           // TBD(WinterPu): need to check the length of the variable
-          context += addOneLineFunc(`${bpType.bpNameConvFuncFrom}}(${STR_AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, XXXFUABT_UserInfo_UserAccountLength);`);
-        }
-        else{
-          if(mapCpp2BPStruct.has(type.name)){
+          context += addOneLineFunc(
+            `${bpType.bpNameConvFuncFrom}}(${STR_AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, XXXFUABT_UserInfo_UserAccountLength);`
+          );
+        } else {
+          if (mapCpp2BPStruct.has(type.name)) {
             // Is UStruct
             // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
-            context += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${STR_CREATE_RAW_DATA}();`);
-          }
-          else{
+            context += addOneLineFunc(
+              `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${STR_CREATE_RAW_DATA}();`
+            );
+          } else {
             // AgoraData.{{name}} = {{name}};
-            context += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`);
+            context += addOneLineFunc(
+              `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
+            );
           }
         }
-      }
-      else{
-        context += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`);
+      } else {
+        context += addOneLineFunc(
+          `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
+        );
       }
 
       // Ex. return AgoraData;
       context += addOneLineFunc(`return ${STR_AGORA_DATA};`);
-
-    }
-    else{
+    } else {
       // Ex. AgoraData.{{name}} = {{name}} ;\n
-      contextCreateRawData += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`);
+      contextCreateRawData += addOneLineFunc(
+        `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
+      );
     }
 
     // **** FreeRawData Context ****
-    if(bpType.bpConvFromCppWayType === BPConvFromCppWayType.NewFreeData){
+    if (bpType.bpConvFromCppWayType === BPConvFromCppWayType.NewFreeData) {
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
-      contextFreeRawData += addOneLineFunc(`${member_variable.name}.${STR_FREE_RAW_DATA}(${STR_AGORA_DATA}.${member_variable.name});`);
+      contextFreeRawData += addOneLineFunc(
+        `${member_variable.name}.${STR_FREE_RAW_DATA}(${STR_AGORA_DATA}.${member_variable.name});`
+      );
     }
-    
-    
   });
 
   const result = new BPStructContext();

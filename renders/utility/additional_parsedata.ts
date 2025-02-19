@@ -1,6 +1,6 @@
 // Define custom user data for code generation
 
-import { UEBPType } from "./blueprint_special/bptype_helper";
+import { UEBPType } from './blueprint_special/bptype_helper';
 
 export type CXXFileUserData = {
   fileName: string;
