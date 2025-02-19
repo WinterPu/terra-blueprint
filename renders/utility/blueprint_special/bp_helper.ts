@@ -7,187 +7,23 @@ import {
   ConstructorInitializer,
   MemberVariable,
   SimpleType,
+  Struct,
 } from '@agoraio-extensions/cxx-parser';
 
 import * as Logger from '../logger';
 
-// [TBD]
-/*
-1. get default value
-2. type conversion function
-3. whitelist and blacklist
-*/
+import {BPConvFromCppWayType, UEBPType} from './bptype_helper';
 
-// [TBD] if need namespace or not ？
-
-// [Key] type.source namespace removed
-export const map_cpptype_2_uebptype: { [key: string]: string } = {
-  'void': 'void',
-  'int': 'int',
-  'float': 'float',
-  'double': 'FString',
-  'const char*': 'FString',
-  'char const*': 'FString',
-  'unsigned char const*': 'FString',
-
-  'unsigned short': 'int',
-  'unsigned int': 'int64',
-
-  // not builtin type
-  'uint8_t': 'Byte',
-  'int32_t': 'int',
-  'uint32_t': 'int64',
-  'int64_t': 'int64',
-  'uint64_t': 'FString',
-
-  'uid_t': 'int64',
-
-  'long long': 'int64',
-
-  // [TBD] some types that may have issues"
-  'size_t': 'int64',
-  'void*': 'void*',
-
-  // ==== agora special =====
-
-  // Optional
-  'Optional<bool>': 'FUABT_Opt_bool',
-  'Optional<agora::rtc::VIDEO_STREAM_TYPE>': 'FUABT_Opt_VIDEO_STREAM_TYPE',
-  'Optional<double>': 'FUABT_Opt_double',
-  'Optional<int>': 'FUABT_Opt_int',
-  'Optional<agora::rtc::CAMERA_DIRECTION>': 'FUABT_Opt_CAMERA_DIRECTION',
-  'Optional<agora::rtc::CAMERA_FOCAL_LENGTH_TYPE>':
-    'FUABT_Opt_CAMERA_FOCAL_LENGTH_TYPE',
-  'Optional<const char *>': 'FUABT_Opt_ConstCharPtr',
-  'Optional<agora::rtc::CLIENT_ROLE_TYPE>': 'FUABT_Opt_CLIENT_ROLE_TYPE',
-  'Optional<agora::rtc::AUDIENCE_LATENCY_LEVEL_TYPE>':
-    'FUABT_Opt_AUDIENCE_LATENCY_LEVEL_TYPE',
-  'Optional<agora::CHANNEL_PROFILE_TYPE>': 'FUABT_Opt_CHANNEL_PROFILE_TYPE',
-  'Optional<agora::rtc::video_track_id_t>': 'FUABT_Opt_video_track_id_t',
-  'Optional<agora::rtc::THREAD_PRIORITY_TYPE>':
-    'FUABT_Opt_THREAD_PRIORITY_TYPE',
-};
-
-const map_cpptype_default_value: { [key: string]: string } = {
-  'int': '0',
-  'float': '0.0',
-  'double': '0.0',
-  'const char*': '""',
-  'char const*': '""',
-  'bool': 'false',
-
-  'unsigned short': '0',
-  'unsigned int': '0',
-
-  'uint8_t': '0',
-  'int32_t': '0',
-  'uint32_t': '0',
-  'int64_t': '0',
-  'uint64_t': '0',
-  'uid_t': '0',
-
-  'long long': '0',
-
-  'size_t': '0',
-  'void*': 'nullptr',
-
-  'unsigned char const*': '""',
-
-  // ==== agora special =====
-};
-
-// type convert functions
-
-export const map_bp2cpp_convert_function_name: { [key: string]: string } = {
-  double: 'UABT::ToDouble',
-
-  uid_t: 'UABT::ToUID',
-  uint32_t: 'UABT::ToUInt32',
-  track_id_t: 'UABT::ToVTID',
-  view_t: 'UABT::ToView',
-};
-
-export const map_cpp2bp_convert_function_name: { [key: string]: string } = {
-  'view_t': 'UABT::FromViewToInt',
-  'double': 'UABT::FromDouble',
-
-  // array
-  'float*': 'UABT::FromFloatArray',
-};
-
-export const map_bp2cpp_memory_handle: { [key: string]: [string, string] } = {
-  // FString
-  'char*': ['UABT::New_CharPtr', 'UABT::Free_CharPtr'],
-  'unsigned char*': ['UABT::New_UnsignedCharPtr', 'UABT::Free_UnsignedCharPtr'],
-  'char**': ['UABT::New_CharArrayPtr', 'UABT::Free_CharArrayPtr'],
-  'uid_t*': ['UABT::New_UIDArrayPtr', 'UABT::Free_UIDArrayPtr'],
-
-  'generic': ['UABT::New_RawData', 'UABT::Free_RawData'],
-  'genericArray': ['UABT::New_RawDataArray', 'UABT::Free_RawDataArray'],
-};
-
-export const map_setdata_function_name: { [key: string]: string } = {
-  //[TBD] need to add flag to judge if it needs to use set data
-
-  //example:
-  // UABT::SetCharArrayPtr(AgoraData.userAccount, this->userAccount, agora::rtc::MAX_USER_ACCOUNT_LENGTH);
-  // No need to free memory
-  'char*': 'UABT::SetCharArrayPtr',
-};
-
-function removeNamespace(input: string): string {
-  if (!input) return input; // handle undefined
-  // use regular expression to remove namespace
-  return input.replace(/.*::/, '');
-}
-
-export function convertToBPType(type: SimpleType, isConst?: boolean): string {
-  // [TBD] - char* how to handle
-  // char** how to handle
-  console.log('convertToBPType', type.source);
-  let typename_without_namespace = removeNamespace(type.source);
-  let bpType = map_cpptype_2_uebptype[typename_without_namespace];
-  if (bpType) {
-    // return bpType;
-  } else {
-    // [TBD] need to distinguish between UStruct and UEnum
-    let varname_without_namespace = removeNamespace(type.name);
-    let [typeCategory, bpTypeName] = getRegisteredBPType(
-      varname_without_namespace
-    );
-
-    if (typeCategory != CXXTYPE.Unknown) {
-      bpType = bpTypeName;
-    } else if (type.is_builtin_type) {
-      bpType = type.name;
-    } else {
-      Logger.PrintError(`convertToBPType: No Conversion Mapping ${type.name}`);
-      bpType = type.name;
-    }
-
-    // check if it is a array
-    // analyze if it is a array type
-    let [isArray, arrayType] = parseArrayType(type.source);
-    if (isArray) {
-      bpType = 'TArray<' + bpType + '>';
-    }
-  }
-
-  if (isConst) {
-    bpType = 'const ' + bpType + ' &';
-  }
-
-  // [TBD] need to judge if the parameter is a input or output parameter
-
-  return bpType;
-}
+import * as BPTypeHelper from './bptype_helper';
 
 export function genBPReturnType(return_type: SimpleType): string {
-  return convertToBPType(return_type, false);
+  const bp_type = BPTypeHelper.convertToBPType(return_type);
+  return bp_type.source;
 }
 
-export function genBPParameterType(return_type: SimpleType): string {
-  return convertToBPType(return_type, return_type.is_const);
+export function genBPParameterType(return_type: SimpleType, is_output?: boolean): string {
+  const bp_type = BPTypeHelper.convertToBPType(return_type, is_output);
+  return bp_type.source;
 }
 
 export function genBPMethodName(method_name: string): string {
@@ -232,257 +68,27 @@ export function genbpCallbackDelegateVarName(method_name: string): string {
   return `${BPMethodName}`;
 }
 
-enum CppBPConvWayType {
-  NoNeedConversion, // no need conversion
-  Basic, // need basic conversion method
-  NewFreeData, // need memory allocation
-  SetData, // directly set data
-}
 
-export class CppBPConversion {
-  convFuncType: CppBPConvWayType;
-  convFunc: string;
-  convFuncAdditional01: string; // Ex. free data conv function
-
-  constructor() {
-    this.convFuncType = CppBPConvWayType.NoNeedConversion;
-    this.convFunc = '';
-    this.convFuncAdditional01 = '';
-  }
-}
-
-export type CppBPConversionTerraData = {
-  bNeedConvTo: boolean;
-  nameConvFuncTo: string;
-
-  bNeedConvFrom: boolean;
-  bNeedConvFromMemoAlloc: boolean;
-  bNeedConvFromSetData: boolean;
-  nameConvFuncFrom: string;
-  nameConvFuncFromAdditional: string;
-};
-
-export function getCppBPConversion(type: SimpleType): CppBPConversionTerraData {
-  const convBPToCpp = genBPConvertToRawType(type);
-  const convBPFromCpp = genBPConvertFromRawType(type);
-
-  let conversion: CppBPConversionTerraData = {
-    bNeedConvTo: convBPToCpp.convFuncType == CppBPConvWayType.Basic,
-    nameConvFuncTo: convBPToCpp.convFunc,
-
-    bNeedConvFrom: convBPFromCpp.convFuncType == CppBPConvWayType.Basic,
-    bNeedConvFromMemoAlloc:
-      convBPFromCpp.convFuncType == CppBPConvWayType.NewFreeData,
-    bNeedConvFromSetData:
-      convBPFromCpp.convFuncType == CppBPConvWayType.SetData,
-    nameConvFuncFrom: convBPFromCpp.convFunc,
-    nameConvFuncFromAdditional: convBPFromCpp.convFuncAdditional01,
-  };
-  return conversion;
-}
-
-export function genBPConvertToRawType(type: SimpleType): CppBPConversion {
-  let conversion = new CppBPConversion();
-  // UEnum
-  let typename_without_namespace = removeNamespace(type.name);
-  let [typeCategory, bpTypeName] = getRegisteredBPType(
-    typename_without_namespace
-  );
-  if (typeCategory == CXXTYPE.Enumz) {
-    conversion = {
-      convFuncType: CppBPConvWayType.Basic,
-      convFunc: 'UABTEnum::ToRawValue',
-      convFuncAdditional01: '',
-    };
-  }
-
-  let convert_function = map_bp2cpp_convert_function_name[type.name];
-  if (convert_function) {
-    conversion = {
-      convFuncType: CppBPConvWayType.Basic,
-      convFunc: convert_function,
-      convFuncAdditional01: '',
-    };
-  } else {
-  }
-  return conversion;
-}
-
-export function genBPConvertFromRawType(type: SimpleType): CppBPConversion {
-  let conversion = new CppBPConversion();
-
-  // Enum
-  let typename_without_namespace = removeNamespace(type.name);
-  let [typeCategory, bpTypeName] = getRegisteredBPType(
-    typename_without_namespace
-  );
-  if (typeCategory == CXXTYPE.Enumz) {
-    conversion = {
-      convFuncType: CppBPConvWayType.Basic,
-      convFunc: 'UABTEnum::WrapWithUE',
-      convFuncAdditional01: '',
-    };
-  }
-
-  let convert_function = map_cpp2bp_convert_function_name[type.name];
-  if (convert_function) {
-    conversion = {
-      convFuncType: CppBPConvWayType.Basic,
-      convFunc: convert_function,
-      convFuncAdditional01: '',
-    };
-  } else {
-    let func_memorys = map_bp2cpp_memory_handle[type.name];
-    if (func_memorys) {
-      conversion = {
-        convFuncType: CppBPConvWayType.NewFreeData,
-        convFunc: func_memorys[0], // New Data
-        convFuncAdditional01: func_memorys[1], // Free Data
-      };
-    } else {
-      let set_data_func = map_setdata_function_name[type.name];
-      if (set_data_func) {
-        conversion = {
-          convFuncType: CppBPConvWayType.SetData,
-          convFunc: set_data_func,
-          convFuncAdditional01: '',
-        };
-      }
-    }
-  }
-
-  return conversion;
-}
-
-export function checkIsUStruct(bpType: string): boolean {
-  if (bpType && bpType.includes('FUABT_')) {
-    return true;
-  }
-  return false;
-}
-
-// [TBD] - TArray<char>
-// 函数：检查字符串是否为数组类型，并返回类型名或原始类型
-export function parseArrayType(typeString: string): [boolean, string] {
-  // 匹配格式为 typeName[n] 或 typeName[] 的字符串
-  const regex = /^(.*?)(\[\d+\]|\[\])$/;
-  const match = regex.exec(typeString);
-
-  // 如果匹配成功，返回 true 和类型名
-  if (match) {
-    return [true, match[1]]; // match[1] 是去掉数组标记后的类型名
-  }
-
-  // 如果不匹配，返回 false 和原始类型
-  return [false, typeString];
-}
-
-// struct - member variable: default value
-export type BPDictInitializer = { [paramName: string]: ConstructorInitializer };
-
-export function getBPMemberVariableDefaultValue(
-  dictStructInitializer: BPDictInitializer,
-  member_variable: MemberVariable
-): [boolean, string] {
-  let bNeedDefaultValue = true;
-  let valDefaultVal = 'Unknown_TBD';
-
-  // TBD if there is no default constructor
-  if (dictStructInitializer[member_variable.name]) {
-    bNeedDefaultValue = true;
-    // [TBD]
-    valDefaultVal = dictStructInitializer[member_variable.name].values[0];
-
-    if (valDefaultVal == undefined) {
-      valDefaultVal = 'Unknown_TBD';
-    }
-
-    let cpp_type = dictStructInitializer[member_variable.name]?.type;
-    let cpp_type_without_namespace = removeNamespace(cpp_type);
-    let enum_val = mapCpp2BPEnum.get(cpp_type_without_namespace);
-    if (enum_val) {
-      valDefaultVal =
-        'UABT::WrapWithUE(' +
-        dictStructInitializer[member_variable.name].values[0] +
-        ')';
-      bNeedDefaultValue = true;
-    }
-  }
-
-  if (valDefaultVal == 'Unknown_TBD') {
-    let cpp_type = dictStructInitializer[member_variable.name]?.type;
-    let cpp_type_without_namespace = removeNamespace(cpp_type);
-    if (
-      cpp_type_without_namespace &&
-      map_cpptype_default_value[cpp_type_without_namespace]
-    ) {
-      valDefaultVal = map_cpptype_default_value[cpp_type_without_namespace];
-      bNeedDefaultValue = true;
-    }
-  }
-
-  if (valDefaultVal == 'Unknown_TBD') {
-    let cpp_type_without_namespace = removeNamespace(
-      member_variable.type.source
-    );
-    if (
-      cpp_type_without_namespace &&
-      map_cpptype_default_value[cpp_type_without_namespace]
-    ) {
-      valDefaultVal = map_cpptype_default_value[cpp_type_without_namespace];
-      bNeedDefaultValue = true;
-    }
-  }
-
-  if (valDefaultVal == 'Unknown_TBD') {
-    let cpp_type_without_namespace = removeNamespace(
-      member_variable.type.source
-    );
-    let enum_val = mapCpp2BPEnum.get(cpp_type_without_namespace);
-    if (enum_val) {
-      valDefaultVal = 'UABT::WrapWithUE((int)0)';
-      bNeedDefaultValue = true;
-    }
-  }
-
-  if (valDefaultVal == 'Unknown_TBD') {
-    let cpp_type_without_namespace = removeNamespace(
-      member_variable.type.source
-    );
-    if (
-      mapCpp2BPClass.has(cpp_type_without_namespace) ||
-      mapCpp2BPStruct.has(cpp_type_without_namespace)
-    ) {
-      bNeedDefaultValue = false;
-    }
-  }
-
-  if (valDefaultVal == 'Unknown_TBD') {
-    if (member_variable.type.name == 'Optional') {
-      bNeedDefaultValue = false;
-    }
-  }
-
-  if (valDefaultVal == 'Unknown_TBD') {
-    let [bIsArray, original_type] = parseArrayType(member_variable.type.source);
-    console.log(
-      member_variable.type.source,
-      'getBPMemberVariableDefaultValue',
-      bIsArray,
-      original_type
-    );
-    if (bIsArray) {
-      bNeedDefaultValue = false;
-    }
-  }
-
-  return [bNeedDefaultValue, valDefaultVal];
+export function getBPType(type: SimpleType): UEBPType {
+  return BPTypeHelper.convertToBPType(type);
 }
 
 // About BP Name
-let mapCpp2BPClass: Map<string, string> = new Map();
-let mapCpp2BPStruct: Map<string, string> = new Map();
-let mapCpp2BPEnum: Map<string, string> = new Map();
+const mapCpp2BPClass: Map<string, string> = new Map();
+const mapCpp2BPStruct: Map<string, string> = new Map();
+const mapCpp2BPEnum: Map<string, string> = new Map();
+
+export function getMapCpp2BPClass(): Map<string, string> {
+  return mapCpp2BPClass;
+}
+
+export function getMapCpp2BPStruct(): Map<string, string> {
+  return mapCpp2BPStruct;
+}
+
+export function getMapCpp2BPEnum(): Map<string, string> {
+  return mapCpp2BPEnum;
+}
 
 export function initMapRegisteredData() {
   mapCpp2BPClass.clear();
@@ -545,4 +151,134 @@ export function getRegisteredBPType(node_name: string): [CXXTYPE, string] {
   }
 
   return [typeCategory, bpTypeName];
+}
+
+
+
+export function prepareBPStructInitializerDict(node_struct : Struct): BPTypeHelper.BPDictInitializer{
+  const dict_variable_initializer: BPTypeHelper.BPDictInitializer = {};
+
+  node_struct.constructors.map((constructor, index) => {
+    if (constructor.parameters.length == 0) {
+      //default constructor
+      constructor.initializerList.map((initializer) => {
+        dict_variable_initializer[initializer.name] = initializer;
+      });
+    }
+  });
+
+  return dict_variable_initializer;
+}
+
+
+export function getBPStructData_DefaultVal(dict_variable_initializer: BPTypeHelper.BPDictInitializer, member_variable: MemberVariable): string {
+  let bNeedDefaultVal = false;
+  let defaultVal = '';
+  let outputfomatDefaultVal = '';
+
+  [bNeedDefaultVal, defaultVal] = BPTypeHelper.getBPMemberVariableDefaultValue(dict_variable_initializer, member_variable);
+
+  if(bNeedDefaultVal){
+    outputfomatDefaultVal = `= ${defaultVal}`;
+  }
+
+  return outputfomatDefaultVal;
+}
+
+
+export class BPStructContext{
+  contextConstructor = '';
+  contextCreateRawData = '';
+  contextFreeRawData = '';
+
+  constructor(){
+    this.contextConstructor = '';
+    this.contextCreateRawData = '';
+    this.contextFreeRawData = '';
+  }
+};
+
+
+export function genContext_BPStruct(node_struct : Struct, prefix_indent: string = ''): BPStructContext {
+  let context = '';
+
+  let contextConstructor = '';
+  let contextCreateRawData = '';
+  let contextFreeRawData = '';
+
+  const STR_AGORA_DATA= 'AgoraData';
+  const STR_CREATE_RAW_DATA = 'CreateRawData';
+  const STR_FREE_RAW_DATA = 'FreeRawData';
+
+  const addOneLineFunc = function addOneLineIndent(line: string): string {
+    return prefix_indent + line + "\n";
+  }
+  
+  node_struct.member_variables.map((member_variable, index) => {
+    let type = member_variable.type;
+    let bpType = BPTypeHelper.convertToBPType(type);
+
+    // **** Constructor Context ****
+    if(bpType.bpNeedConvFuncToCpp){
+      contextConstructor += addOneLineFunc(`${member_variable.name} = ${bpType.bpNameConvFuncTo}(${STR_AGORA_DATA}.${member_variable.name});`);
+    }else{
+      contextConstructor += addOneLineFunc(`${member_variable.name} = ${STR_AGORA_DATA}.${member_variable.name};`);
+    }
+
+
+    // **** CreateRawData Context ****
+    if(bpType.bpNeedConvFuncFromCpp){
+      // Ex. {{user_data.fullTypeWithNamespace}} AgoraData;
+      context += addOneLineFunc(`${type} ${STR_AGORA_DATA};`);
+
+      if(bpType.bpNeedConvFuncFromCpp){
+        if(bpType.bpConvFromCppWayType === BPConvFromCppWayType.Basic || bpType.bpConvFromCppWayType === BPConvFromCppWayType.NewFreeData){
+          // Ex. AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
+          context += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${bpType.bpNameConvFuncFrom}}(${member_variable.name});`);
+        }
+        else if (bpType.bpConvFromCppWayType === BPConvFromCppWayType.SetData){
+          // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
+          // TBD(WinterPu): need to check the length of the variable
+          context += addOneLineFunc(`${bpType.bpNameConvFuncFrom}}(${STR_AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, XXXFUABT_UserInfo_UserAccountLength);`);
+        }
+        else{
+          if(mapCpp2BPStruct.has(type.name)){
+            // Is UStruct
+            // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
+            context += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${STR_CREATE_RAW_DATA}();`);
+          }
+          else{
+            // AgoraData.{{name}} = {{name}};
+            context += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`);
+          }
+        }
+      }
+      else{
+        context += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`);
+      }
+
+      // Ex. return AgoraData;
+      context += addOneLineFunc(`return ${STR_AGORA_DATA};`);
+
+    }
+    else{
+      // Ex. AgoraData.{{name}} = {{name}} ;\n
+      contextCreateRawData += addOneLineFunc(`${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`);
+    }
+
+    // **** FreeRawData Context ****
+    if(bpType.bpConvFromCppWayType === BPConvFromCppWayType.NewFreeData){
+      // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
+      contextFreeRawData += addOneLineFunc(`${member_variable.name}.${STR_FREE_RAW_DATA}(${STR_AGORA_DATA}.${member_variable.name});`);
+    }
+    
+    
+  });
+
+  const result = new BPStructContext();
+  result.contextConstructor = contextConstructor;
+  result.contextCreateRawData = contextCreateRawData;
+  result.contextFreeRawData = contextFreeRawData;
+
+  return result;
 }

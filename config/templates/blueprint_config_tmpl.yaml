@@ -24,6 +24,9 @@ parsers:
       ignoreDefaultConfig: true
       configFilePath: ../parsers/config/blueprint/remove_node_list.ts
 
+  - name: ReturnTypeParser
+    package: '@agoraio-extensions/terra_shared_configs'
+
 
 # List of renderer configurations
 renderers:

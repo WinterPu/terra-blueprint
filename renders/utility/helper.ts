@@ -73,6 +73,8 @@ export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[];
 
 export type ExcludeApiFunction = (method_name: string) => boolean;
 
+const STR_NO_CALLBACK : string = 'NotCallbackMethod';
+
 // main function
 export function genGeneralTerraData(
   terraContext: TerraContext,
@@ -150,13 +152,13 @@ export function genGeneralTerraData(
               ? BPHelper.genbpCallbackDelegateMacroName(
                   method.parameters.length
                 )
-              : 'NotCallbackMethod',
+              : STR_NO_CALLBACK,
             bpCallbackDelegateTypeName: bIsCallbackMethod
               ? BPHelper.genbpCallbackDelegateTypeName(method.name)
-              : 'NotCallbackMethod',
+              : STR_NO_CALLBACK,
             bpCallbackDelegateVarName: bIsCallbackMethod
               ? BPHelper.genbpCallbackDelegateVarName(method.name)
-              : 'NotCallbackMethod',
+              : STR_NO_CALLBACK,
             bpIsNoParamCallback:
               bIsCallbackMethod && method.parameters.length === 0,
 
@@ -190,7 +192,7 @@ export function genGeneralTerraData(
               defaultValueComment: commentDefaultValue,
 
               // bp
-              bpParameterType: BPHelper.genBPParameterType(parameter.type),
+              bpParameterType: BPHelper.genBPParameterType(parameter.type, parameter.is_output),
               ...parameter.user_data,
             };
             parameter.user_data = parameterUserData;
@@ -240,49 +242,34 @@ export function genGeneralTerraData(
           enum_constant.user_data = enumConstantsUserData;
         });
       } else if (node.__TYPE == CXXTYPE.Struct) {
-        const dict_variable_initializer: BPHelper.BPDictInitializer = {};
+        
+        const dictInitializer = BPHelper.prepareBPStructInitializerDict(node.asStruct());
 
-        node.asStruct().constructors.map((constructor, index) => {
-          if (constructor.parameters.length == 0) {
-            //default constructor
-            constructor.initializerList.map((initializer) => {
-              dict_variable_initializer[initializer.name] = initializer;
-            });
-          }
-        });
+        const contextStruct = BPHelper.genContext_BPStruct(node.asStruct(),"		");
+
+        const structUserData: CustomUserData.StructUserData = {
+          contextConstructor: contextStruct.contextConstructor,
+          contextCreateRawData: contextStruct.contextCreateRawData,
+          contextFreeRawData: contextStruct.contextFreeRawData,
+        };
+        node.user_data = structUserData;
 
         // Only For Struct
         node.asStruct().member_variables.map((member_variable, index) => {
-          const conversion = BPHelper.getCppBPConversion(member_variable.type);
-          const valBPType = BPHelper.convertToBPType(member_variable.type);
-          const [bValNeedDefaultVal, valDefaultVal] =
-            BPHelper.getBPMemberVariableDefaultValue(
-              dict_variable_initializer,
-              member_variable
-            );
+          const bpType = BPHelper.getBPType(member_variable.type);
+          const simpleTypeUserData: CustomUserData.SimpleTypeUserData = {
+            bpType: bpType,
+          };
+          member_variable.type.user_data = simpleTypeUserData;
+
+          const formatDefaultVal = BPHelper.getBPStructData_DefaultVal(dictInitializer, member_variable);
           const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData =
             {
               commentCppStyle: CppHelper.formatAsCppComment(
                 member_variable.comment
               ),
-              isFirst: index === 0,
-              isLast: index === node.asStruct().member_variables.length - 1,
-
-              bpType: valBPType,
-              bpIsUStruct: BPHelper.checkIsUStruct(valBPType),
-
-              bpNeedConvTo: conversion.bNeedConvTo,
-              bpNameConvFuncTo: conversion.nameConvFuncTo,
-
-              bpNeedConvFrom: conversion.bNeedConvFrom,
-              bpNeedConvFromMemoAlloc: conversion.bNeedConvFromMemoAlloc,
-              bpNeedConvFromSetData: conversion.bNeedConvFromSetData,
-              bpNameConvFuncFrom: conversion.nameConvFuncFrom,
-              bpNameConvFuncFromAdditional:
-                conversion.nameConvFuncFromAdditional,
-
-              bpNeedDefaultValue: bValNeedDefaultVal,
-              bpDefaultValue: valDefaultVal,
+              
+              bpFormatDefaultVal: formatDefaultVal,
 
               ...member_variable.user_data,
             };

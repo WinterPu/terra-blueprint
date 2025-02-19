@@ -1,5 +1,7 @@
 // Define custom user data for code generation
 
+import { UEBPType } from "./blueprint_special/bptype_helper";
+
 export type CXXFileUserData = {
   fileName: string;
 };
@@ -22,6 +24,10 @@ export type TerraNodeUserData = {
   lenEnumConstants: number;
   bpIsCallback: boolean;
   bpGenEnumConversionFunction: string;
+};
+
+export type SimpleTypeUserData = {
+  bpType: UEBPType;
 };
 
 export type ClazzMethodUserData = {
@@ -60,26 +66,16 @@ export type EnumConstantsUserData = {
   isLast: boolean;
 };
 
+export type StructUserData = {
+  contextConstructor: string;
+  contextCreateRawData: string;
+  contextFreeRawData: string;
+};
+
 export type StructMemberVariableUserData = {
   commentCppStyle: string;
-  isFirst: boolean;
-  isLast: boolean;
-
   // bp
-  bpType: string;
-  bpIsUStruct: boolean;
-
-  bpNeedConvTo: boolean;
-  bpNameConvFuncTo: string;
-
-  bpNeedConvFrom: boolean;
-  bpNeedConvFromMemoAlloc: boolean;
-  bpNeedConvFromSetData: boolean;
-  bpNameConvFuncFrom: string;
-  bpNameConvFuncFromAdditional: string;
-
-  bpNeedDefaultValue: boolean;
-  bpDefaultValue: string;
+  bpFormatDefaultVal: string;
 };
 
 export type ParameterUserData = {

@@ -81,14 +81,20 @@ export function createCompilationDirectivesContent(
   return endIf;
 }
 
+export function IsDeprecatedAttr(str_attribute: string): boolean {
+  return str_attribute === '__deprecated__' || str_attribute === 'deprecated';
+}
+
 export function genSuffixAttribute(input: string[]): string {
   if (input.length <= 0) return '';
 
   let str_attribute = '';
   input.forEach((attr) => {
-    if (attr === '__deprecated__' || attr === 'deprecated') {
+    if (IsDeprecatedAttr(attr)) {
       str_attribute = '__deprecated';
     }
   });
   return str_attribute;
 }
+
+
