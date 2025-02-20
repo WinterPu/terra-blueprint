@@ -16,20 +16,20 @@ public:
 	FUABT_{{name}}(){}
 	FUABT_{{name}}(const {{user_data.fullTypeWithNamespace}} & AgoraData){
 
-{{{user_data.contextConstructor}}}
+{{{user_data.bpContextConstructor}}}
 
 	}
 
 	{{user_data.fullTypeWithNamespace}} CreateRawData() const {
 
-{{{user_data.contextCreateRawData}}}
+{{{user_data.bpContextCreateRawData}}}
 
 	}
 
 	void FreeRawData({{user_data.fullTypeWithNamespace}} & AgoraData) const
 	{
 
-{{{user_data.contextFreeRawData}}}
+{{{user_data.bpContextFreeRawData}}}
 
 	}
 }

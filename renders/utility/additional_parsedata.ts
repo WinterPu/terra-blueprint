@@ -58,6 +58,10 @@ export type ClazzMethodUserData = {
   bpCallbackDelegateTypeName: string;
   bpCallbackDelegateVarName: string;
   bpIsNoParamCallback: boolean;
+
+  bpContextParamsCppFromBP: string;
+  bpContextParamsBPFromCpp: string;
+  bpNativePtr: string;
 };
 
 export type EnumConstantsUserData = {
@@ -67,9 +71,9 @@ export type EnumConstantsUserData = {
 };
 
 export type StructUserData = {
-  contextConstructor: string;
-  contextCreateRawData: string;
-  contextFreeRawData: string;
+  bpContextConstructor: string;
+  bpContextCreateRawData: string;
+  bpContextFreeRawData: string;
 };
 
 export type StructMemberVariableUserData = {

@@ -3,18 +3,12 @@
 {{#methods}}
   {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
-
-{{#user_data.isCallback}}
-      #if (__cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
-	        AsyncTask(ENamedThreads::GameThread, [=, this]()
-      #else
-	        AsyncTask(ENamedThreads::GameThread, [=]()
-      #endif
-          {
-
-          });
-{{/user_data.isCallback}}
-
+      // Convert UEBP to CppType
+{{{user_data.bpContextParamsCppFromBP}}}
+      // Call Native Method
+      
+      auto ret = {{{user_data.bpNativePtr}}}->{{user_data.bpMethodName}}({{#parameters}}Raw_{{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+      return ret;
   }
   
 {{/methods}}

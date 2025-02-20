@@ -1,3 +1,4 @@
+import { CXXTerraNode } from '@agoraio-extensions/cxx-parser';
 export function convertTypeNameToNodeName(input: string): string {
   if (!input) return input; // handle undefined
   return removeNamespace(input);
@@ -9,7 +10,29 @@ export function removeNamespace(input: string): string {
   return input.replace(/.*::/, '');
 }
 
+export function generateFullScopeName(node: CXXTerraNode): string {
+  let name = node.name;
+  let namespaces = node.namespaces;
+  const separator = '::';
+  if (!namespaces || namespaces.length === 0) {
+    return name;
+  }
+
+  return `${namespaces.join(separator)}${separator}${name}`;
+}
+
 export function isNullOrEmpty(str: string | null | undefined): boolean {
   // including whitespace
   return str === null || str === undefined || str.trim() === '';
+}
+
+export function addOneLine_Format(
+  line: string,
+  prefix_indent: string = ''
+): string {
+  return prefix_indent + line + '\n';
+}
+
+export function IsNotEmptyStr(str: string): boolean {
+  return str !== null && str !== undefined && str.trim() !== '';
 }

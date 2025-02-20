@@ -5,14 +5,24 @@ import {
   CXXTYPE,
   CXXTerraNode,
   ConstructorInitializer,
+  MemberFunction,
   MemberVariable,
   SimpleType,
   Struct,
 } from '@agoraio-extensions/cxx-parser';
 
+import * as CppHelper from '../cpp_helper';
 import * as Logger from '../logger';
 
-import { BPConvFromCppWayType, UEBPType } from './bptype_helper';
+import * as Tools from '../tools';
+
+import { BPMethodContext, BPStructContext } from './bpcontext_data';
+import { map_native_ptr_name } from './bptype_data';
+import {
+  ConvWayType_BPFromCpp,
+  ConvWayType_CppFromBP,
+  UEBPType,
+} from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
 
@@ -192,24 +202,10 @@ export function getBPStructData_DefaultVal(
   return outputfomatDefaultVal;
 }
 
-export class BPStructContext {
-  contextConstructor = '';
-  contextCreateRawData = '';
-  contextFreeRawData = '';
-
-  constructor() {
-    this.contextConstructor = '';
-    this.contextCreateRawData = '';
-    this.contextFreeRawData = '';
-  }
-}
-
 export function genContext_BPStruct(
   node_struct: Struct,
   prefix_indent: string = ''
 ): BPStructContext {
-  let context = '';
-
   let contextConstructor = '';
   let contextCreateRawData = '';
   let contextFreeRawData = '';
@@ -218,84 +214,114 @@ export function genContext_BPStruct(
   const STR_CREATE_RAW_DATA = 'CreateRawData';
   const STR_FREE_RAW_DATA = 'FreeRawData';
 
-  const addOneLineFunc = function addOneLineIndent(line: string): string {
-    return prefix_indent + line + '\n';
+  const addOneLineFunc = function (line: string): string {
+    return Tools.addOneLine_Format(line, prefix_indent);
   };
-
+  // Ex. {{user_data.fullTypeWithNamespace}} AgoraData;
+  contextCreateRawData += addOneLineFunc(
+    `${Tools.generateFullScopeName(node_struct)} ${STR_AGORA_DATA};`
+  );
   node_struct.member_variables.map((member_variable, index) => {
     let type = member_variable.type;
     let bpType = BPTypeHelper.convertToBPType(type);
+    let macro_scope_start =
+      CppHelper.createCompilationDirectivesContent(member_variable);
+
+    let macro_scope_end = CppHelper.createCompilationDirectivesContent(
+      member_variable,
+      false
+    );
+
+    if (
+      Tools.IsNotEmptyStr(macro_scope_start) &&
+      Tools.IsNotEmptyStr(macro_scope_end)
+    ) {
+      contextConstructor += addOneLineFunc(`${macro_scope_start}`);
+      contextCreateRawData += addOneLineFunc(`${macro_scope_start}`);
+    }
 
     // **** Constructor Context ****
-    if (bpType.bpNeedConvFuncToCpp) {
+    if (bpType.bpNeedConvFunc_BPFromCpp) {
       contextConstructor += addOneLineFunc(
-        `${member_variable.name} = ${bpType.bpNameConvFuncTo}(${STR_AGORA_DATA}.${member_variable.name});`
+        `this->${member_variable.name} = ${bpType.bpNameConvFunc_BPFromCpp}(${STR_AGORA_DATA}.${member_variable.name});`
       );
     } else {
       contextConstructor += addOneLineFunc(
-        `${member_variable.name} = ${STR_AGORA_DATA}.${member_variable.name};`
+        `this->${member_variable.name} = ${STR_AGORA_DATA}.${member_variable.name};`
       );
     }
 
     // **** CreateRawData Context ****
-    if (bpType.bpNeedConvFuncFromCpp) {
-      // Ex. {{user_data.fullTypeWithNamespace}} AgoraData;
-      context += addOneLineFunc(`${type} ${STR_AGORA_DATA};`);
-
-      if (bpType.bpNeedConvFuncFromCpp) {
-        if (
-          bpType.bpConvFromCppWayType === BPConvFromCppWayType.Basic ||
-          bpType.bpConvFromCppWayType === BPConvFromCppWayType.NewFreeData
-        ) {
-          // Ex. AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
-          context += addOneLineFunc(
-            `${STR_AGORA_DATA}.${member_variable.name} = ${bpType.bpNameConvFuncFrom}}(${member_variable.name});`
-          );
-        } else if (
-          bpType.bpConvFromCppWayType === BPConvFromCppWayType.SetData
-        ) {
-          // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
-          // TBD(WinterPu): need to check the length of the variable
-          context += addOneLineFunc(
-            `${bpType.bpNameConvFuncFrom}}(${STR_AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, XXXFUABT_UserInfo_UserAccountLength);`
+    if (bpType.bpConvWayType_CppFromBP) {
+      if (
+        bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.Basic ||
+        bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.NewFreeData
+      ) {
+        // Ex. AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
+        contextCreateRawData += addOneLineFunc(
+          `${STR_AGORA_DATA}.${member_variable.name} = ${bpType.bpNameConvFunc_CppFromBP}(${member_variable.name});`
+        );
+      } else if (
+        bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.SetData
+      ) {
+        // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
+        // TBD(WinterPu): need to check the length of the variable
+        contextCreateRawData += addOneLineFunc(
+          `${bpType.bpNameConvFunc_CppFromBP}}(${STR_AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, XXXFUABT_UserInfo_UserAccountLength);`
+        );
+      } else {
+        if (mapCpp2BPStruct.has(type.name)) {
+          // Is UStruct
+          // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
+          contextCreateRawData += addOneLineFunc(
+            `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${STR_CREATE_RAW_DATA}();`
           );
         } else {
-          if (mapCpp2BPStruct.has(type.name)) {
-            // Is UStruct
-            // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
-            context += addOneLineFunc(
-              `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${STR_CREATE_RAW_DATA}();`
-            );
-          } else {
-            // AgoraData.{{name}} = {{name}};
-            context += addOneLineFunc(
-              `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
-            );
-          }
+          // AgoraData.{{name}} = {{name}};
+          contextCreateRawData += addOneLineFunc(
+            `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
+          );
         }
-      } else {
-        context += addOneLineFunc(
-          `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
-        );
       }
-
-      // Ex. return AgoraData;
-      context += addOneLineFunc(`return ${STR_AGORA_DATA};`);
     } else {
-      // Ex. AgoraData.{{name}} = {{name}} ;\n
       contextCreateRawData += addOneLineFunc(
         `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
       );
     }
 
     // **** FreeRawData Context ****
-    if (bpType.bpConvFromCppWayType === BPConvFromCppWayType.NewFreeData) {
+    let tmpContextFreeRawData = '';
+    if (bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.NewFreeData) {
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
-      contextFreeRawData += addOneLineFunc(
-        `${member_variable.name}.${STR_FREE_RAW_DATA}(${STR_AGORA_DATA}.${member_variable.name});`
+      tmpContextFreeRawData += addOneLineFunc(
+        `${bpType.bpNameConvFuncAdditional_CppFromBP}}(${STR_AGORA_DATA}.${member_variable.name});`
       );
     }
+
+    if (mapCpp2BPStruct.has(type.name)) {
+      // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
+      tmpContextFreeRawData += addOneLineFunc(
+        `${member_variable.name}.${STR_FREE_RAW_DATA}(${STR_AGORA_DATA}.${member_variable.name});`
+      );
+    } else {
+    }
+
+    if (
+      Tools.IsNotEmptyStr(macro_scope_start) &&
+      Tools.IsNotEmptyStr(macro_scope_end)
+    ) {
+      contextConstructor += addOneLineFunc(`${macro_scope_end}`);
+      contextCreateRawData += addOneLineFunc(`${macro_scope_end}`);
+      if (tmpContextFreeRawData !== '') {
+        contextFreeRawData += addOneLineFunc(`${macro_scope_start}`);
+        contextFreeRawData += tmpContextFreeRawData;
+        contextFreeRawData += addOneLineFunc(`${macro_scope_end}`);
+      }
+    }
   });
+
+  // Ex. return AgoraData;
+  contextCreateRawData += addOneLineFunc(`return ${STR_AGORA_DATA};`);
 
   const result = new BPStructContext();
   result.contextConstructor = contextConstructor;
@@ -303,4 +329,42 @@ export function genContext_BPStruct(
   result.contextFreeRawData = contextFreeRawData;
 
   return result;
+}
+
+export function genContext_BPMethod(
+  node_method: MemberFunction,
+  prefix_indent: string = ''
+): BPMethodContext {
+  let contextParamsCppFromBP = '';
+  let contextParamsBPFromCpp = '';
+
+  const addOneLineFunc = function (line: string): string {
+    return Tools.addOneLine_Format(line, prefix_indent);
+  };
+
+  node_method.parameters.map((param, index) => {
+    const type = param.type;
+    const bptype = BPTypeHelper.convertToBPType(param.type);
+
+    contextParamsCppFromBP += addOneLineFunc(
+      `${type.source} Raw_${param.name} = ${param.name};`
+    );
+
+    contextParamsBPFromCpp += addOneLineFunc(
+      `${bptype.source} UEBP_${param.name} = ${param.name};`
+    );
+  });
+
+  const result = new BPMethodContext();
+  result.contextParamsCppFromBP = contextParamsCppFromBP;
+  result.contextParamsBPFromCpp = contextParamsBPFromCpp;
+
+  return result;
+}
+
+export function genContext_BPMethod_NativePtr(
+  node_method: MemberFunction,
+  prefix_indent: string = ''
+): string {
+  return BPTypeHelper.getMethod_NativePtr(node_method);
 }

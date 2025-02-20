@@ -115,6 +115,11 @@ export function genGeneralTerraData(
           //     debugger
           // }
 
+          const contextBPMethod = BPHelper.genContext_BPMethod(
+            method,
+            '      '
+          );
+
           const clazzMethodUserData: CustomUserData.ClazzMethodUserData = {
             hasConditionalDirective:
               method.conditional_compilation_directives_infos.length > 0,
@@ -162,6 +167,9 @@ export function genGeneralTerraData(
             bpIsNoParamCallback:
               bIsCallbackMethod && method.parameters.length === 0,
 
+            bpContextParamsCppFromBP: contextBPMethod.contextParamsCppFromBP,
+            bpContextParamsBPFromCpp: contextBPMethod.contextParamsBPFromCpp,
+            bpNativePtr: BPHelper.genContext_BPMethod_NativePtr(method),
             ...method.user_data,
           };
 
@@ -252,9 +260,9 @@ export function genGeneralTerraData(
         const contextStruct = BPHelper.genContext_BPStruct(node.asStruct(), '		');
 
         const structUserData: CustomUserData.StructUserData = {
-          contextConstructor: contextStruct.contextConstructor,
-          contextCreateRawData: contextStruct.contextCreateRawData,
-          contextFreeRawData: contextStruct.contextFreeRawData,
+          bpContextConstructor: contextStruct.contextConstructor,
+          bpContextCreateRawData: contextStruct.contextCreateRawData,
+          bpContextFreeRawData: contextStruct.contextFreeRawData,
         };
         node.user_data = structUserData;
 

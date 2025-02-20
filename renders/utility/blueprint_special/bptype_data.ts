@@ -1,5 +1,6 @@
 // [TBD] if need namespace or not ？
 
+// For parameters' type
 // [Key] type.source namespace removed
 export const map_cpptype_2_uebptype: { [key: string]: string } = {
   'void': 'void',
@@ -50,6 +51,7 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
 
 // type convert functions
 
+// [key]: still use cpp type
 export const map_bp2cpp_convert_function_name: { [key: string]: string } = {
   double: 'UABT::ToDouble',
 
@@ -62,7 +64,8 @@ export const map_bp2cpp_convert_function_name: { [key: string]: string } = {
 export const map_cpp2bp_convert_function_name: { [key: string]: string } = {
   'view_t': 'UABT::FromViewToInt',
   'double': 'UABT::FromDouble',
-
+  'const char*': 'UTF8_TO_TCHAR',
+  'char const*': 'UTF8_TO_TCHAR',
   // array
   'float*': 'UABT::FromFloatArray',
 };
@@ -113,4 +116,35 @@ export const map_cpptype_default_value: { [key: string]: string } = {
   'unsigned char const*': '""',
 
   // ==== agora special =====
+};
+
+export const map_native_ptr_name: { [key: string]: string } = {
+  IRtcEngine: 'AgoraUERtcEngine::Get()',
+  IMediaPlayer: 'MediaPlayerInstance',
+  IAudioDeviceManager: 'AudioDeviceManagerInstance',
+  IMediaRecorder: 'MediaRecorderInstance',
+  IMediaStreamingSource: 'MediaStreamingSourceInstance',
+  IMediaEngine: 'MediaEngineInstance',
+  IMediaPlayerSource: 'MediaPlayerSourceInstance',
+  ILocalSpatialAudioEngine: 'LocalSpatialAudioEngineInstance',
+  MusicChartCollection: 'MusicChartCollectionInstance',
+  IH265Transcoder: 'H265TranscoderInstance',
+  IMediaRecorderObserver: 'MediaRecorderObserverInstance',
+  IMediaPlayerObserver: 'MediaPlayerObserverInstance',
+  IMediaPlayerSourceObserver: 'MediaPlayerSourceObserverInstance',
+  ILocalSpatialAudioEngineObserver: 'LocalSpatialAudioEngineObserverInstance',
+  IH265TranscoderObserver: 'H265TranscoderObserverInstance',
+  IVideoFrameMetaInfo: 'VideoFrameMetaInfoInstance',
+};
+
+// TBD(WinterPu)
+// 1. const FString & or FString
+
+// TBD(WinterPu)
+// 1. When bp to cpp raw: FString => std::string / not: const char *
+// 2. const char * => FString
+
+// For declaration type
+export const map_decltype_bp2cpp: { [key: string]: string } = {
+  FString: 'std::string',
 };

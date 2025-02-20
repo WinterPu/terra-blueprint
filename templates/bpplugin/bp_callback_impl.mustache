@@ -20,3 +20,43 @@ void UAgoraBPu_{{name}}::RemoveAllBlueprintCallbackExecutors(){
 
 }
 
+
+{{#methods}}
+    {{#return_type}}{{{source}}}{{/return_type}} {{parent.user_data.bpNodeName}}::{{name}} ({{#parameters}}{{{type.clang_qualtype}}} {{name}}{{{user_data.defaultValueComment}}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
+    {
+
+{{{user_data.bpContextParamsBPFromCpp}}}
+
+        TWeakObjectPtr<UAgoraBPu{{name}}CBExecutor> SelfWeakPtr(this);
+        if(!SelfWeakPtr.IsValid())
+            return;
+            
+        #if (__cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
+                AsyncTask(ENamedThreads::GameThread, [=, this]()
+        #else
+                AsyncTask(ENamedThreads::GameThread, [=]()
+        #endif
+            {
+
+                if(!SelfWeakPtr.IsValid())
+                    return;
+
+                {{user_data.bpMethodName}}.Broadcast({{#parameters}}UEBP_{{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+
+            });
+    }
+{{/methods}}
+
+
+
+
+{{#methods}}
+  {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
+  {
+
+    UE_LOG(LogAgora, Warning, TEXT("%s"), *FString(AG_FUNCTION_MACRO));
+
+  }
+  
+{{/methods}}
+
