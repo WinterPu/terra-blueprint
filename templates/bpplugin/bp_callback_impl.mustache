@@ -1,18 +1,18 @@
 
-void UAgoraBPu_{{name}}::AddBlueprintCallbackExecutor(UAgoraBPu{{name}}CBExecutor* Executor){
+void UAgoraBPu{{name}}::AddBlueprintCallbackExecutor(UAgoraBPu{{name}}CBExecutor* Executor){
 	if (Executor == nullptr)
 	{
 		UAgoraBPuLogger::PrintWarn(FString::Printf(TEXT("%s Null Callback Executor"), *FString(AG_FUNCTION_MACRO)));
 		return;
 	}
     {{#methods}}
-    {{user_data.bpCallbackDelegateVarName}}.AddDynamic(Executor, &UAgoraBPu_{{parent.name}}CBExecutor::{{user_data.bpMethodName}});
+    {{user_data.bpCallbackDelegateVarName}}.AddDynamic(Executor, &UAgoraBPu{{parent.name}}CBExecutor::{{user_data.bpMethodName}});
     {{/methods}}
 
 }
 
 
-void UAgoraBPu_{{name}}::RemoveAllBlueprintCallbackExecutors(){
+void UAgoraBPu{{name}}::RemoveAllBlueprintCallbackExecutors(){
 
     {{#methods}}
     {{user_data.bpCallbackDelegateVarName}}.Clear();
