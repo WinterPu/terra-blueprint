@@ -17,6 +17,22 @@ parsers:
           - '@agoraio-extensions/terra_shared_configs:headers/{{SDK_VERSION}}/include/IAgoraMediaComponentFactory.h'
 
 
+
+  - name: OverrideNodeParser
+    package: '@agoraio-extensions/terra_shared_configs'
+    args:
+      customHeaderFileNamePrefix: 'Custom'
+      includeHeaderDirs:
+        - '@agoraio-extensions/terra_shared_configs:headers/{{SDK_VERSION}}/include'
+      parseFiles:
+        include:
+          - '@agoraio-extensions/terra_shared_configs:headers/{{SDK_VERSION}}/include/*.h'
+          - '@agoraio-extensions/terra_shared_configs:headers/{{SDK_VERSION}}/custom_headers/*.h'
+        exclude:
+          - '@agoraio-extensions/terra_shared_configs:headers/{{SDK_VERSION}}/include/time_utils.h'
+          - '@agoraio-extensions/terra_shared_configs:headers/{{SDK_VERSION}}/include/rte_*.h'
+          - '@agoraio-extensions/terra_shared_configs:headers/{{SDK_VERSION}}/include/IAgoraMediaComponentFactory.h'
+
   ## Path: relative to [config] not [templates]
   - name: RemoveNodeParser
     path: ../parsers/remove_node_parser.ts
