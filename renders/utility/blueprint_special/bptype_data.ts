@@ -51,6 +51,15 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
 
 // type convert functions
 
+export const map_cpp2bp_convert_function_name: { [key: string]: string } = {
+  'view_t': 'UABT::FromViewToInt',
+  'double': 'UABT::FromDouble',
+  'const char*': 'UTF8_TO_TCHAR',
+  'char const*': 'UTF8_TO_TCHAR',
+  // array
+  'float*': 'UABT::FromFloatArray',
+};
+
 // [key]: still use cpp type
 export const map_bp2cpp_convert_function_name: { [key: string]: string } = {
   double: 'UABT::ToDouble',
@@ -61,17 +70,10 @@ export const map_bp2cpp_convert_function_name: { [key: string]: string } = {
   view_t: 'UABT::ToView',
 };
 
-export const map_cpp2bp_convert_function_name: { [key: string]: string } = {
-  'view_t': 'UABT::FromViewToInt',
-  'double': 'UABT::FromDouble',
-  'const char*': 'UTF8_TO_TCHAR',
-  'char const*': 'UTF8_TO_TCHAR',
-  // array
-  'float*': 'UABT::FromFloatArray',
-};
-
 export const map_bp2cpp_memory_handle: { [key: string]: [string, string] } = {
   // FString
+  'const char*': ['UABT::New_ConstCharPtr', 'UABT::Free_ConstCharPtr'],
+  'char const*': ['UABT::New_ConstCharPtr', 'UABT::Free_ConstCharPtr'],
   'char*': ['UABT::New_CharPtr', 'UABT::Free_CharPtr'],
   'unsigned char*': ['UABT::New_UnsignedCharPtr', 'UABT::Free_UnsignedCharPtr'],
   'char**': ['UABT::New_CharArrayPtr', 'UABT::Free_CharArrayPtr'],
@@ -148,3 +150,7 @@ export const map_native_ptr_name: { [key: string]: string } = {
 export const map_decltype_bp2cpp: { [key: string]: string } = {
   FString: 'std::string',
 };
+
+// TBD(WinterPu)
+// 1. add additional_postcontent for method
+// Ex. blueprint pure function

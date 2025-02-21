@@ -57,8 +57,8 @@ export class UEBPType {
   bpConvWayType_CppFromBP: ConvWayType_CppFromBP;
   bpNameConvFunc_CppFromBP: string;
   // Example:
-  // bpNameConvFunc_BPFromCpp [NewRawData]
-  // bpNameConvFuncAdditional_BPFromCpp: [FreeRawData]
+  // bpNameConvFunc_CppFromBP [NewRawData]
+  // bpNameConvFuncAdditional_CppFromBP: [FreeRawData]
   bpNameConvFuncAdditional_CppFromBP: string;
 
   constructor() {
@@ -73,11 +73,11 @@ export class UEBPType {
     this.bpNeedConvFunc_BPFromCpp = false;
     this.bpConvWayType_BPFromCpp = ConvWayType_BPFromCpp.NoNeedConversion;
     this.bpNameConvFunc_BPFromCpp = '';
-    this.bpNameConvFuncAdditional_CppFromBP = '';
 
     this.bpNeedConvFunc_CppFromBP = false;
     this.bpConvWayType_CppFromBP = ConvWayType_CppFromBP.NoNeedConversion;
     this.bpNameConvFunc_CppFromBP = '';
+    this.bpNameConvFuncAdditional_CppFromBP = '';
   }
 
   toString(): string {
@@ -173,7 +173,7 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
     };
   }
 
-  let convert_function = map_bp2cpp_convert_function_name[type.name];
+  let convert_function = map_bp2cpp_convert_function_name[type.source];
   if (convert_function) {
     conversion = {
       convNeeded: true,
@@ -182,7 +182,7 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
       convFuncAdditional01: '',
     };
   } else {
-    let func_memorys = map_bp2cpp_memory_handle[type.name];
+    let func_memorys = map_bp2cpp_memory_handle[type.source];
     if (func_memorys) {
       conversion = {
         convNeeded: true,
@@ -191,7 +191,7 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
         convFuncAdditional01: func_memorys[1], // Free Data
       };
     } else {
-      let set_data_func = map_setdata_function_name[type.name];
+      let set_data_func = map_setdata_function_name[type.source];
       if (set_data_func) {
         conversion = {
           convNeeded: true,

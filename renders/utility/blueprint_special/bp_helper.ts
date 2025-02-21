@@ -294,7 +294,7 @@ export function genContext_BPStruct(
     if (bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.NewFreeData) {
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
       tmpContextFreeRawData += addOneLineFunc(
-        `${bpType.bpNameConvFuncAdditional_CppFromBP}}(${STR_AGORA_DATA}.${member_variable.name});`
+        `${bpType.bpNameConvFuncAdditional_CppFromBP}(${STR_AGORA_DATA}.${member_variable.name});`
       );
     }
 
@@ -312,9 +312,17 @@ export function genContext_BPStruct(
     ) {
       contextConstructor += addOneLineFunc(`${macro_scope_end}`);
       contextCreateRawData += addOneLineFunc(`${macro_scope_end}`);
-      if (tmpContextFreeRawData !== '') {
+      if (tmpContextFreeRawData && tmpContextFreeRawData !== '') {
         contextFreeRawData += addOneLineFunc(`${macro_scope_start}`);
-        contextFreeRawData += tmpContextFreeRawData;
+      }
+    }
+    if (tmpContextFreeRawData && tmpContextFreeRawData !== '') {
+      contextFreeRawData += tmpContextFreeRawData;
+
+      if (
+        Tools.IsNotEmptyStr(macro_scope_start) &&
+        Tools.IsNotEmptyStr(macro_scope_end)
+      ) {
         contextFreeRawData += addOneLineFunc(`${macro_scope_end}`);
       }
     }
