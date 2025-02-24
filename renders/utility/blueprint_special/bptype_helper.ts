@@ -12,8 +12,10 @@ import * as Tools from '../tools';
 
 import * as BPHelper from './bp_helper';
 import {
+  ClazzAddtionalContext,
   map_bp2cpp_convert_function_name,
   map_bp2cpp_memory_handle,
+  map_class_initialization,
   map_cpp2bp_convert_function_name,
   map_cpptype_2_uebptype,
   map_cpptype_default_value,
@@ -481,4 +483,9 @@ export function getBPMemberVariableDefaultValue(
 
 export function getMethod_NativePtr(node_method: MemberFunction): string {
   return map_native_ptr_name[node_method.parent_name] ?? '';
+}
+
+export type ClazzAddtionalContext = ClazzAddtionalContext;
+export function getContext_BPClass(clazz_name: string): ClazzAddtionalContext {
+  return map_class_initialization[clazz_name];
 }

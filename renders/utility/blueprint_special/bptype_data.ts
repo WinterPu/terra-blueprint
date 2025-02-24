@@ -154,3 +154,90 @@ export const map_decltype_bp2cpp: { [key: string]: string } = {
 // TBD(WinterPu)
 // 1. add additional_postcontent for method
 // Ex. blueprint pure function
+
+
+export type ClazzAddtionalContext = {
+  Inst: string;
+  InitDecl: string;
+  InitImpl: string;
+}
+
+export const map_class_initialization: { [key: string]: ClazzAddtionalContext } = {
+  IAudioDeviceManager: {
+    Inst: `
+    UPROPERTY()
+    static UAgoraBPuAudioDeviceManager* AudioDeviceManagerInstance;
+    `,
+    InitDecl: `
+    UFUNCTION(BlueprintCallable,Category = "Agora|IAudioDeviceManager")
+    static UAgoraBPuAudioDeviceManager* GetAgoraAudioDeviceManager();
+    `,
+    InitImpl: `
+    UAgoraBPuAudioDeviceManager* UAgoraBPuAudioDeviceManager::GetAgoraAudioDeviceManager(){
+      if (Instance == nullptr)
+      {
+        Instance = NewObject<UAgoraBPuAudioDeviceManager>();
+        Instance->AddToRoot();
+        AgoraUERtcEngine::Get()->queryInterface(agora::rtc::AGORA_IID_AUDIO_DEVICE_MANAGER, (void**)&Instance->AudioDeviceManager);
+
+        if(Instance->AudioDeviceManager == nullptr){
+        
+          UAgoraBPuLogger::PrintError("AudioDeviceManager is nullptr." + AGORA_UEBP_ERR_STR[AGORA_UE_ERROR_CODE::ERROR_BP_RTC_ENGINE_NOT_INITIALIZED]);
+
+        }
+
+
+        Instance->PlaybackDeviceCollection = NewObject<UAudioDeviceCollection>();
+
+        Instance->RecordDeviceCollection = NewObject<UAudioDeviceCollection>();
+      }
+      return Instance;
+    }
+    `
+  },
+
+
+
+
+  IVideoDeviceManager: {
+    Inst: `
+    UPROPERTY()
+    static UAgoraBPuVideoDeviceManager* VideoDeviceManagerInstance
+    `,
+    InitDecl: `
+    UFUNCTION(BlueprintCallable,Category = "Agora|IVideoDeviceManager")
+    static UAgoraBPuVideoDeviceManager* GetAgoraVideoDeviceManager();
+    `,
+    InitImpl: `
+    UAgoraBPuVideoDeviceManager* UAgoraBPuVideoDeviceManager::GetAgoraVideoDeviceManager()
+    {
+      if (Instance == nullptr)
+      {
+        Instance = NewObject<UAgoraBPuVideoDeviceManager>();
+        Instance->AddToRoot();
+        AgoraUERtcEngine::Get()->queryInterface(agora::rtc::AGORA_IID_VIDEO_DEVICE_MANAGER, (void**)&Instance->VideoDeviceManager);
+
+        if (Instance->VideoDeviceManager == nullptr) {
+
+          UAgoraBPuLogger::PrintError("VideoDeviceManager is nullptr." + AGORA_UEBP_ERR_STR[AGORA_UE_ERROR_CODE::ERROR_BP_RTC_ENGINE_NOT_INITIALIZED]);
+
+          Instance->VideoDeviceCollection = nullptr;
+        }
+        else{
+        
+          Instance->VideoDeviceCollection = NewObject<UVideoDeviceCollection>();
+        
+        }
+      }
+      return Instance;
+    }
+`
+  },
+
+
+
+
+
+
+
+};

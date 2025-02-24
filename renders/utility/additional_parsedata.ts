@@ -30,6 +30,12 @@ export type SimpleTypeUserData = {
   bpType: UEBPType;
 };
 
+export type ClazzUserData = {
+  bpContextInst: string;
+  bpContextInitDecl: string;
+  bpContextInitImpl: string;
+};
+
 export type ClazzMethodUserData = {
   hasConditionalDirective: boolean;
   isExcluded: boolean;

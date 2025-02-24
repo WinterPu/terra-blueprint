@@ -4,6 +4,7 @@ import {
   CXXFile,
   CXXTYPE,
   CXXTerraNode,
+  Clazz,
   ConstructorInitializer,
   MemberFunction,
   MemberVariable,
@@ -17,8 +18,7 @@ import * as Logger from '../logger';
 import * as Tools from '../tools';
 
 import { BPMethodContext, BPStructContext } from './bpcontext_data';
-import { map_native_ptr_name } from './bptype_data';
-import {
+import {map_class_initialization, 
   ConvWayType_BPFromCpp,
   ConvWayType_CppFromBP,
   UEBPType,
@@ -375,4 +375,12 @@ export function genContext_BPMethod_NativePtr(
   prefix_indent: string = ''
 ): string {
   return BPTypeHelper.getMethod_NativePtr(node_method);
+}
+
+
+export function genContext_BPClass(
+  node_clazz: Clazz,
+  prefix_indent: string = ''
+): BPTypeHelper.ClazzAddtionalContext {
+  return BPTypeHelper.getContext_BPClass(node_clazz.name);
 }

@@ -27,6 +27,7 @@ import * as BPHelper from './blueprint_special/bp_helper';
 import * as CppHelper from './cpp_helper';
 import * as FilterHelper from './filter_helper';
 import * as Logger from './logger';
+import { map_class_initialization } from './blueprint_special/bptype_data';
 
 const regMap: { [key: string]: string } = {
   isCallback: '.*(Observer|Handler|Callback|Receiver|Sink).*',
@@ -114,6 +115,14 @@ export function genGeneralTerraData(
           // if (bDebug){
           //     debugger
           // }
+          let context_clazz = BPHelper.genContext_BPClass(node.asClazz());
+          const clazzUserData: CustomUserData.ClazzUserData = {
+            bpContextInst: context_clazz?.Inst ?? "",
+            bpContextInitDecl:context_clazz?.InitDecl ?? "",
+            bpContextInitImpl: context_clazz?.InitImpl ?? "",
+          };
+          node.user_data = clazzUserData;
+
 
           const contextBPMethod = BPHelper.genContext_BPMethod(
             method,

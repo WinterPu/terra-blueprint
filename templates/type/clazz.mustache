@@ -39,11 +39,20 @@ private:
 {{/user_data.isCallback}}
 
 {{^user_data.isCallback}}
+
+public:
+{{{user_data.bpContextInitDecl}}}
+
 {{#methods}}
 {{{user_data.commentCppStyle}}}
   UFUNCTION(BlueprintCallable,Category = "Agora|{{parent_name}}")
   {{{user_data.bpReturnType}}} {{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
   
 {{/methods}}
+
+private:
+{{{user_data.bpContextInst}}}
+
 {{/user_data.isCallback}}
+
 };
