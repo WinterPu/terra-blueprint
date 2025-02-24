@@ -10,7 +10,7 @@ export class BPStructContext {
   }
 }
 
-export class BPParamContext{
+export class BPParamContext {
   contextDecl = '';
   contextUsage = '';
   contextFree = '';

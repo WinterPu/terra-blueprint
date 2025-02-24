@@ -146,12 +146,10 @@ export const map_native_ptr_name: { [key: string]: string } = {
 // 1. When bp to cpp raw: FString => std::string / not: const char *
 // 2. const char * => FString
 
-
 export enum SpecialDeclTypeRule {
   RULE_STR_BP2CPP = 'SPECIAL_DECL_TYPE_RULE_string_bp2cpp', // const char* => std::string
   RULE_STR_CPP2BP = 'SPECIAL_DECL_TYPE_RULE_string_cpp2bp', // std::string => const char*
 }
-
 
 // For declaration type
 export const map_convdecltype_bp2cpp: { [key: string]: string } = {
@@ -168,15 +166,15 @@ export const map_convdecltype_cpp2bp: { [key: string]: string } = {
 // 1. add additional_postcontent for method
 // Ex. blueprint pure function
 
-
-
-export type ClazzAddtionalContext = {
+export type ClazzAddtionalContext_ = {
   Inst: string;
   InitDecl: string;
   InitImpl: string;
-}
+};
 
-export const map_class_initialization: { [key: string]: ClazzAddtionalContext } = {
+export const map_class_initialization: {
+  [key: string]: ClazzAddtionalContext_;
+} = {
   IAudioDeviceManager: {
     Inst: `
     UPROPERTY()
@@ -207,11 +205,8 @@ export const map_class_initialization: { [key: string]: ClazzAddtionalContext } 
       }
       return Instance;
     }
-    `
+    `,
   },
-
-
-
 
   IVideoDeviceManager: {
     Inst: `
@@ -245,13 +240,6 @@ export const map_class_initialization: { [key: string]: ClazzAddtionalContext } 
       }
       return Instance;
     }
-`
+`,
   },
-
-
-
-
-
-
-
 };

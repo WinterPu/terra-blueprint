@@ -12,5 +12,4 @@ export const AGORA_MUSTACHE_DATA = {
 
   UABTEnum_WrapWithUE: 'UABTEnum::WrapWithUE',
   UABTEnum_ToRawValue: 'UABTEnum::ToRawValue',
-
 };

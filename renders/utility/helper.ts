@@ -24,10 +24,10 @@ import * as CustomUserData from './additional_parsedata';
 
 import * as BPHelper from './blueprint_special/bp_helper';
 
+import { map_class_initialization } from './blueprint_special/bptype_data';
 import * as CppHelper from './cpp_helper';
 import * as FilterHelper from './filter_helper';
 import * as Logger from './logger';
-import { map_class_initialization } from './blueprint_special/bptype_data';
 
 const regMap: { [key: string]: string } = {
   isCallback: '.*(Observer|Handler|Callback|Receiver|Sink).*',
@@ -117,12 +117,11 @@ export function genGeneralTerraData(
           // }
           let context_clazz = BPHelper.genContext_BPClass(node.asClazz());
           const clazzUserData: CustomUserData.ClazzUserData = {
-            bpContextInst: context_clazz?.Inst ?? "",
-            bpContextInitDecl:context_clazz?.InitDecl ?? "",
-            bpContextInitImpl: context_clazz?.InitImpl ?? "",
+            bpContextInst: context_clazz?.Inst ?? '',
+            bpContextInitDecl: context_clazz?.InitDecl ?? '',
+            bpContextInitImpl: context_clazz?.InitImpl ?? '',
           };
           node.user_data = clazzUserData;
-
 
           const contextBPMethod = BPHelper.genContext_BPMethod(
             method,
@@ -176,13 +175,19 @@ export function genGeneralTerraData(
             bpIsNoParamCallback:
               bIsCallbackMethod && method.parameters.length === 0,
 
-            bpContextParamsDecl_BPFromCpp: contextBPMethod.contextParam_BPFromCpp.contextDecl,
-            bpContextParamsUsage_BPFromCpp: contextBPMethod.contextParam_BPFromCpp.contextUsage,
-            bpContextParamsFree_BPFromCpp: contextBPMethod.contextParam_BPFromCpp.contextFree,
+            bpContextParamsDecl_BPFromCpp:
+              contextBPMethod.contextParam_BPFromCpp.contextDecl,
+            bpContextParamsUsage_BPFromCpp:
+              contextBPMethod.contextParam_BPFromCpp.contextUsage,
+            bpContextParamsFree_BPFromCpp:
+              contextBPMethod.contextParam_BPFromCpp.contextFree,
 
-            bpContextParamsDecl_CppFromBP: contextBPMethod.contextParam_CppFromBP.contextDecl,
-            bpContextParamsUsage_CppFromBP: contextBPMethod.contextParam_CppFromBP.contextUsage,
-            bpContextParamsFree_CppFromBP: contextBPMethod.contextParam_CppFromBP.contextFree,
+            bpContextParamsDecl_CppFromBP:
+              contextBPMethod.contextParam_CppFromBP.contextDecl,
+            bpContextParamsUsage_CppFromBP:
+              contextBPMethod.contextParam_CppFromBP.contextUsage,
+            bpContextParamsFree_CppFromBP:
+              contextBPMethod.contextParam_CppFromBP.contextFree,
 
             bpNativePtr: BPHelper.genContext_BPMethod_NativePtr(method),
             ...method.user_data,

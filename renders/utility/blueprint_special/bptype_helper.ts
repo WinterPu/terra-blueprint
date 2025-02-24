@@ -13,7 +13,7 @@ import * as Tools from '../tools';
 import * as BPHelper from './bp_helper';
 
 import {
-  ClazzAddtionalContext,
+  ClazzAddtionalContext_,
   SpecialDeclTypeRule,
   map_bp2cpp_convert_function_name,
   map_bp2cpp_memory_handle,
@@ -521,8 +521,8 @@ export function getMethod_NativePtr(node_method: MemberFunction): string {
   return map_native_ptr_name[node_method.parent_name] ?? '';
 }
 
-export type ClazzAddtionalContext = ClazzAddtionalContext;
-export function getContext_BPClass(clazz_name: string): ClazzAddtionalContext {
+export type ClazzAddtionalContext = ClazzAddtionalContext_;
+export function getContext_BPClass(clazz_name: string): ClazzAddtionalContext_ {
   return map_class_initialization[clazz_name];
 }
 
