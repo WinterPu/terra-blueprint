@@ -65,8 +65,12 @@ export type ClazzMethodUserData = {
   bpCallbackDelegateVarName: string;
   bpIsNoParamCallback: boolean;
 
-  bpContextParamsCppFromBP: string;
-  bpContextParamsBPFromCpp: string;
+  bpContextParamsDecl_CppFromBP: string;
+  bpContextParamsUsage_CppFromBP: string;
+  bpContextParamsFree_CppFromBP: string;
+  bpContextParamsDecl_BPFromCpp: string;
+  bpContextParamsUsage_BPFromCpp: string;
+  bpContextParamsFree_BPFromCpp: string;
   bpNativePtr: string;
 };
 

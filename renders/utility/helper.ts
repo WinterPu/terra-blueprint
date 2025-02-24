@@ -176,8 +176,14 @@ export function genGeneralTerraData(
             bpIsNoParamCallback:
               bIsCallbackMethod && method.parameters.length === 0,
 
-            bpContextParamsCppFromBP: contextBPMethod.contextParamsCppFromBP,
-            bpContextParamsBPFromCpp: contextBPMethod.contextParamsBPFromCpp,
+            bpContextParamsDecl_BPFromCpp: contextBPMethod.contextParam_BPFromCpp.contextDecl,
+            bpContextParamsUsage_BPFromCpp: contextBPMethod.contextParam_BPFromCpp.contextUsage,
+            bpContextParamsFree_BPFromCpp: contextBPMethod.contextParam_BPFromCpp.contextFree,
+
+            bpContextParamsDecl_CppFromBP: contextBPMethod.contextParam_CppFromBP.contextDecl,
+            bpContextParamsUsage_CppFromBP: contextBPMethod.contextParam_CppFromBP.contextUsage,
+            bpContextParamsFree_CppFromBP: contextBPMethod.contextParam_CppFromBP.contextFree,
+
             bpNativePtr: BPHelper.genContext_BPMethod_NativePtr(method),
             ...method.user_data,
           };

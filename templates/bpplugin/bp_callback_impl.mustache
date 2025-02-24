@@ -25,7 +25,7 @@ void UAgoraBPu{{name}}::RemoveAllBlueprintCallbackExecutors(){
     {{#return_type}}{{{source}}}{{/return_type}} {{parent.user_data.bpNodeName}}::{{name}} ({{#parameters}}{{{type.clang_qualtype}}} {{name}}{{{user_data.defaultValueComment}}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
     {
 
-{{{user_data.bpContextParamsBPFromCpp}}}
+{{{user_data.bpContextParamsDecl_BPFromCpp}}}
 
         TWeakObjectPtr<UAgoraBPu{{name}}CBExecutor> SelfWeakPtr(this);
         if(!SelfWeakPtr.IsValid())
@@ -41,7 +41,9 @@ void UAgoraBPu{{name}}::RemoveAllBlueprintCallbackExecutors(){
                 if(!SelfWeakPtr.IsValid())
                     return;
 
-                {{user_data.bpMethodName}}.Broadcast({{#parameters}}UEBP_{{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+                {{user_data.bpMethodName}}.Broadcast({{{user_data.bpContextParamsUsage_BPFromCpp}}});
+
+                {{{user_data.bpContextParamsFree_BPFromCpp}}}
 
             });
     }

@@ -17,11 +17,14 @@ import * as Logger from '../logger';
 
 import * as Tools from '../tools';
 
-import { BPMethodContext, BPStructContext } from './bpcontext_data';
+import { AGORA_MUSTACHE_DATA }  from './bptype_mustache_data';
+
+import { BPMethodContext, BPParamContext, BPStructContext } from './bpcontext_data';
 import {map_class_initialization, 
   ConvWayType_BPFromCpp,
   ConvWayType_CppFromBP,
   UEBPType,
+  ConversionWayType,
 } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
@@ -136,15 +139,15 @@ export function genBPNameForAgora_Class(clazz_name: string): string {
   if (clazz_name.startsWith('I')) {
     clazz_name = clazz_name.slice(1); // 去掉开头的 I
   }
-  return 'UAgoraBPu' + clazz_name;
+  return AGORA_MUSTACHE_DATA.UEBP_PREFIX_CLASS+ clazz_name;
 }
 
 export function genBPNameForAgora_Struct(struct_name: string): string {
-  return 'FUABT_' + struct_name;
+  return AGORA_MUSTACHE_DATA.UEBP_PREFIX_STRUCT + struct_name;
 }
 
 export function genBPNameForAgora_Enum(enum_name: string): string {
-  return 'EUABT_' + enum_name;
+  return AGORA_MUSTACHE_DATA.UEBP_PREFIX_ENUM + enum_name;
 }
 
 export function getRegisteredBPType(node_name: string): [CXXTYPE, string] {
@@ -210,20 +213,22 @@ export function genContext_BPStruct(
   let contextCreateRawData = '';
   let contextFreeRawData = '';
 
-  const STR_AGORA_DATA = 'AgoraData';
-  const STR_CREATE_RAW_DATA = 'CreateRawData';
-  const STR_FREE_RAW_DATA = 'FreeRawData';
-
   const addOneLineFunc = function (line: string): string {
     return Tools.addOneLine_Format(line, prefix_indent);
   };
+  
+  // Begin
   // Ex. {{user_data.fullTypeWithNamespace}} AgoraData;
   contextCreateRawData += addOneLineFunc(
-    `${Tools.generateFullScopeName(node_struct)} ${STR_AGORA_DATA};`
+    `${Tools.generateFullScopeName(node_struct)} ${AGORA_MUSTACHE_DATA.AGORA_DATA};`
   );
+
+
   node_struct.member_variables.map((member_variable, index) => {
     let type = member_variable.type;
     let bpType = BPTypeHelper.convertToBPType(type);
+    const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
+    const conv_cppfrombp = bpType.bpConv_CppFromBP;
     let macro_scope_start =
       CppHelper.createCompilationDirectivesContent(member_variable);
 
@@ -241,67 +246,81 @@ export function genContext_BPStruct(
     }
 
     // **** Constructor Context ****
-    if (bpType.bpNeedConvFunc_BPFromCpp) {
+    if (conv_bpfromcpp.convNeeded) {
       contextConstructor += addOneLineFunc(
-        `this->${member_variable.name} = ${bpType.bpNameConvFunc_BPFromCpp}(${STR_AGORA_DATA}.${member_variable.name});`
+        `this->${member_variable.name} = ${conv_bpfromcpp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
       );
     } else {
       contextConstructor += addOneLineFunc(
-        `this->${member_variable.name} = ${STR_AGORA_DATA}.${member_variable.name};`
+        `this->${member_variable.name} = ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name};`
       );
     }
 
     // **** CreateRawData Context ****
-    if (bpType.bpConvWayType_CppFromBP) {
+    if (conv_cppfrombp.convNeeded) {
       if (
-        bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.Basic ||
-        bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.NewFreeData
+        conv_cppfrombp.convFuncType === ConversionWayType.Basic ||
+        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData
       ) {
         // Ex. AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
         contextCreateRawData += addOneLineFunc(
-          `${STR_AGORA_DATA}.${member_variable.name} = ${bpType.bpNameConvFunc_CppFromBP}(${member_variable.name});`
+          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${conv_cppfrombp.convFunc}(${member_variable.name});`
         );
       } else if (
-        bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.SetData
+        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_SetData
       ) {
         // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
         // TBD(WinterPu): need to check the length of the variable
         contextCreateRawData += addOneLineFunc(
-          `${bpType.bpNameConvFunc_CppFromBP}}(${STR_AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, XXXFUABT_UserInfo_UserAccountLength);`
+          `${conv_cppfrombp.convFunc}}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, XXXFUABT_UserInfo_UserAccountLength);`
         );
-      } else {
+      } else if (
+        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NeedCallConvFunc
+      ) {
+        // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
+        contextCreateRawData += addOneLineFunc(
+          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${conv_cppfrombp.convFunc}();`
+        );
+      }
+      else {
         if (mapCpp2BPStruct.has(type.name)) {
           // Is UStruct
           // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
           contextCreateRawData += addOneLineFunc(
-            `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${STR_CREATE_RAW_DATA}();`
+            `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${AGORA_MUSTACHE_DATA.CREATE_RAW_DATA}();`
           );
         } else {
           // AgoraData.{{name}} = {{name}};
           contextCreateRawData += addOneLineFunc(
-            `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
+            `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
           );
         }
       }
     } else {
       contextCreateRawData += addOneLineFunc(
-        `${STR_AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
+        `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
       );
     }
 
     // **** FreeRawData Context ****
     let tmpContextFreeRawData = '';
-    if (bpType.bpConvWayType_CppFromBP === ConvWayType_CppFromBP.NewFreeData) {
+    if (conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData) {
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
       tmpContextFreeRawData += addOneLineFunc(
-        `${bpType.bpNameConvFuncAdditional_CppFromBP}(${STR_AGORA_DATA}.${member_variable.name});`
+        `${conv_cppfrombp.convFuncAdditional01}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
+      );
+    }
+    else if (conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NeedCallConvFunc) {
+      // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
+      tmpContextFreeRawData += addOneLineFunc(
+        `${member_variable.name}.${conv_cppfrombp.convFuncAdditional01}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
       );
     }
 
     if (mapCpp2BPStruct.has(type.name)) {
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
       tmpContextFreeRawData += addOneLineFunc(
-        `${member_variable.name}.${STR_FREE_RAW_DATA}(${STR_AGORA_DATA}.${member_variable.name});`
+        `${member_variable.name}.${AGORA_MUSTACHE_DATA.FREE_RAW_DATA}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
       );
     } else {
     }
@@ -329,7 +348,7 @@ export function genContext_BPStruct(
   });
 
   // Ex. return AgoraData;
-  contextCreateRawData += addOneLineFunc(`return ${STR_AGORA_DATA};`);
+  contextCreateRawData += addOneLineFunc(`return ${AGORA_MUSTACHE_DATA.AGORA_DATA};`);
 
   const result = new BPStructContext();
   result.contextConstructor = contextConstructor;
@@ -339,12 +358,70 @@ export function genContext_BPStruct(
   return result;
 }
 
+function genContext_ConvDeclType(param_name : string, param_conv_prefix : string , default_conv: BPTypeHelper.CppBPConversionData, data: BPTypeHelper.ConvDeclTypeData): BPParamContext {
+  let param = new BPParamContext();
+
+  param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} = ${param_name};`;
+  param.contextUsage = `${param_conv_prefix}${param_name}`;
+  param.contextFree = '';
+
+  if (data.enableSpecialRule) {
+    // decl
+    const str_dereference = data.needDereference ? '*' : '';
+    const str_conv_func = data.convFunc ? data.convFunc : '';
+
+    // usage
+    const str_usage_postfix = data.useMemberFunc ? data.useMemberFunc : '';
+
+    param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} = ${str_conv_func}(${str_dereference}${param_name});`;
+
+    param.contextUsage = `${param_conv_prefix}${param_name}${str_usage_postfix}`;
+    param.contextFree = '';
+  }
+  else if (default_conv.convNeeded){
+
+    const str_conv_func = default_conv.convFunc ? default_conv.convFunc : '';
+
+    const str_free_func = default_conv.convFuncAdditional01 && default_conv.convFuncAdditional01 !== '' ? default_conv.convFuncAdditional01 : '';
+    param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} = ${str_conv_func}(${param_name});`;
+
+
+    param.contextUsage = `${param_conv_prefix}${param_name}`;
+
+
+    if(str_free_func && str_free_func !== ''){
+      if(default_conv.convFuncType === ConversionWayType.CppFromBP_NewFreeData){
+        param.contextFree = `${str_free_func}(${param_name});`;
+      }
+      else if(default_conv.convFuncType === ConversionWayType.CppFromBP_NeedCallConvFunc){
+        param.contextFree = `${param_name}.${str_free_func}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${param_name});`;
+      }
+    }
+
+  }
+
+  return param;
+}
+
 export function genContext_BPMethod(
   node_method: MemberFunction,
   prefix_indent: string = ''
 ): BPMethodContext {
-  let contextParamsCppFromBP = '';
-  let contextParamsBPFromCpp = '';
+  // Example:
+
+  // decl: std::string a = TCHAR_TO_UTF8(*b);
+  // usage: a.c_str();
+  // free: none
+  let contextParam_BPFromCpp = new BPParamContext();
+
+
+  // decl: FString a = UTF8_TO_TCHAR(b);
+  // usage: a;
+  // free: none
+  let contextParam_CppFromBP = new BPParamContext();
+
+  let result = new BPMethodContext();
+
 
   const addOneLineFunc = function (line: string): string {
     return Tools.addOneLine_Format(line, prefix_indent);
@@ -353,19 +430,46 @@ export function genContext_BPMethod(
   node_method.parameters.map((param, index) => {
     const type = param.type;
     const bptype = BPTypeHelper.convertToBPType(param.type);
+    
+    const default_conv_bpfromcpp = bptype.bpConv_BPFromCpp;
+    const default_conv_cppfrombp = bptype.bpConv_CppFromBP;
 
-    contextParamsCppFromBP += addOneLineFunc(
-      `${type.source} Raw_${param.name} = ${param.name};`
+    contextParam_BPFromCpp = genContext_ConvDeclType(param.name, AGORA_MUSTACHE_DATA.UEBP_, default_conv_bpfromcpp, bptype.bpConvDeclType_BPFromCpp);
+
+    contextParam_CppFromBP = genContext_ConvDeclType(param.name, AGORA_MUSTACHE_DATA.RAW_, default_conv_cppfrombp, bptype.bpConvDeclType_CppFromBP);
+    
+    // Usage
+    const param_delimiter = index == node_method.parameters.length - 1 ? '' : ', ';
+
+    // BP From Cpp
+    // Decl
+    result.contextParam_BPFromCpp.contextDecl += addOneLineFunc(
+      contextParam_BPFromCpp.contextDecl
     );
 
-    contextParamsBPFromCpp += addOneLineFunc(
-      `${bptype.source} UEBP_${param.name} = ${param.name};`
+    // Usage
+    result.contextParam_BPFromCpp.contextUsage += `${contextParam_BPFromCpp.contextUsage}${param_delimiter}`;
+
+    // Free
+    result.contextParam_BPFromCpp.contextFree += addOneLineFunc(
+      contextParam_BPFromCpp.contextFree
+    );
+
+
+    // Cpp From BP
+    // Decl
+    result.contextParam_CppFromBP.contextDecl += addOneLineFunc(
+      contextParam_CppFromBP.contextDecl
+    );
+
+    // Usage
+    result.contextParam_CppFromBP.contextUsage += `${contextParam_CppFromBP.contextUsage}${param_delimiter}`
+
+    // Free
+    result.contextParam_CppFromBP.contextFree += addOneLineFunc(
+      contextParam_CppFromBP.contextFree
     );
   });
-
-  const result = new BPMethodContext();
-  result.contextParamsCppFromBP = contextParamsCppFromBP;
-  result.contextParamsBPFromCpp = contextParamsBPFromCpp;
 
   return result;
 }

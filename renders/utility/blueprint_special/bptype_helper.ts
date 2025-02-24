@@ -11,32 +11,66 @@ import * as Logger from '../logger';
 import * as Tools from '../tools';
 
 import * as BPHelper from './bp_helper';
+
 import {
   ClazzAddtionalContext,
+  SpecialDeclTypeRule,
   map_bp2cpp_convert_function_name,
   map_bp2cpp_memory_handle,
   map_class_initialization,
+  map_convdecltype_bp2cpp,
+  map_convdecltype_cpp2bp,
   map_cpp2bp_convert_function_name,
   map_cpptype_2_uebptype,
   map_cpptype_default_value,
   map_native_ptr_name,
   map_setdata_function_name,
 } from './bptype_data';
+import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
-export enum ConvWayType_BPFromCpp {
-  // BP = FuncFrom(Cpp);
-  NoNeedConversion, // no need conversion
-  Basic, // need basic conversion method
-  // Example: CreateRawData()
-  NeedCallConvFunc, // need call conversion function
+export class ConvDeclTypeData {
+  convDeclType: string;
+
+  // Special Rule
+  // Example:
+  // std::string a = TCHAR_TO_UTF8(*b);
+  // usage: a.c_str()
+  enableSpecialRule: boolean;
+  convFunc: string;
+  needDereference: boolean;
+  useMemberFunc: string;
+  constructor() {
+    this.convDeclType = '';
+
+    this.enableSpecialRule = false;
+    this.convFunc = '';
+    this.needDereference = false;
+    this.useMemberFunc = '';
+  }
+  toString(): string {
+    return `ConvDeclTypeData {
+      convDeclType: ${this.convDeclType}
+
+      // Special Rule ..... 
+      enableSpecialRule: ${this.enableSpecialRule}
+      convFunc: ${this.convFunc}
+      needDereference: ${this.needDereference}
+      useMemberFunc: ${this.useMemberFunc}
+    }`;
+  }
 }
 
-export enum ConvWayType_CppFromBP {
-  // Cpp = FuncTo(BP);
+export enum ConversionWayType {
   NoNeedConversion, // no need conversion
-  Basic, // need basic conversion method
-  NewFreeData, // need memory allocation
-  SetData, // directly set data
+  Basic, // need call basic conversion method
+
+  // BP = FuncFrom(Cpp);
+
+  // Cpp = FuncTo(BP);
+  CppFromBP_NewFreeData, // need memory allocation
+  CppFromBP_SetData, // directly set data
+  // Example: CreateRawData()
+  CppFromBP_NeedCallConvFunc, // need call conversion function
 }
 
 export class UEBPType {
@@ -45,23 +79,30 @@ export class UEBPType {
   cppTypeNameWithoutNamespace: string;
   cppTypeSourceWithoutNamespace: string;
 
+  // Direct Convert
   // BP
   name: string; // [bpTypeName] type name of blueprint: Ex. FString
   source: string; // [bpTypeSource] type with full qualifier: Ex. const FString &
 
   // bp = FuncFrom(cpp);
-  bpNeedConvFunc_BPFromCpp: boolean;
-  bpConvWayType_BPFromCpp: ConvWayType_BPFromCpp;
-  bpNameConvFunc_BPFromCpp: string;
+  bpConv_BPFromCpp: CppBPConversionData;
+  // bpNeedConvFunc_BPFromCpp: boolean;
+  // bpConvWayType_BPFromCpp: ConvWayType_BPFromCpp;
+  // bpNameConvFunc_BPFromCpp: string;
 
   // cpp = FuncTo(bp);
-  bpNeedConvFunc_CppFromBP: boolean;
-  bpConvWayType_CppFromBP: ConvWayType_CppFromBP;
-  bpNameConvFunc_CppFromBP: string;
-  // Example:
-  // bpNameConvFunc_CppFromBP [NewRawData]
-  // bpNameConvFuncAdditional_CppFromBP: [FreeRawData]
-  bpNameConvFuncAdditional_CppFromBP: string;
+  bpConv_CppFromBP: CppBPConversionData;
+  // bpNeedConvFunc_CppFromBP: boolean;
+  // bpConvWayType_CppFromBP: ConvWayType_CppFromBP;
+  // bpNameConvFunc_CppFromBP: string;
+  // // Example:
+  // // bpNameConvFunc_CppFromBP [NewRawData]
+  // // bpNameConvFuncAdditional_CppFromBP: [FreeRawData]
+  // bpNameConvFuncAdditional_CppFromBP: string;
+
+  // Convert In Impl:
+  bpConvDeclType_BPFromCpp: ConvDeclTypeData;
+  bpConvDeclType_CppFromBP: ConvDeclTypeData;
 
   constructor() {
     this.cppTypeName = '';
@@ -72,14 +113,11 @@ export class UEBPType {
     this.name = '';
     this.source = '';
 
-    this.bpNeedConvFunc_BPFromCpp = false;
-    this.bpConvWayType_BPFromCpp = ConvWayType_BPFromCpp.NoNeedConversion;
-    this.bpNameConvFunc_BPFromCpp = '';
+    this.bpConv_BPFromCpp = new CppBPConversionData();
+    this.bpConv_CppFromBP = new CppBPConversionData();
 
-    this.bpNeedConvFunc_CppFromBP = false;
-    this.bpConvWayType_CppFromBP = ConvWayType_CppFromBP.NoNeedConversion;
-    this.bpNameConvFunc_CppFromBP = '';
-    this.bpNameConvFuncAdditional_CppFromBP = '';
+    this.bpConvDeclType_BPFromCpp = new ConvDeclTypeData();
+    this.bpConvDeclType_CppFromBP = new ConvDeclTypeData();
   }
 
   toString(): string {
@@ -95,28 +133,22 @@ export class UEBPType {
         source: "${this.source}"  // Blueprint type with qualifiers
 
         // Conversion from C++ to BP:
-        bpNeedConvFunc_BPFromCpp: ${this.bpNeedConvFunc_BPFromCpp}
-        bpConvWayType_BPFromCpp: ${
-          ConvWayType_BPFromCpp[this.bpConvWayType_BPFromCpp]
-        }
-        bpNameConvFunc_BPFromCpp: "${this.bpNameConvFunc_BPFromCpp}"
+        bpConv_BPFromCpp: "${this.bpConv_BPFromCpp.toString()}"
 
         // Conversion from BP to C++:
-        bpNeedConvFunc_CppFromBP: ${this.bpNeedConvFunc_CppFromBP}
-        bpConvWayType_CppFromBP: ${
-          ConvWayType_CppFromBP[this.bpConvWayType_CppFromBP]
-        }
-        bpNameConvFunc_CppFromBP: "${this.bpNameConvFunc_CppFromBP}"
-        bpNameConvFuncAdditional_CppFromBP: "${
-          this.bpNameConvFuncAdditional_CppFromBP
-        }"
+        bpConv_CppFromBP: "${this.bpConv_CppFromBP.toString()}"
+
+        // Convert In Impl:
+        bpConvDeclTypeSpecialRule_BPFromCpp: "${this.bpConvDeclType_BPFromCpp.toString()}"
+        bpConvDeclTypeSpecialRule_CppFromBP: "${this.bpConvDeclType_CppFromBP.toString()}"
     }`;
   }
 }
 
-type ConversionWayType = ConvWayType_BPFromCpp | ConvWayType_CppFromBP;
+// Declare the function type
+function genConvDeclType_WithSpecialDeclTypeRule(val: string): ConvDeclTypeData;
 
-class CppBPConversionData {
+export class CppBPConversionData {
   convNeeded: boolean;
   convFuncType: ConversionWayType;
   convFunc: string;
@@ -124,12 +156,19 @@ class CppBPConversionData {
 
   constructor() {
     this.convNeeded = false;
-    this.convFuncType = ConvWayType_BPFromCpp.NoNeedConversion;
+    this.convFuncType = ConversionWayType.NoNeedConversion;
     this.convFunc = '';
     this.convFuncAdditional01 = '';
   }
+  toString(): string {
+    return `CppBPConversionData {
+      convNeeded: ${this.convNeeded}
+      convFuncType: ${this.convFuncType}
+      convFunc: ${this.convFunc}
+      convFuncAdditional01: ${this.convFuncAdditional01}
+    }`;
+  }
 }
-
 function genBPConvertFromRawType(type: SimpleType): CppBPConversionData {
   // bp = Func(cpp);
   let conversion = new CppBPConversionData();
@@ -138,22 +177,18 @@ function genBPConvertFromRawType(type: SimpleType): CppBPConversionData {
   let nodeName = Tools.convertTypeNameToNodeName(type.name);
   let [typeCategory, bpTypeName] = BPHelper.getRegisteredBPType(nodeName);
   if (typeCategory == CXXTYPE.Enumz) {
-    conversion = {
-      convNeeded: true,
-      convFuncType: ConvWayType_BPFromCpp.Basic,
-      convFunc: 'UABTEnum::WrapWithUE',
-      convFuncAdditional01: '',
-    };
+    conversion.convNeeded = true;
+    conversion.convFuncType = ConversionWayType.Basic;
+    conversion.convFunc = AGORA_MUSTACHE_DATA.UABTEnum_WrapWithUE;
+    conversion.convFuncAdditional01 = '';
   }
 
   let convert_function = map_cpp2bp_convert_function_name[type.source];
   if (convert_function) {
-    conversion = {
-      convNeeded: true,
-      convFuncType: ConvWayType_BPFromCpp.Basic,
-      convFunc: convert_function,
-      convFuncAdditional01: '',
-    };
+    conversion.convNeeded = true;
+    conversion.convFuncType = ConversionWayType.Basic;
+    conversion.convFunc = convert_function;
+    conversion.convFuncAdditional01 = '';
   } else {
   }
 
@@ -167,43 +202,43 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
   let nodeName = Tools.convertTypeNameToNodeName(type.name);
   let [typeCategory, bpTypeName] = BPHelper.getRegisteredBPType(nodeName);
   if (typeCategory == CXXTYPE.Enumz) {
-    conversion = {
-      convNeeded: true,
-      convFuncType: ConvWayType_CppFromBP.Basic,
-      convFunc: 'UABTEnum::ToRawValue',
-      convFuncAdditional01: '',
-    };
+    conversion.convNeeded = true;
+    conversion.convFuncType = ConversionWayType.Basic;
+    conversion.convFunc = AGORA_MUSTACHE_DATA.UABTEnum_ToRawValue;
+    conversion.convFuncAdditional01 = '';
+  }
+
+  if (typeCategory === CXXTYPE.Clazz || typeCategory === CXXTYPE.Struct) {
+    conversion.convNeeded = true;
+    conversion.convFuncType = ConversionWayType.CppFromBP_NeedCallConvFunc;
+    conversion.convFunc = AGORA_MUSTACHE_DATA.CREATE_RAW_DATA;
+    conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
   }
 
   let convert_function = map_bp2cpp_convert_function_name[type.source];
   if (convert_function) {
-    conversion = {
-      convNeeded: true,
-      convFuncType: ConvWayType_CppFromBP.Basic,
-      convFunc: convert_function,
-      convFuncAdditional01: '',
-    };
+    conversion.convNeeded = true;
+    conversion.convFuncType = ConversionWayType.Basic;
+    conversion.convFunc = convert_function;
+    conversion.convFuncAdditional01 = '';
   } else {
     let func_memorys = map_bp2cpp_memory_handle[type.source];
     if (func_memorys) {
-      conversion = {
-        convNeeded: true,
-        convFuncType: ConvWayType_CppFromBP.NewFreeData,
-        convFunc: func_memorys[0], // New Data
-        convFuncAdditional01: func_memorys[1], // Free Data
-      };
+      conversion.convNeeded = true;
+      conversion.convFuncType = ConversionWayType.CppFromBP_NewFreeData;
+      conversion.convFunc = func_memorys[0]; // New Data
+      conversion.convFuncAdditional01 = func_memorys[1]; // Free Data
     } else {
       let set_data_func = map_setdata_function_name[type.source];
       if (set_data_func) {
-        conversion = {
-          convNeeded: true,
-          convFuncType: ConvWayType_CppFromBP.SetData,
-          convFunc: set_data_func,
-          convFuncAdditional01: '',
-        };
+        conversion.convNeeded = true;
+        conversion.convFuncType = ConversionWayType.CppFromBP_SetData;
+        conversion.convFunc = set_data_func;
+        conversion.convFuncAdditional01 = '';
       }
     }
   }
+
   return conversion;
 }
 
@@ -362,19 +397,20 @@ export function convertToBPType(
   result.source = tmpTypeSource;
 
   // **** Fourth Step: Get Conversion Function ****
-  const convBPFromCpp = genBPConvertFromRawType(type);
-  const convBPToCpp = genBPConvertToRawType(type);
+  result.bpConv_BPFromCpp = genBPConvertFromRawType(type);
+  result.bpConv_CppFromBP = genBPConvertToRawType(type);
 
-  result.bpNeedConvFunc_BPFromCpp = convBPFromCpp.convNeeded;
-  result.bpConvWayType_BPFromCpp =
-    convBPFromCpp.convFuncType as ConvWayType_BPFromCpp;
-  result.bpNameConvFunc_BPFromCpp = convBPFromCpp.convFunc;
-
-  result.bpNeedConvFunc_CppFromBP = convBPToCpp.convNeeded;
-  result.bpConvWayType_CppFromBP =
-    convBPToCpp.convFuncType as ConvWayType_CppFromBP;
-  result.bpNameConvFunc_CppFromBP = convBPToCpp.convFunc;
-  result.bpNameConvFuncAdditional_CppFromBP = convBPToCpp.convFuncAdditional01;
+  // **** Fifth Step: Get Conversion Decl Type ****
+  const originalConvDeclType_BPFromCpp =
+    map_convdecltype_cpp2bp[type.source] ?? result.name;
+  result.bpConvDeclType_BPFromCpp = genConvDeclType_WithSpecialDeclTypeRule(
+    originalConvDeclType_BPFromCpp
+  );
+  const originalConvDeclType_CppFromBP =
+    map_convdecltype_bp2cpp[type.source] ?? type.name;
+  result.bpConvDeclType_CppFromBP = genConvDeclType_WithSpecialDeclTypeRule(
+    originalConvDeclType_CppFromBP
+  );
 
   return result;
 }
@@ -400,7 +436,7 @@ export function getBPMemberVariableDefaultValue(
     let enum_val = BPHelper.getMapCpp2BPEnum().get(cpp_type_without_namespace);
     if (enum_val) {
       valDefaultVal =
-        'UABT::WrapWithUE(' +
+        `${AGORA_MUSTACHE_DATA.UABTEnum_WrapWithUE}(` +
         dictStructInitializer[member_variable.name].values[0] +
         ')';
       bNeedDefaultValue = true;
@@ -438,7 +474,7 @@ export function getBPMemberVariableDefaultValue(
     );
     let enum_val = BPHelper.getMapCpp2BPEnum().get(cpp_type_without_namespace);
     if (enum_val) {
-      valDefaultVal = 'UABT::WrapWithUE((int)0)';
+      valDefaultVal = `(${AGORA_MUSTACHE_DATA.UABTEnum_WrapWithUE}((int)0))`;
       bNeedDefaultValue = true;
     }
   }
@@ -489,3 +525,44 @@ export type ClazzAddtionalContext = ClazzAddtionalContext;
 export function getContext_BPClass(clazz_name: string): ClazzAddtionalContext {
   return map_class_initialization[clazz_name];
 }
+
+// ********** Special Decl Type Rule **********
+
+function checkNeedApplySpecialDeclTypeRule(val: string): boolean {
+  return Object.values(SpecialDeclTypeRule).includes(
+    val as SpecialDeclTypeRule
+  );
+}
+
+function genConvDeclType_WithSpecialDeclTypeRule(
+  val: string
+): ConvDeclTypeData {
+  let result = new ConvDeclTypeData();
+  result.convDeclType = val;
+  if (!checkNeedApplySpecialDeclTypeRule(val)) {
+    return result;
+  }
+  const rule = val as SpecialDeclTypeRule;
+  if (rule === SpecialDeclTypeRule.RULE_STR_BP2CPP) {
+    // decl: std::string a = TCHAR_TO_UTF8(*b);
+    // usage: a.c_str();
+    // free: none
+    result.enableSpecialRule = true;
+    result.convDeclType = 'std::string';
+    result.convFunc = 'TCHAR_TO_UTF8';
+    result.needDereference = true;
+    result.useMemberFunc = '.c_str()';
+  } else if (rule === SpecialDeclTypeRule.RULE_STR_CPP2BP) {
+    // decl: FString a = UTF8_TO_TCHAR(b);
+    // usage: a;
+    // free: none
+    result.enableSpecialRule = true;
+    result.convDeclType = 'FString';
+    result.convFunc = 'UTF8_TO_TCHAR';
+    result.needDereference = false;
+    result.useMemberFunc = '';
+  }
+  return result;
+}
+
+// ********** End of Special Decl Type Rule **********

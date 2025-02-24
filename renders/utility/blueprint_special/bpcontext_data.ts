@@ -10,12 +10,23 @@ export class BPStructContext {
   }
 }
 
-export class BPMethodContext {
-  contextParamsCppFromBP = '';
-  contextParamsBPFromCpp = '';
+export class BPParamContext{
+  contextDecl = '';
+  contextUsage = '';
+  contextFree = '';
 
   constructor() {
-    this.contextParamsCppFromBP = '';
-    this.contextParamsBPFromCpp = '';
+    this.contextDecl = '';
+    this.contextUsage = '';
+    this.contextFree = '';
+  }
+}
+
+export class BPMethodContext {
+  contextParam_CppFromBP = new BPParamContext();
+  contextParam_BPFromCpp = new BPParamContext();
+  constructor() {
+    this.contextParam_CppFromBP = new BPParamContext();
+    this.contextParam_BPFromCpp = new BPParamContext();
   }
 }

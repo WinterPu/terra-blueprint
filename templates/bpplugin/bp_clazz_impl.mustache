@@ -4,10 +4,12 @@
   {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
       // Convert UEBP to CppType
-{{{user_data.bpContextParamsCppFromBP}}}
+{{{user_data.bpContextParamsDecl_CppFromBP}}}
       // Call Native Method
       
-      auto ret = {{{user_data.bpNativePtr}}}->{{user_data.bpMethodName}}({{#parameters}}Raw_{{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+      auto ret = {{{user_data.bpNativePtr}}}->{{name}}({{{user_data.bpContextParamsUsage_CppFromBP}}});
+
+{{{user_data.bpContextParamsFree_CppFromBP}}}
       return ret;
   }
   
