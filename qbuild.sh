@@ -15,6 +15,10 @@ PROJECT_ROOT=$(realpath ${MY_PATH})
 #     --config ${MY_PATH}/config/types_configs.yaml \
 #     --output-dir=${PROJECT_ROOT}/packages/@iris/rtc/generate \
 
+rm -rf ${PROJECT_ROOT}/packages/cpp
+rm -rf ${PROJECT_ROOT}/packages/blueprint
+mkdir -p ${PROJECT_ROOT}/packages/cpp
+mkdir -p ${PROJECT_ROOT}/packages/blueprint
 
 ## Cpp Generation
 npm exec terra -- run \
