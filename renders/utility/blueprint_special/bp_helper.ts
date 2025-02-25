@@ -1,5 +1,6 @@
 import {
   CXXTYPE,
+  CXXTerraNode,
   Clazz,
   MemberFunction,
   MemberVariable,
@@ -125,6 +126,16 @@ export function registerBPNameForAgora_Enum(
   mapCpp2BPEnum.set(enum_name, bp_name);
 }
 
+export function registerBPNameForSelfDefinedType() {
+  const map_conv_cpp2bp = BPTypeHelper.getConvMap_CppToBP();
+  for (const [key_cpp, value_bp] of Object.entries(map_conv_cpp2bp)) {
+    // Optional Value
+    if (Tools.IsOptionalUABTType(value_bp)) {
+      mapCpp2BPStruct.set(key_cpp, value_bp);
+    }
+  }
+}
+
 export function genBPNameForAgora_Class(clazz_name: string): string {
   // legency issue
   // Because the design previously removed the leading 'I'.
@@ -142,7 +153,16 @@ export function genBPNameForAgora_Struct(struct_name: string): string {
 export function genBPNameForAgora_Enum(enum_name: string): string {
   return AGORA_MUSTACHE_DATA.UEBP_PREFIX_ENUM + enum_name;
 }
-
+export function getRegisteredBPSearchKey(node: CXXTerraNode): string {
+  let search_key = node.name ?? '';
+  if (node.__TYPE === CXXTYPE.SimpleType) {
+    if (search_key.includes('Optional')) {
+      search_key = node.source;
+    }
+    search_key = Tools.convertTypeNameToNodeName(search_key);
+  }
+  return search_key;
+}
 export function getRegisteredBPType(node_name: string): [CXXTYPE, string] {
   let typeCategory = CXXTYPE.Unknown;
   let bpTypeName = node_name;
@@ -276,6 +296,14 @@ export function genContext_BPStruct(
         contextCreateRawData += addOneLineFunc(
           `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${conv_cppfrombp.convFunc}();`
         );
+      } else if (
+        conv_cppfrombp.convFuncType ===
+        ConversionWayType.CppFromBP_CreateFreeOptData
+      ) {
+        // Ex. AgoraData.{{name}} = {{name}}.CreateRawOptData();
+        contextCreateRawData += addOneLineFunc(
+          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA}();`
+        );
       } else {
         if (mapCpp2BPStruct.has(type.name)) {
           // Is UStruct
@@ -312,6 +340,14 @@ export function genContext_BPStruct(
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
       tmpContextFreeRawData += addOneLineFunc(
         `${member_variable.name}.${conv_cppfrombp.convFuncAdditional01}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
+      );
+    } else if (
+      conv_cppfrombp.convFuncType ===
+      ConversionWayType.CppFromBP_CreateFreeOptData
+    ) {
+      // Ex. FUABT_Opt_bool::FreeRawOptData(AgoraData.{{name}});
+      tmpContextFreeRawData += addOneLineFunc(
+        `${bpType.name}::${AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
       );
     }
 
@@ -390,7 +426,16 @@ function genContext_ConvDeclType(
       default_conv.convFuncAdditional01 !== ''
         ? default_conv.convFuncAdditional01
         : '';
-    param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} = ${str_conv_func}(${param_name});`;
+    if (
+      default_conv.convFuncType ===
+        ConversionWayType.CppFromBP_NeedCallConvFunc ||
+      default_conv.convFuncType ===
+        ConversionWayType.CppFromBP_CreateFreeOptData
+    ) {
+      param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} =${param_name}.${str_conv_func}();`;
+    } else {
+      param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} = ${str_conv_func}(${param_name});`;
+    }
 
     param.contextUsage = `${param_conv_prefix}${param_name}`;
 
@@ -404,6 +449,11 @@ function genContext_ConvDeclType(
         ConversionWayType.CppFromBP_NeedCallConvFunc
       ) {
         param.contextFree = `${param_name}.${str_free_func}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${param_name});`;
+      } else if (
+        default_conv.convFuncType ===
+        ConversionWayType.CppFromBP_CreateFreeOptData
+      ) {
+        param.contextFree = `${default_conv.bpTypeName}::${str_free_func}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${param_name});`;
       }
     }
   }

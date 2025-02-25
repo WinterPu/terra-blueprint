@@ -68,6 +68,9 @@ export function preProcessNode(cxxfiles: CXXFile[]) {
       }
     });
   });
+
+  // register some type you defined in conversion map
+  BPHelper.registerBPNameForSelfDefinedType();
 }
 
 export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[];
@@ -322,9 +325,9 @@ export function genGeneralTerraData(
   view = view.filter((cxxfile) => {
     return (
       cxxfile.nodes.filter((node) => {
-        const [typeCategoryName, valBPNodeName] = BPHelper.getRegisteredBPType(
-          node.name
-        );
+        const key_registeredsource = BPHelper.getRegisteredBPSearchKey(node);
+        const [typeCategoryName, valBPNodeName] =
+          BPHelper.getRegisteredBPType(key_registeredsource);
         const terraNodeUserData: CustomUserData.TerraNodeUserData = {
           isStruct: node.__TYPE === CXXTYPE.Struct,
           isEnumz: node.__TYPE === CXXTYPE.Enumz,

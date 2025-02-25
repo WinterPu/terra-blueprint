@@ -28,6 +28,10 @@ import {
 } from './bptype_data';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
+export function getConvMap_CppToBP() {
+  return map_cpptype_2_uebptype;
+}
+
 export class ConvDeclTypeData {
   convDeclType: string;
 
@@ -69,6 +73,7 @@ export enum ConversionWayType {
   // Cpp = FuncTo(BP);
   CppFromBP_NewFreeData, // need memory allocation
   CppFromBP_SetData, // directly set data
+  CppFromBP_CreateFreeOptData, // need memory allocation
   // Example: CreateRawData()
   CppFromBP_NeedCallConvFunc, // need call conversion function
 }
@@ -145,20 +150,23 @@ export class UEBPType {
   }
 }
 
-// Declare the function type
-function genConvDeclType_WithSpecialDeclTypeRule(val: string): ConvDeclTypeData;
+// No need to declare first
+// // Declare the function type
+// function genConvDeclType_WithSpecialDeclTypeRule(val: string): ConvDeclTypeData;
 
 export class CppBPConversionData {
   convNeeded: boolean;
   convFuncType: ConversionWayType;
   convFunc: string;
   convFuncAdditional01: string; // Ex. free data conv function
+  bpTypeName: string;
 
   constructor() {
     this.convNeeded = false;
     this.convFuncType = ConversionWayType.NoNeedConversion;
     this.convFunc = '';
     this.convFuncAdditional01 = '';
+    this.bpTypeName = '';
   }
   toString(): string {
     return `CppBPConversionData {
@@ -166,6 +174,7 @@ export class CppBPConversionData {
       convFuncType: ${this.convFuncType}
       convFunc: ${this.convFunc}
       convFuncAdditional01: ${this.convFuncAdditional01}
+      bpTypeName: ${this.bpTypeName}
     }`;
   }
 }
@@ -174,13 +183,15 @@ function genBPConvertFromRawType(type: SimpleType): CppBPConversionData {
   let conversion = new CppBPConversionData();
 
   // Enum
-  let nodeName = Tools.convertTypeNameToNodeName(type.name);
-  let [typeCategory, bpTypeName] = BPHelper.getRegisteredBPType(nodeName);
+  const key_registeredsource = BPHelper.getRegisteredBPSearchKey(type);
+  let [typeCategory, bpTypeName] =
+    BPHelper.getRegisteredBPType(key_registeredsource);
   if (typeCategory == CXXTYPE.Enumz) {
     conversion.convNeeded = true;
     conversion.convFuncType = ConversionWayType.Basic;
     conversion.convFunc = AGORA_MUSTACHE_DATA.UABTEnum_WrapWithUE;
     conversion.convFuncAdditional01 = '';
+    conversion.bpTypeName = bpTypeName;
   }
 
   let convert_function = map_cpp2bp_convert_function_name[type.source];
@@ -189,6 +200,7 @@ function genBPConvertFromRawType(type: SimpleType): CppBPConversionData {
     conversion.convFuncType = ConversionWayType.Basic;
     conversion.convFunc = convert_function;
     conversion.convFuncAdditional01 = '';
+    conversion.bpTypeName = bpTypeName;
   } else {
   }
 
@@ -199,20 +211,30 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
   // cpp = Func(bp);
   let conversion = new CppBPConversionData();
   // UEnum
-  let nodeName = Tools.convertTypeNameToNodeName(type.name);
-  let [typeCategory, bpTypeName] = BPHelper.getRegisteredBPType(nodeName);
+  const key_registeredsource = BPHelper.getRegisteredBPSearchKey(type);
+  let [typeCategory, bpTypeName] =
+    BPHelper.getRegisteredBPType(key_registeredsource);
   if (typeCategory == CXXTYPE.Enumz) {
     conversion.convNeeded = true;
     conversion.convFuncType = ConversionWayType.Basic;
     conversion.convFunc = AGORA_MUSTACHE_DATA.UABTEnum_ToRawValue;
     conversion.convFuncAdditional01 = '';
+    conversion.bpTypeName = bpTypeName;
   }
 
   if (typeCategory === CXXTYPE.Clazz || typeCategory === CXXTYPE.Struct) {
-    conversion.convNeeded = true;
-    conversion.convFuncType = ConversionWayType.CppFromBP_NeedCallConvFunc;
-    conversion.convFunc = AGORA_MUSTACHE_DATA.CREATE_RAW_DATA;
-    conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
+    if (Tools.IsOptionalUABTType(bpTypeName)) {
+      conversion.convNeeded = true;
+      conversion.convFuncType = ConversionWayType.CppFromBP_CreateFreeOptData;
+      conversion.convFunc = AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA;
+      conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA;
+    } else {
+      conversion.convNeeded = true;
+      conversion.convFuncType = ConversionWayType.CppFromBP_NeedCallConvFunc;
+      conversion.convFunc = AGORA_MUSTACHE_DATA.CREATE_RAW_DATA;
+      conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
+    }
+    conversion.bpTypeName = bpTypeName;
   }
 
   let convert_function = map_bp2cpp_convert_function_name[type.source];
@@ -345,8 +367,9 @@ export function convertToBPType(
     // type.name has namespace
     // TBD(WinterPu):
     // 1. is it possible to have namespace in the middle[ex. Optional<agora::rtc::RtcConnection>]
-    let nodeName = Tools.convertTypeNameToNodeName(type.name);
-    let [typeCategory, bpTypeNameTmp] = BPHelper.getRegisteredBPType(nodeName);
+    const key_registeredsource = BPHelper.getRegisteredBPSearchKey(type);
+    let [typeCategory, bpTypeNameTmp] =
+      BPHelper.getRegisteredBPType(key_registeredsource);
 
     if (typeCategory != CXXTYPE.Unknown) {
       result.name = bpTypeNameTmp;

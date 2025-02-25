@@ -1,4 +1,6 @@
 import { CXXTerraNode } from '@agoraio-extensions/cxx-parser';
+
+import { AGORA_MUSTACHE_DATA } from './blueprint_special/bptype_mustache_data';
 export function convertTypeNameToNodeName(input: string): string {
   if (!input) return input; // handle undefined
   return removeNamespace(input);
@@ -35,4 +37,8 @@ export function addOneLine_Format(
 
 export function IsNotEmptyStr(str: string): boolean {
   return str !== null && str !== undefined && str.trim() !== '';
+}
+
+export function IsOptionalUABTType(type: string): boolean {
+  return type.startsWith(AGORA_MUSTACHE_DATA.FUABT_OPT_PREFIX);
 }
