@@ -40,6 +40,12 @@ parsers:
       ignoreDefaultConfig: true
       configFilePath: ../parsers/config/blueprint/remove_node_list.ts
 
+  - name: MergeNodeParser
+    package: '@agoraio-extensions/terra_shared_configs'
+    args:
+      configFilePath: ../parsers/config/blueprint/merge_node_list.ts
+      ignoreDefaultConfig: true
+
   - name: ReturnTypeParser
     package: '@agoraio-extensions/terra_shared_configs'
 
