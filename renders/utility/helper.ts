@@ -46,6 +46,8 @@ export function preProcessNode(cxxfiles: CXXFile[]) {
   BPHelper.initMapRegisteredData();
 
   cxxfiles.map((cxxfile: CXXFile) => {
+    const fileName = CppHelper.getFileName(cxxfile);
+    BPHelper.registerBPFileName(fileName, BPHelper.genBPFileName(fileName));
     cxxfile.nodes.map((node) => {
       if (node.__TYPE == CXXTYPE.Clazz) {
         // Only For Clazz
@@ -94,11 +96,12 @@ export function genGeneralTerraData(
 
   //let custom_nodes=
   let view = cxxfiles.map((cxxfile: CXXFile) => {
+    const valFileName = CppHelper.getFileName(cxxfile);
+    const includeFiles = BPHelper.getIncludeFilesForBP(cxxfile);
     const cxxUserData: CustomUserData.CXXFileUserData = {
-      fileName: path.basename(
-        cxxfile.file_path,
-        path.extname(cxxfile.file_path)
-      ),
+      fileName: valFileName,
+      bpFileName: BPHelper.genBPFileName(valFileName),
+      bpIncludeFiles: includeFiles,
     };
     cxxfile.user_data = cxxUserData;
 

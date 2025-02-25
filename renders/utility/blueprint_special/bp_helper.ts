@@ -1,4 +1,7 @@
+import path from 'path';
+
 import {
+  CXXFile,
   CXXTYPE,
   CXXTerraNode,
   Clazz,
@@ -18,10 +21,27 @@ import {
   BPParamContext,
   BPStructContext,
 } from './bpcontext_data';
+
 import { ConversionWayType, UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
+
+export function getIncludeFilesForBP(cxxFile: CXXFile): string[] {
+  let includeFiles: string[] = [];
+  cxxFile.nodes.forEach((node: CXXTerraNode) => {
+    if (node.__TYPE == CXXTYPE.IncludeDirective) {
+      let inc_dir = node.asIncludeDirective();
+      const filename = Tools.extractFileName(inc_dir.include_file_path) ?? '';
+      if (mapFileName2BPName.has(filename)) {
+        const bp_filename = mapFileName2BPName.get(filename) ?? '';
+        const ext_name = path.extname(inc_dir.include_file_path);
+        includeFiles.push(`#include "${bp_filename}${ext_name}"`);
+      }
+    }
+  });
+  return includeFiles;
+}
 
 export function genBPReturnType(return_type: SimpleType): string {
   const bp_type = BPTypeHelper.convertToBPType(return_type);
@@ -83,9 +103,14 @@ export function getBPType(type: SimpleType): UEBPType {
 }
 
 // About BP Name
+const mapFileName2BPName: Map<string, string> = new Map();
 const mapCpp2BPClass: Map<string, string> = new Map();
 const mapCpp2BPStruct: Map<string, string> = new Map();
 const mapCpp2BPEnum: Map<string, string> = new Map();
+
+export function getMapFileName2BPName(): Map<string, string> {
+  return mapFileName2BPName;
+}
 
 export function getMapCpp2BPClass(): Map<string, string> {
   return mapCpp2BPClass;
@@ -103,6 +128,7 @@ export function initMapRegisteredData() {
   mapCpp2BPClass.clear();
   mapCpp2BPStruct.clear();
   mapCpp2BPEnum.clear();
+  mapFileName2BPName.clear();
 }
 
 export function registerBPNameForAgora_Class(
@@ -124,6 +150,10 @@ export function registerBPNameForAgora_Enum(
   bp_name: string
 ) {
   mapCpp2BPEnum.set(enum_name, bp_name);
+}
+
+export function registerBPFileName(file_name: string, bp_filename: string) {
+  mapFileName2BPName.set(file_name, bp_filename);
 }
 
 export function registerBPNameForSelfDefinedType() {
@@ -153,6 +183,15 @@ export function genBPNameForAgora_Struct(struct_name: string): string {
 export function genBPNameForAgora_Enum(enum_name: string): string {
   return AGORA_MUSTACHE_DATA.UEBP_PREFIX_ENUM + enum_name;
 }
+
+export function genBPFileName(file_name: string): string {
+  let res_name = file_name;
+  if (res_name.startsWith('I')) {
+    res_name = res_name.slice(1); // 去掉开头的 I
+  }
+  return AGORA_MUSTACHE_DATA.BPFileName_Prefix + res_name;
+}
+
 export function getRegisteredBPSearchKey(node: CXXTerraNode): string {
   let search_key = node.name ?? '';
   if (node.__TYPE === CXXTYPE.SimpleType) {

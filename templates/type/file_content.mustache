@@ -1,5 +1,19 @@
 // Copyright(c) 2024 Agora.io. All rights reserved.
 
+#pragma once
+
+#include "CoreMinimal.h"
+#include "AgoraPluginInterface.h"
+#include "AgoraHeaderBase.h"
+#include "UtilityAgoraBPuLogger.h"
+#include "UtilityUABTEnumConvertMacro.h"
+
+{{#user_data.bpIncludeFiles}}
+{{{.}}}
+{{/user_data.bpIncludeFiles}}
+
+#include "AgoraBPu{{&user_data.fileName}}.generated.h"
+
 {{#nodes}}
 {{#user_data.isCallback}}
 {{> callback}}

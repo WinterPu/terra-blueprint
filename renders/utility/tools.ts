@@ -1,3 +1,5 @@
+import path from 'path';
+
 import { CXXTerraNode } from '@agoraio-extensions/cxx-parser';
 
 import { AGORA_MUSTACHE_DATA } from './blueprint_special/bptype_mustache_data';
@@ -41,4 +43,8 @@ export function IsNotEmptyStr(str: string): boolean {
 
 export function IsOptionalUABTType(type: string): boolean {
   return type.startsWith(AGORA_MUSTACHE_DATA.FUABT_OPT_PREFIX);
+}
+
+export function extractFileName(file_path: string): string {
+  return path.basename(file_path, path.extname(file_path));
 }

@@ -1,3 +1,5 @@
+import path from 'path';
+
 import {
   CXXFile,
   CXXTYPE,
@@ -14,6 +16,7 @@ import {
 } from '@agoraio-extensions/terra-core';
 import { List, map } from 'lodash';
 
+import * as Tools from './tools';
 export function formatAsCppComment(input: string): string {
   if (input == '' || input == undefined) {
     return '';
@@ -95,4 +98,8 @@ export function genSuffixAttribute(input: string[]): string {
     }
   });
   return str_attribute;
+}
+
+export function getFileName(cxxFile: CXXFile): string {
+  return Tools.extractFileName(cxxFile.file_path);
 }

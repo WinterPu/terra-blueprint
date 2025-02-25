@@ -4,6 +4,10 @@ import { UEBPType } from './blueprint_special/bptype_helper';
 
 export type CXXFileUserData = {
   fileName: string;
+
+  // bp
+  bpFileName: string;
+  bpIncludeFiles: string[];
 };
 
 export type TerraNodeUserData = {

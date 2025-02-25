@@ -51,6 +51,9 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
 
 // type convert functions
 
+// TBD(WinterPu)
+// 1. int64 => agora::rtc::uid_t
+
 export const map_cpp2bp_convert_function_name: { [key: string]: string } = {
   'view_t': 'UABT::FromViewToInt',
   'double': 'UABT::FromDouble',
