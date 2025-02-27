@@ -22,6 +22,7 @@ const list_custom_impl_methods = [
   'setupRemoteVideo',
   'setupLocalVideo',
   'setupRemoteVideoEx',
+  'writeLog',
 ];
 
 export function UESDK_CheckIfApiExcluded(method_name: string): boolean {
