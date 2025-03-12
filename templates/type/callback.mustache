@@ -18,3 +18,45 @@ public:
     
     {{/methods}}
 };
+
+
+// For UE 4.25 UHT Parsing
+class {{name}}ClassWrapper : public {{{user_data.fullTypeWithNamespace}}}{};
+
+{{{user_data.commentCppStyle}}}
+UCLASS()
+class AGORAPLUGIN_API {{user_data.bpNodeName}} ; public UObject, public {{name}}ClassWrapper {
+  GENERATED_BODY()
+public:
+    
+public:
+  {{#methods}}
+{{{user_data.commentCppStyle}}}
+	UPROPERTY(BlueprintAssignable, Category = "Agora|Event")
+  {{user_data.bpCallbackDelegateTypeName}} {{user_data.bpCallbackDelegateVarName}};
+  {{/methods}}
+
+  {{#methods}}
+  {{^user_data.isExcluded}}
+  {{#user_data.hasConditionalDirective}}
+
+  {{{conditional_compilation_directives_infos}}}
+  {{/user_data.hasConditionalDirective}}
+          virtual {{#return_type}}{{{source}}}{{/return_type}} {{name}} ({{#parameters}}{{{type.source}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}}) override;
+  {{#user_data.hasConditionalDirective}}
+  #endif
+
+  {{/user_data.hasConditionalDirective}}
+  {{/user_data.isExcluded}}
+  {{/methods}}
+
+  // You could add multiple executors to the target handler
+	UFUNCTION(BlueprintCallable, Category = "Agora|Event")
+	void AddBlueprintCallbackExecutor(UAgoraBPu{{name}}CBExecutor* Executor);
+
+	UFUNCTION(BlueprintCallable, Category = "Agora|Event")
+	void RemoveAllBlueprintCallbackExecutors();
+
+private:
+	EAgoraBPuEventHandlerType Type = EAgoraBPuEventHandlerType::EventHandler;
+};
