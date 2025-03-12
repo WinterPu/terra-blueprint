@@ -441,23 +441,45 @@ function genContext_ConvDeclType(
 ): BPParamContext {
   let param = new BPParamContext();
 
-  param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} = ${param_name};`;
-  param.contextUsage = `${param_conv_prefix}${param_name}`;
+  let name_conv_var = param_conv_prefix + param_name;
+  param.contextDecl = `${data.convDeclType} ${name_conv_var}= ${param_name};`;
+  param.contextUsage = `${name_conv_var}`;
   param.contextFree = '';
 
+  // default DeclType A = B;
+
+  // [Step 01]: if it has special rule, directly use it
   if (data.enableSpecialRule) {
     // decl
     const str_dereference = data.needDereference ? '*' : '';
     const str_conv_func = data.convFunc ? data.convFunc : '';
 
+    const str_name_param = `${str_dereference}${param_name}`;
+
     // usage
     const str_usage_postfix = data.useMemberFunc ? data.useMemberFunc : '';
 
-    param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} = ${str_conv_func}(${str_dereference}${param_name});`;
+    if (
+      data.specialRuleConvType === ConversionWayType.CppFromBP_NeedCallConvFunc
+    ) {
+      param.contextDecl = `${data.convDeclType} ${name_conv_var} = ${str_conv_func}(${str_name_param});`;
 
-    param.contextUsage = `${param_conv_prefix}${param_name}${str_usage_postfix}`;
-    param.contextFree = '';
+      param.contextUsage = `${name_conv_var}${str_usage_postfix}`;
+      param.contextFree = '';
+    } else if (
+      data.specialRuleConvType === ConversionWayType.CppFromBP_SetData
+    ) {
+      // Example: float[3] a; UABT::SetFloatArray(b,a);
+      const str_num_setdata_size = data.numSetDataSize
+        ? ', ' + data.numSetDataSize
+        : '';
+      param.contextDecl = `${data.convDeclType} ${name_conv_var}; ${str_conv_func}(${str_name_param},${name_conv_var}${str_num_setdata_size});`;
+
+      param.contextUsage = `${name_conv_var}${str_usage_postfix}`;
+      param.contextFree = '';
+    }
   } else if (default_conv.convNeeded) {
+    // [Step 02]: reference its default conv (used in parameters)
     const str_conv_func = default_conv.convFunc ? default_conv.convFunc : '';
 
     const str_free_func =
@@ -471,12 +493,15 @@ function genContext_ConvDeclType(
       default_conv.convFuncType ===
         ConversionWayType.CppFromBP_CreateFreeOptData
     ) {
-      param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} =${param_name}.${str_conv_func}();`;
+      param.contextDecl = `${data.convDeclType} ${name_conv_var} =${param_name}.${str_conv_func}();`;
+    } else if (
+      default_conv.convFuncType === ConversionWayType.CppFromBP_SetData
+    ) {
     } else {
-      param.contextDecl = `${data.convDeclType} ${param_conv_prefix}${param_name} = ${str_conv_func}(${param_name});`;
+      param.contextDecl = `${data.convDeclType} ${name_conv_var} = ${str_conv_func}(${param_name});`;
     }
 
-    param.contextUsage = `${param_conv_prefix}${param_name}`;
+    param.contextUsage = `${name_conv_var}`;
 
     if (str_free_func && str_free_func !== '') {
       if (

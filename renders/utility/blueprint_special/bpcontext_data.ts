@@ -1,3 +1,4 @@
+// This is context data directly using in mustache template
 export class BPStructContext {
   contextConstructor = '';
   contextCreateRawData = '';

@@ -1,3 +1,4 @@
+// This is defined string used in mustache template
 export const AGORA_MUSTACHE_DATA = {
   AGORA_DATA: 'AgoraData',
   CREATE_RAW_DATA: 'CreateRawData',

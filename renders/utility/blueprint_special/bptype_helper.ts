@@ -24,7 +24,10 @@ import {
   map_cpptype_2_uebptype,
   map_cpptype_default_value,
   map_native_ptr_name,
+  map_parse_array_blacklist,
+  map_parse_array_whitelist,
   map_setdata_function_name,
+  regex_parse_array_blacklist,
 } from './bptype_data';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
@@ -40,16 +43,20 @@ export class ConvDeclTypeData {
   // std::string a = TCHAR_TO_UTF8(*b);
   // usage: a.c_str()
   enableSpecialRule: boolean;
+  specialRuleConvType: ConversionWayType;
   convFunc: string;
-  needDereference: boolean;
-  useMemberFunc: string;
+  needDereference: boolean; // as arg: TCHAR_TO_UTF8(*b)
+  useMemberFunc: string; // as a.c_str()
+  numSetDataSize: string; // SetData(a,b,numSetDataSize)
   constructor() {
     this.convDeclType = '';
 
     this.enableSpecialRule = false;
+    this.specialRuleConvType = ConversionWayType.NoNeedConversion;
     this.convFunc = '';
     this.needDereference = false;
     this.useMemberFunc = '';
+    this.numSetDataSize = '';
   }
   toString(): string {
     return `ConvDeclTypeData {
@@ -57,9 +64,11 @@ export class ConvDeclTypeData {
 
       // Special Rule ..... 
       enableSpecialRule: ${this.enableSpecialRule}
+      specialRuleConvType: ${this.specialRuleConvType}
       convFunc: ${this.convFunc}
       needDereference: ${this.needDereference}
       useMemberFunc: ${this.useMemberFunc}
+      numSetDataSize: ${this.numSetDataSize}
     }`;
   }
 }
@@ -266,18 +275,48 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
 
 // TBD(WinterPu) - TArray<char>
 // 函数：检查字符串是否为数组类型，并返回类型名或原始类型
-export function parseArrayType(typeString: string): [boolean, string] {
+//// we use: regex + blacklist + whitelist
+export function parseArrayType(
+  typeSource: string,
+  refBPTypeName: string = 'only_check_if_it_is_an_array'
+): [boolean, string] {
+  // Regex to check
   // 匹配格式为 typeName[n] 或 typeName[] 的字符串
   const regex = /^(.*?)(\[\d+\]|\[\])$/;
-  const match = regex.exec(typeString);
+  const match = regex.exec(typeSource);
+
+  // Black List
+  if (map_parse_array_blacklist[typeSource]) {
+    return [false, typeSource];
+  }
+
+  regex_parse_array_blacklist.forEach((regex) => {
+    if (regex.test(typeSource)) {
+      return [false, typeSource];
+    }
+  });
+
+
+  // White List
+  // TBD(WinterPu):
+  // It would have (const int* list, int listNum)
+  // Should combine them together
+  if (map_parse_array_whitelist[typeSource]) {
+    return [true, map_parse_array_whitelist[typeSource]];
+  }
+
+  // TBD(WinterPu):
+  // you may defined in [map_parse_array_whitelist] and it doesn't match [refBPTypeName]
 
   // 如果匹配成功，返回 true 和类型名
   if (match) {
-    return [true, match[1]]; // match[1] 是去掉数组标记后的类型名
+    // Here, if it is a array, you should use [refBPTypeName]
+    let matched_array_type = 'TArray<' + refBPTypeName + '>';
+    return [true, matched_array_type]; // match[1] 是去掉数组标记后的类型名
   }
 
   // 如果不匹配，返回 false 和原始类型
-  return [false, typeString];
+  return [false, typeSource];
 }
 
 /* 
@@ -388,9 +427,9 @@ export function convertToBPType(
   // is array
   // check if it is a array
   // analyze if it is a array type
-  let [isArray, arrayType] = parseArrayType(type.source);
+  let [isArray, arrayType] = parseArrayType(type.source, result.name);
   if (isArray) {
-    tmpTypeSource = 'TArray<' + arrayType + '>';
+    tmpTypeSource = arrayType;
   }
 
   // is_const  /  isOutput
@@ -424,11 +463,16 @@ export function convertToBPType(
   result.bpConv_CppFromBP = genBPConvertToRawType(type);
 
   // **** Fifth Step: Get Conversion Decl Type ****
+  // some types are different during decl type
+  // default DeclType: is result.name
   const originalConvDeclType_BPFromCpp =
     map_convdecltype_cpp2bp[type.source] ?? result.name;
+
   result.bpConvDeclType_BPFromCpp = genConvDeclType_WithSpecialDeclTypeRule(
     originalConvDeclType_BPFromCpp
   );
+
+  // default DeclType: is type.name
   const originalConvDeclType_CppFromBP =
     map_convdecltype_bp2cpp[type.source] ?? type.name;
   result.bpConvDeclType_CppFromBP = genConvDeclType_WithSpecialDeclTypeRule(
@@ -565,12 +609,15 @@ function genConvDeclType_WithSpecialDeclTypeRule(
   if (!checkNeedApplySpecialDeclTypeRule(val)) {
     return result;
   }
+
+  // Apply Special Rule
+  result.enableSpecialRule = true;
   const rule = val as SpecialDeclTypeRule;
   if (rule === SpecialDeclTypeRule.RULE_STR_BP2CPP) {
     // decl: std::string a = TCHAR_TO_UTF8(*b);
     // usage: a.c_str();
     // free: none
-    result.enableSpecialRule = true;
+    result.specialRuleConvType = ConversionWayType.CppFromBP_NeedCallConvFunc;
     result.convDeclType = 'std::string';
     result.convFunc = 'TCHAR_TO_UTF8';
     result.needDereference = true;
@@ -579,9 +626,28 @@ function genConvDeclType_WithSpecialDeclTypeRule(
     // decl: FString a = UTF8_TO_TCHAR(b);
     // usage: a;
     // free: none
-    result.enableSpecialRule = true;
+    result.specialRuleConvType = ConversionWayType.CppFromBP_NeedCallConvFunc;
     result.convDeclType = 'FString';
     result.convFunc = 'UTF8_TO_TCHAR';
+    result.needDereference = false;
+    result.useMemberFunc = '';
+  } else if (rule === SpecialDeclTypeRule.RULE_FVECTOR_BP2CPP) {
+    // decl: float[3] a; UABT::SetFloatArray(b,a,3);
+    // usage: a;
+    // free: none
+    result.specialRuleConvType = ConversionWayType.CppFromBP_SetData;
+    result.convDeclType = 'float[3]';
+    result.convFunc = 'UABT::SetFloatArray';
+    result.needDereference = false;
+    result.useMemberFunc = '';
+    result.numSetDataSize = '';
+  } else if (rule === SpecialDeclTypeRule.RULE_FVECTOR_CPP2BP) {
+    // decl: FVector a = UABT::FromFloatArray(b);
+    // usage: a;
+    // free: none
+    result.specialRuleConvType = ConversionWayType.CppFromBP_NeedCallConvFunc;
+    result.convDeclType = 'FVector';
+    result.convFunc = 'UABT::FromFloatArray';
     result.needDereference = false;
     result.useMemberFunc = '';
   }

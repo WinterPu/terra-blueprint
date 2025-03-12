@@ -29,6 +29,8 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
   'size_t': 'int64',
   'void*': 'void*',
 
+  'float const[3]': 'FVector',
+
   // ==== agora special =====
 
   // Optional
@@ -152,17 +154,24 @@ export const map_native_ptr_name: { [key: string]: string } = {
 export enum SpecialDeclTypeRule {
   RULE_STR_BP2CPP = 'SPECIAL_DECL_TYPE_RULE_string_bp2cpp', // const char* => std::string
   RULE_STR_CPP2BP = 'SPECIAL_DECL_TYPE_RULE_string_cpp2bp', // std::string => const char*
+
+  RULE_FVECTOR_BP2CPP = 'SPECIAL_DECL_TYPE_RULE_string_bp2cpp_fvector', // float const[3] => FVector
+  RULE_FVECTOR_CPP2BP = 'SPECIAL_DECL_TYPE_RULE_string_cpp2bp_fvector', // FVector => float const[3]
 }
 
 // For declaration type
 export const map_convdecltype_bp2cpp: { [key: string]: string } = {
   'const char*': SpecialDeclTypeRule.RULE_STR_BP2CPP,
   'char const*': SpecialDeclTypeRule.RULE_STR_BP2CPP,
+
+  'float const[3]': SpecialDeclTypeRule.RULE_FVECTOR_BP2CPP,
 };
 
+// key: type source 
 export const map_convdecltype_cpp2bp: { [key: string]: string } = {
   'const char*': SpecialDeclTypeRule.RULE_STR_CPP2BP,
   'char const*': SpecialDeclTypeRule.RULE_STR_CPP2BP,
+  'float const[3]': SpecialDeclTypeRule.RULE_FVECTOR_CPP2BP,
 };
 
 // TBD(WinterPu)
@@ -245,4 +254,24 @@ export const map_class_initialization: {
     }
 `,
   },
+};
+
+///// ========== For Array Parsing ==========
+
+// should exclude
+export const map_parse_array_blacklist: { [key: string]: boolean } = {
+  'char const*': true, // const char* => const FString &
+  'float const[3]': true, // float const[3] => FVector
+};
+
+export const regex_parse_array_blacklist: RegExp[] = [
+  /char\s+const\s*\[\s*\d+\s*\]/g, // char const[n]
+  // 可以添加更多规则
+];
+
+// should do conversion
+// Here, the value should be: TArray<type> without ex. const qualifier
+// they would be added in the latter process
+export const map_parse_array_whitelist: { [key: string]: string } = {
+  'int const*': 'TArray<int>',
 };
