@@ -48,3 +48,8 @@ export function IsOptionalUABTType(type: string): boolean {
 export function extractFileName(file_path: string): string {
   return path.basename(file_path, path.extname(file_path));
 }
+
+export function extractBracketNumber(input: string): string {
+  const match = input.match(/\[(\d+)\]/);
+  return match ? match[1] : '';
+}

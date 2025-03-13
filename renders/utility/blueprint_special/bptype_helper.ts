@@ -27,6 +27,7 @@ import {
   map_parse_array_blacklist,
   map_parse_array_whitelist,
   map_setdata_function_name,
+  regex_cpptype_2_uebptype_blacklist,
   regex_parse_array_blacklist,
 } from './bptype_data';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
@@ -168,6 +169,7 @@ export class CppBPConversionData {
   convFuncType: ConversionWayType;
   convFunc: string;
   convFuncAdditional01: string; // Ex. free data conv function
+  convAdditionalFuncParam01: string; // Ex. SetData(a,b,Size)
   bpTypeName: string;
 
   constructor() {
@@ -175,6 +177,7 @@ export class CppBPConversionData {
     this.convFuncType = ConversionWayType.NoNeedConversion;
     this.convFunc = '';
     this.convFuncAdditional01 = '';
+    this.convAdditionalFuncParam01 = '';
     this.bpTypeName = '';
   }
   toString(): string {
@@ -183,6 +186,7 @@ export class CppBPConversionData {
       convFuncType: ${this.convFuncType}
       convFunc: ${this.convFunc}
       convFuncAdditional01: ${this.convFuncAdditional01}
+      convAdditionalFuncParam01: ${this.convAdditionalFuncParam01}
       bpTypeName: ${this.bpTypeName}
     }`;
   }
@@ -266,6 +270,9 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
         conversion.convFuncType = ConversionWayType.CppFromBP_SetData;
         conversion.convFunc = set_data_func;
         conversion.convFuncAdditional01 = '';
+        conversion.convAdditionalFuncParam01 = Tools.extractBracketNumber(
+          type.source
+        );
       }
     }
   }
@@ -290,12 +297,14 @@ export function parseArrayType(
     return [false, typeSource];
   }
 
-  regex_parse_array_blacklist.forEach((regex) => {
-    if (regex.test(typeSource)) {
-      return [false, typeSource];
-    }
-  });
+  if (typeSource === 'char const[512]') {
+    debugger;
+  }
 
+  // return in ForEach would not stop the loop
+  if (regex_parse_array_blacklist.some((regex) => regex.test(typeSource))) {
+    return [false, typeSource];
+  }
 
   // White List
   // TBD(WinterPu):
@@ -392,6 +401,21 @@ export function convertToBPType(
   } else if (Tools.isNullOrEmpty(tmpTypeName_DirectMappingResult)) {
     tmpTypeName_DirectMappingResult =
       map_cpptype_2_uebptype[Tools.removeNamespace(type.name)];
+  }
+
+  for (const [regex, replacement] of regex_cpptype_2_uebptype_blacklist) {
+    // TBD(WinterPu):
+    // what if one pattern meets multiple regex
+
+    // reset regex lastIndex:
+    // so it would not be affected by previous test
+    regex.lastIndex = 0;
+    if (regex.test(type.source)) {
+      tmpTypeName_DirectMappingResult = replacement;
+    }
+    if (regex.test(Tools.removeNamespace(type.source))) {
+      tmpTypeName_DirectMappingResult = replacement;
+    }
   }
 
   if (!Tools.isNullOrEmpty(tmpTypeName_DirectMappingResult)) {

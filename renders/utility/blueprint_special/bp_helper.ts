@@ -497,6 +497,10 @@ function genContext_ConvDeclType(
     } else if (
       default_conv.convFuncType === ConversionWayType.CppFromBP_SetData
     ) {
+      const str_additional_size = default_conv.convAdditionalFuncParam01
+        ? ', ' + default_conv.convAdditionalFuncParam01
+        : '';
+      param.contextDecl = `${data.convDeclType} ${name_conv_var}; ${str_conv_func}(${param_name},${name_conv_var}${str_additional_size});`;
     } else {
       param.contextDecl = `${data.convDeclType} ${name_conv_var} = ${str_conv_func}(${param_name});`;
     }

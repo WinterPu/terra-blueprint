@@ -51,6 +51,10 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
     'FUABT_Opt_THREAD_PRIORITY_TYPE',
 };
 
+export const regex_cpptype_2_uebptype_blacklist = new Map<RegExp, string>([
+  [/char\s+const\s*\[\s*\d+\s*\]/g, 'FString'], // char const[n]
+]);
+
 // type convert functions
 
 // TBD(WinterPu)
@@ -167,7 +171,7 @@ export const map_convdecltype_bp2cpp: { [key: string]: string } = {
   'float const[3]': SpecialDeclTypeRule.RULE_FVECTOR_BP2CPP,
 };
 
-// key: type source 
+// key: type source
 export const map_convdecltype_cpp2bp: { [key: string]: string } = {
   'const char*': SpecialDeclTypeRule.RULE_STR_CPP2BP,
   'char const*': SpecialDeclTypeRule.RULE_STR_CPP2BP,
