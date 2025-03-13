@@ -297,10 +297,6 @@ export function parseArrayType(
     return [false, typeSource];
   }
 
-  if (typeSource === 'char const[512]') {
-    debugger;
-  }
-
   // return in ForEach would not stop the loop
   if (regex_parse_array_blacklist.some((regex) => regex.test(typeSource))) {
     return [false, typeSource];

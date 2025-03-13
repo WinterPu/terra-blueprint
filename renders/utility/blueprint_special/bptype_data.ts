@@ -52,7 +52,7 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
 };
 
 export const regex_cpptype_2_uebptype_blacklist = new Map<RegExp, string>([
-  [/char\s+const\s*\[\s*\d+\s*\]/g, 'FString'], // char const[n]
+  [/(?:const\s+)?char\s*(?:const\s*)?\[\s*\d+\s*\]/g, 'FString'], // char const[n]
 ]);
 
 // type convert functions
@@ -269,7 +269,7 @@ export const map_parse_array_blacklist: { [key: string]: boolean } = {
 };
 
 export const regex_parse_array_blacklist: RegExp[] = [
-  /char\s+const\s*\[\s*\d+\s*\]/g, // char const[n]
+  /(?:const\s+)?char\s*(?:const\s*)?\[\s*\d+\s*\]/g, // char const[n]
   // 可以添加更多规则
 ];
 
