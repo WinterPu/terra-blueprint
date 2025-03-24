@@ -15,6 +15,7 @@ import * as BPHelper from './bp_helper';
 import {
   ClazzAddtionalContext_,
   SpecialDeclTypeRule,
+  keep_pointer_type_list,
   map_bp2cpp_convert_function_name,
   map_bp2cpp_memory_handle,
   map_class_initialization,
@@ -280,6 +281,20 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
   }
 
   return conversion;
+}
+
+export function parsePointerType(
+  type: SimpleType,
+  refBPTypeName: string = 'only_check_if_it_is_an_array'
+): [boolean, string] {
+  // keep the pointer type, not as array type
+  // Ex. agora::rtc::IScreenCaptureSourceList* => UAgoraBPuScreenCaptureSourceList *
+  const type_source = type.source ?? '';
+  const need_keep = keep_pointer_type_list.includes(type_source);
+  if (need_keep) {
+    return [true, refBPTypeName + ' *'];
+  }
+  return [false, type.source];
 }
 
 // TBD(WinterPu) - TArray<char>
@@ -592,6 +607,13 @@ export function convertToBPType(
     tmpTypeSource = arrayType;
   }
 
+  // is a pointer
+  // should be after parseArrayType
+  let [needKeepPointer, pointerType] = parsePointerType(type, result.name);
+  if (needKeepPointer) {
+    tmpTypeSource = pointerType;
+  }
+
   // is_const  /  isOutput
   // TBD(WinterPu)
   // 1. char* how to handle
@@ -728,11 +750,27 @@ export function getBPMemberVariableDefaultValue(
     let [bIsArray, original_type] = parseArrayType(member_variable.type.source);
     console.log(
       member_variable.type.source,
-      'getBPMemberVariableDefaultValue',
+      'getBPMemberVariableDefaultValue parseArrayType',
       bIsArray,
       original_type
     );
     if (bIsArray) {
+      bNeedDefaultValue = false;
+    }
+  }
+
+  // TBD(WinterPu)
+  // currently, have no idea about this situation.
+  // need to check in the future
+  if (valDefaultVal === undefined) {
+    let [bNeedPointer, pointer_type] = parsePointerType(member_variable.type);
+    console.log(
+      member_variable.type.source,
+      'getBPMemberVariableDefaultValue parsePointerType',
+      bNeedPointer,
+      pointer_type
+    );
+    if (bNeedPointer) {
       bNeedDefaultValue = false;
     }
   }

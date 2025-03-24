@@ -312,3 +312,7 @@ export const not_parse_array_type_for_return_type: string[] = [
   'agora::rtc::MusicChartInfo*',
   'agora::rtc::IScreenCaptureSourceList*',
 ];
+
+export const keep_pointer_type_list: string[] = [
+  'agora::rtc::IScreenCaptureSourceList*',
+];
