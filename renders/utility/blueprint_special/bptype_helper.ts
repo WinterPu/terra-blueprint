@@ -27,6 +27,8 @@ import {
   map_parse_array_blacklist,
   map_parse_array_whitelist,
   map_setdata_function_name,
+  not_parse_array_type_based_on_agora,
+  not_parse_array_type_for_return_type,
   regex_cpptype_2_uebptype_blacklist,
   regex_parse_array_blacklist,
 } from './bptype_data';
@@ -283,14 +285,22 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
 // TBD(WinterPu) - TArray<char>
 // 函数：检查字符串是否为数组类型，并返回类型名或原始类型
 //// we use: regex + blacklist + whitelist
+
+// TBD(WinterPu)
+// to fix: virtual int getCaches(MusicCacheInfo *cacheInfo, int32_t* cacheInfoSize) = 0;
+//  int32_t* cacheInfoSize would be TArray<int>
 export function parseArrayType(
   typeSource: string,
-  refBPTypeName: string = 'only_check_if_it_is_an_array'
+  refBPTypeName: string = 'only_check_if_it_is_an_array',
+  isReturnType?: boolean,
+  options?: AnalysisOptions
 ): [boolean, string] {
-  // Regex to check
-  // 匹配格式为 typeName[n] 或 typeName[] 的字符串
-  const regex = /^(.*?)(\[\d+\]|\[\])$/;
-  const match = regex.exec(typeSource);
+  // // Regex to check
+  // // 匹配格式为 typeName[n] 或 typeName[] 的字符串
+  // const regex = /^(.*?)(\[\d+\]|\[\])$/;
+  // const match = regex.exec(typeSource);
+
+  let basicMatch = analyzeBasicArrayType(typeSource, isReturnType, options);
 
   // Black List
   if (map_parse_array_blacklist[typeSource]) {
@@ -314,7 +324,7 @@ export function parseArrayType(
   // you may defined in [map_parse_array_whitelist] and it doesn't match [refBPTypeName]
 
   // 如果匹配成功，返回 true 和类型名
-  if (match) {
+  if (basicMatch.isArray || basicMatch.isPointer) {
     // Here, if it is a array, you should use [refBPTypeName]
     let matched_array_type = 'TArray<' + refBPTypeName + '>';
     return [true, matched_array_type]; // match[1] 是去掉数组标记后的类型名
@@ -324,6 +334,129 @@ export function parseArrayType(
   return [false, typeSource];
 }
 
+export function analyzeBasicArrayType(
+  typeSource: string,
+  isReturnType?: boolean,
+  options?: AnalysisOptions
+): {
+  isArray: boolean;
+  isPointer: boolean;
+  baseType: string;
+  size?: number;
+  isNamespaced: boolean;
+  isSpecialExempt?: boolean;
+} {
+  // 去掉const关键字和规范化空格
+  let normalizedType = typeSource.replace(/\bconst\b/g, '').trim();
+  normalizedType = normalizedType.replace(/\s+/g, ' ');
+
+  let result = {
+    isArray: false,
+    isPointer: false,
+    baseType: typeSource,
+    size: undefined as number | undefined,
+    isNamespaced: normalizedType.includes('::'),
+    isSpecialExempt: false,
+  };
+
+  // [Exclude] Void
+  if (typeSource.toLowerCase().includes('void')) {
+    result.isSpecialExempt = true;
+    return result;
+  }
+
+  //[Exclude] 检查是否是豁免的特殊类型（包含Observer或EventHandler的类型）
+  for (const rule of not_parse_array_type_based_on_agora) {
+    if (typeSource.toLowerCase().includes(rule)) {
+      result.isSpecialExempt = true;
+      return result;
+    }
+  }
+
+  // [Exclude]
+  if (options?.isAgoraType && isReturnType) {
+    result.isSpecialExempt = true;
+    return result;
+  }
+
+  // [Exclude]
+  if (isReturnType) {
+    if (not_parse_array_type_for_return_type.includes(typeSource)) {
+      result.isSpecialExempt = true;
+      return result;
+    }
+  }
+  // 检查是否是数组类型，例如 T[N]
+  const arrayRegex = /^(.+?)\s*\[(\d+)\]$/;
+  const arrayMatch = normalizedType.match(arrayRegex);
+
+  if (arrayMatch) {
+    result.isArray = true;
+    result.baseType = arrayMatch[1].trim();
+    result.size = parseInt(arrayMatch[2], 10);
+    return result;
+  }
+
+  // 检查是否是指针类型，例如 T*
+  const pointerRegex = /^(.+?)\s*\*$/;
+  const pointerMatch = normalizedType.match(pointerRegex);
+
+  if (pointerMatch) {
+    result.isPointer = true;
+    result.baseType = pointerMatch[1].trim();
+    return result;
+  }
+
+  return result;
+}
+
+// 辅助函数：检查是否是特定类型的指针
+export function isPointerToType(
+  typeSource: string,
+  targetType: string
+): boolean {
+  const analysis = analyzeBasicArrayType(typeSource);
+  // 创建一个不区分大小写、忽略空格的比较
+  const normalizedBaseType = analysis.baseType
+    .replace(/\s+/g, '')
+    .toLowerCase();
+  const normalizedTarget = targetType.replace(/\s+/g, '').toLowerCase();
+
+  return analysis.isPointer && normalizedBaseType.includes(normalizedTarget);
+}
+
+// 检查是否是字符数组
+export function isCharArrayType(typeSource: string): {
+  isArray: boolean;
+  size?: number;
+} {
+  const analysis = analyzeBasicArrayType(typeSource);
+
+  // 是否是固定大小的字符数组
+  if (
+    analysis.isArray &&
+    (analysis.baseType === 'char' || analysis.baseType === 'const char')
+  ) {
+    return { isArray: true, size: analysis.size };
+  }
+
+  // 是否是字符指针
+  if (
+    analysis.isPointer &&
+    (analysis.baseType === 'char' || analysis.baseType === 'const char')
+  ) {
+    return { isArray: false };
+  }
+
+  return { isArray: false };
+}
+
+// 定义一个接口
+export interface AnalysisOptions {
+  methodName?: string;
+  variableName?: string;
+  isAgoraType?: boolean;
+}
 /* 
             "type": {
                 "__TYPE": "SimpleType",
@@ -371,7 +504,9 @@ export function parseArrayType(
 */
 export function convertToBPType(
   type: SimpleType,
-  isOutput?: boolean
+  isOutput?: boolean,
+  isReturnType?: boolean,
+  options?: AnalysisOptions
 ): UEBPType {
   let result = new UEBPType();
   result.cppTypeName = type.name;
@@ -447,7 +582,12 @@ export function convertToBPType(
   // is array
   // check if it is a array
   // analyze if it is a array type
-  let [isArray, arrayType] = parseArrayType(type.source, result.name);
+  let [isArray, arrayType] = parseArrayType(
+    type.source,
+    result.name,
+    isReturnType,
+    options
+  );
   if (isArray) {
     tmpTypeSource = arrayType;
   }

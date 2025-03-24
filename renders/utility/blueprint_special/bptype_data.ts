@@ -258,6 +258,22 @@ export const map_class_initialization: {
     }
 `,
   },
+
+  // MusicChartCollection: {
+  //   Inst: `
+  //   UPROPERTY()
+  //   static UAgoraBPuVideoDeviceManager* MusicChartCollection
+  //   `,
+  //   InitDecl: `
+  //   UFUNCTION(BlueprintCallable,Category = "Agora|IVideoDeviceManager")
+  //   static UAgoraBPuVideoDeviceManager* GetAgoraVideoDeviceManager();
+  //   `,
+  //   InitImpl: `
+
+  //   `,
+  // },
+
+  // MusicCollection: {},
 };
 
 ///// ========== For Array Parsing ==========
@@ -265,6 +281,7 @@ export const map_class_initialization: {
 // should exclude
 export const map_parse_array_blacklist: { [key: string]: boolean } = {
   'char const*': true, // const char* => const FString &
+  'char*': true,
   'float const[3]': true, // float const[3] => FVector
 };
 
@@ -279,3 +296,19 @@ export const regex_parse_array_blacklist: RegExp[] = [
 export const map_parse_array_whitelist: { [key: string]: string } = {
   'int const*': 'TArray<int>',
 };
+
+// Agora Special
+// judge in lower case
+export const not_parse_array_type_based_on_agora: string[] = [
+  'observer',
+  'eventhandler',
+  'audiopcmframesink',
+];
+
+// TBD(WinterPu)
+// Better to use: namespace.class.method
+export const not_parse_array_type_for_return_type: string[] = [
+  'agora::rtc::Music*',
+  'agora::rtc::MusicChartInfo*',
+  'agora::rtc::IScreenCaptureSourceList*',
+];

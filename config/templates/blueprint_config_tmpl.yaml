@@ -48,7 +48,12 @@ parsers:
 
   - name: ReturnTypeParser
     package: '@agoraio-extensions/terra_shared_configs'
+    args:
+      configFilePath: ../parsers/config/blueprint/fixed_return_type_list.ts
+      ignoreDefaultConfig: true
 
+  - name: ExtractCallbackHandler
+    path: ../parsers/extract_callbackhandler_parser.ts
 
 # List of renderer configurations
 renderers:

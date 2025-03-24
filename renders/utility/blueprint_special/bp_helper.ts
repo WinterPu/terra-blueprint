@@ -44,7 +44,17 @@ export function getIncludeFilesForBP(cxxFile: CXXFile): string[] {
 }
 
 export function genBPReturnType(return_type: SimpleType): string {
-  const bp_type = BPTypeHelper.convertToBPType(return_type);
+  let isReturnType = true;
+  let options: BPTypeHelper.AnalysisOptions = {
+    isAgoraType: isAgoraClassType(return_type),
+  };
+
+  const bp_type = BPTypeHelper.convertToBPType(
+    return_type,
+    undefined,
+    isReturnType,
+    options
+  );
   return bp_type.source;
 }
 
@@ -122,6 +132,13 @@ export function getMapCpp2BPStruct(): Map<string, string> {
 
 export function getMapCpp2BPEnum(): Map<string, string> {
   return mapCpp2BPEnum;
+}
+
+export function isAgoraClassType(type: SimpleType): boolean {
+  // TBD(WinterPu):
+  // Custom Header would add namespace ext Ex. agora::rtc::ext::AudioDeviceInfo
+  // Notice: AudioDeviceInfo is defined in custom headers
+  return type.name.toLowerCase().includes('::ext::');
 }
 
 export function initMapRegisteredData() {

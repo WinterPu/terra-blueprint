@@ -27,7 +27,6 @@ module.exports = [
   'agora::rtc::IMediaStreamingSourceObserver',
   'agora::rtc::IAudioDeviceCollection',
   'agora::rtc::IVideoDeviceCollection',
-  'agora::rtc::IScreenCaptureSourceList',
   'agora::rtc::AAudioDeviceManager',
   'agora::rtc::AVideoDeviceManager',
   'agora::rtc::IRtcEngineParameter',
@@ -67,4 +66,15 @@ module.exports = [
   'agora::rtc::ICloudSpatialAudioEngine.getTeammates.uids',
   'agora::rtc::ICloudSpatialAudioEngine.getTeammates.userCount',
   'agora::rtc::ILocalSpatialAudioEngine.initialize.config',
+
+  // remove 
+  // 'agora::rtc::IScreenCaptureSourceList',
+
+  //custom header
+  'agora::rtc::IRtcEngine.getVideoDeviceManager',
+  'agora::rtc::IRtcEngine.getAudioDeviceManager',
+  'agora::rtc::IRtcEngine.getMusicContentCenter',
+  'agora::rtc::IRtcEngine.getMediaEngine',
+  'agora::rtc::IRtcEngine.getLocalSpatialAudioEngine',
+  'agora::rtc::IRtcEngine.getH265Transcoder',
 ];
