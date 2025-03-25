@@ -217,7 +217,7 @@ namespace agora {
 				static inline void SetCharArrayPtr(char* Dst, FString Src, int MaxSize){
 				
 					std::string cstr = TCHAR_TO_UTF8(*(Src));
-					if (cstr.length() + 1 < (MaxSize)) {
+					if (cstr.length() + 1 <= (MaxSize)) {
 						for (int i = 0; i < cstr.length(); i++) {
 							(Dst)[i] = cstr[i];
 						}
@@ -295,7 +295,7 @@ namespace agora {
 					if(Ptr){
 						for (int i = 0; i < Count; i++) {
 							UABT_TYPE ReleaseOperator;
-							ReleaseOperator.FreeRawData(*Ptr);
+							ReleaseOperator.FreeRawData(Ptr[i]);
 						}
 						delete[] Ptr;
 						Ptr = nullptr;
