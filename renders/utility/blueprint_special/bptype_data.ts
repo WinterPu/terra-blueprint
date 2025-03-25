@@ -129,24 +129,6 @@ export const map_cpptype_default_value: { [key: string]: string } = {
   // ==== agora special =====
 };
 
-export const map_native_ptr_name: { [key: string]: string } = {
-  IRtcEngine: 'AgoraUERtcEngine::Get()',
-  IMediaPlayer: 'MediaPlayerInstance',
-  IAudioDeviceManager: 'AudioDeviceManagerInstance',
-  IMediaRecorder: 'MediaRecorderInstance',
-  IMediaStreamingSource: 'MediaStreamingSourceInstance',
-  IMediaEngine: 'MediaEngineInstance',
-  IMediaPlayerSource: 'MediaPlayerSourceInstance',
-  ILocalSpatialAudioEngine: 'LocalSpatialAudioEngineInstance',
-  MusicChartCollection: 'MusicChartCollectionInstance',
-  IH265Transcoder: 'H265TranscoderInstance',
-  IMediaRecorderObserver: 'MediaRecorderObserverInstance',
-  IMediaPlayerObserver: 'MediaPlayerObserverInstance',
-  IMediaPlayerSourceObserver: 'MediaPlayerSourceObserverInstance',
-  ILocalSpatialAudioEngineObserver: 'LocalSpatialAudioEngineObserverInstance',
-  IH265TranscoderObserver: 'H265TranscoderObserverInstance',
-  IVideoFrameMetaInfo: 'VideoFrameMetaInfoInstance',
-};
 
 // TBD(WinterPu)
 // 1. const FString & or FString
@@ -186,6 +168,31 @@ export type ClazzAddtionalContext_ = {
   Inst: string;
   InitDecl: string;
   InitImpl: string;
+};
+
+
+export const map_native_ptr_name: { [key: string]: string } = {
+  IRtcEngine: 'AgoraUERtcEngine::Get()',
+  IMediaPlayer: 'MediaPlayerInstance',
+  IAudioDeviceManager: 'AudioDeviceManagerInstance',
+  IVideoDeviceManager: 'VideoDeviceManagerInstance',
+  IMediaRecorder: 'MediaRecorderInstance',
+  IMediaStreamingSource: 'MediaStreamingSourceInstance',
+  IMediaEngine: 'MediaEngineInstance',
+  IMediaPlayerSource: 'MediaPlayerSourceInstance',
+  ILocalSpatialAudioEngine: 'LocalSpatialAudioEngineInstance',
+  MusicChartCollection: 'MusicChartCollectionInstance',
+  IH265Transcoder: 'H265TranscoderInstance',
+  IMediaRecorderObserver: 'MediaRecorderObserverInstance',
+  IMediaPlayerObserver: 'MediaPlayerObserverInstance',
+  IMediaPlayerSourceObserver: 'MediaPlayerSourceObserverInstance',
+  ILocalSpatialAudioEngineObserver: 'LocalSpatialAudioEngineObserverInstance',
+  IH265TranscoderObserver: 'H265TranscoderObserverInstance',
+  IVideoFrameMetaInfo: 'VideoFrameMetaInfoInstance',
+  IMediaPlayerCacheManager: 'MediaPlayerCacheManagerInstance',
+  MusicCollection: 'MusicCollectionInstance',
+  IMusicContentCenter: 'MusicContentCenterInstance',
+  IScreenCaptureSourceList: 'ScreenCaptureSourceListInstance',
 };
 
 export const map_class_initialization: {
