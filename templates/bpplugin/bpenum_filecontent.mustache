@@ -28,23 +28,57 @@ enum class EUABT_{{name}} : uint8 {
     {{/user_data.isFirst}}
 
 {{/enum_constants}}
-}
+};
 {{/name}}
 
-
-{{user_data.bpGenEnumConversionFunction}}(
-    EUABT_{{name}},
-  	{{user_data.fullTypeWithNamespace}},
+namespace agora{
+    namespace rtc{
+        namespace ue{
+            namespace UABTEnum{
+                inline {{user_data.fullTypeWithNamespace}} ToRawValue(EUABT_{{name}} Val){
+                    {{user_data.fullTypeWithNamespace}} Result;
+                    switch(Val){
     {{#enum_constants}}
-    {{#user_data.isLast}}
-    {{name}}
-    {{/user_data.isLast}}
-    {{^user_data.isLast}}
-    {{name}},
-    {{/user_data.isLast}}
+        case EUABT_{{{parent_name}}}::{{{name}}} : Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}}; break;
     {{/enum_constants}}
-)
 
+    {{#enum_constants}}
+    {{#user_data.isFirst}}
+        default: Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}}; break;
+    {{/user_data.isFirst}}
+    {{/enum_constants}}
+                    }
+                    return Result;
+                }
+            }
+        }
+    }
+}
+
+
+namespace agora{
+    namespace rtc{
+        namespace ue{
+            namespace UABTEnum{
+                inline EUABT_{{name}} WrapWithUE({{user_data.fullTypeWithNamespace}} Val){
+                    EUABT_{{name}} Result;
+                    switch(Val){
+    {{#enum_constants}}
+        case {{user_data.fullTypeWithNamespace}}::{{{name}}} : Result =  EUABT_{{{parent_name}}}::{{{name}}}; break;
+    {{/enum_constants}}
+
+    {{#enum_constants}}
+    {{#user_data.isFirst}}
+        default: Result =  EUABT_{{{parent_name}}}::{{{name}}}; break;
+    {{/user_data.isFirst}}
+    {{/enum_constants}}
+                    }
+                    return Result;
+                }
+            }
+        }
+    }
+}
 
 
 {{/user_data.isEnumz}}

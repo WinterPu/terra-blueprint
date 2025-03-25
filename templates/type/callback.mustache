@@ -25,7 +25,7 @@ class {{name}}ClassWrapper : public {{{user_data.fullTypeWithNamespace}}}{};
 
 {{{user_data.commentCppStyle}}}
 UCLASS()
-class AGORAPLUGIN_API {{user_data.bpNodeName}} ; public UObject, public {{name}}ClassWrapper {
+class AGORAPLUGIN_API {{user_data.bpNodeName}} : public UObject, public {{name}}ClassWrapper {
   GENERATED_BODY()
 public:
     
