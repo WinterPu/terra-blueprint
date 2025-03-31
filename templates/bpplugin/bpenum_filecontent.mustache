@@ -1,8 +1,9 @@
 // Copyright(c) 2024 Agora.io. All rights reserved.
 
+// [Notice] We use if-else rather than switch-case because of some enum entries with the same value
+
 {{#nodes}}
 {{#user_data.isEnumz}}
-
 
 {{{user_data.commentCppStyle}}}
 {{#name}}
@@ -26,7 +27,6 @@ enum class EUABT_{{name}} : uint8 {
             {{name}},
         {{/user_data.isLast}}
     {{/user_data.isFirst}}
-
 {{/enum_constants}}
 };
 {{/name}}
@@ -37,49 +37,31 @@ namespace agora{
             namespace UABTEnum{
                 inline {{user_data.fullTypeWithNamespace}} ToRawValue(EUABT_{{name}} Val){
                     {{user_data.fullTypeWithNamespace}} Result;
-                    switch(Val){
-    {{#enum_constants}}
-        case EUABT_{{{parent_name}}}::{{{name}}} : Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}}; break;
-    {{/enum_constants}}
-
     {{#enum_constants}}
     {{#user_data.isFirst}}
-        default: Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}}; break;
+        if ( Val ==   EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}}; }
+    {{/user_data.isFirst}}
+    {{^user_data.isFirst}}
+        else if ( Val ==  EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}};}
     {{/user_data.isFirst}}
     {{/enum_constants}}
-                    }
                     return Result;
                 }
-            }
-        }
-    }
-}
-
-
-namespace agora{
-    namespace rtc{
-        namespace ue{
-            namespace UABTEnum{
                 inline EUABT_{{name}} WrapWithUE({{user_data.fullTypeWithNamespace}} Val){
                     EUABT_{{name}} Result;
-                    switch(Val){
-    {{#enum_constants}}
-        case {{user_data.fullTypeWithNamespace}}::{{{name}}} : Result =  EUABT_{{{parent_name}}}::{{{name}}}; break;
-    {{/enum_constants}}
-
     {{#enum_constants}}
     {{#user_data.isFirst}}
-        default: Result =  EUABT_{{{parent_name}}}::{{{name}}}; break;
+        if ( Val == {{user_data.fullTypeWithNamespace}}::{{{name}}} ){ Result = EUABT_{{{parent_name}}}::{{{name}}}; }
+    {{/user_data.isFirst}}
+    {{^user_data.isFirst}}
+        else if ( Val == {{user_data.fullTypeWithNamespace}}::{{{name}}} ){ Result = EUABT_{{{parent_name}}}::{{{name}}};}
     {{/user_data.isFirst}}
     {{/enum_constants}}
-                    }
                     return Result;
                 }
             }
         }
     }
 }
-
-
 {{/user_data.isEnumz}}
 {{/nodes}}
