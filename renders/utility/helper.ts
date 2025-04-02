@@ -145,12 +145,6 @@ export function genGeneralTerraData(
             ),
             hasReturnVal: method.return_type.source.toLowerCase() != 'void',
 
-            macro_scope_start:
-              CppHelper.createCompilationDirectivesContent(method),
-            macro_scope_end: CppHelper.createCompilationDirectivesContent(
-              method,
-              false
-            ),
             commentCppStyle: CppHelper.formatAsCppComment(method.comment),
             suffix_attribute: CppHelper.genSuffixAttribute(method.attributes),
             isFirst: index === 0,
@@ -165,6 +159,13 @@ export function genGeneralTerraData(
             bpReturnType: BPHelper.genBPReturnType(method.return_type),
 
             bpMethodName: BPHelper.genBPMethodName(method.name),
+
+            macro_scope_start:
+              CppHelper.createCompilationDirectivesContent(method),
+            macro_scope_end: CppHelper.createCompilationDirectivesContent(
+              method,
+              false
+            ),
 
             bpIsCallback: bIsCallbackMethod,
             bpCallbackDelegateMacroName: bIsCallbackMethod
@@ -336,7 +337,11 @@ export function genGeneralTerraData(
           isClazz: node.__TYPE === CXXTYPE.Clazz,
 
           commentCppStyle: CppHelper.formatAsCppComment(node.comment),
-
+          macro_scope_start: CppHelper.createCompilationDirectivesContent(node),
+          macro_scope_end: CppHelper.createCompilationDirectivesContent(
+            node,
+            false
+          ),
           bpNodeName: valBPNodeName,
           bpHasRegistered: typeCategoryName !== CXXTYPE.Unknown,
           ...node.user_data,

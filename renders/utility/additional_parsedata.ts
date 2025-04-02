@@ -20,8 +20,11 @@ export type TerraNodeUserData = {
   prefix_name: string;
 
   commentCppStyle: string;
+  macro_scope_start: string;
+  macro_scope_end: string;
 
   // bp
+
   bpNodeName: string;
   bpHasRegistered: boolean; // if the node is class, struct, enum, it would be registered first.
   lenEnumConstants: number;
@@ -50,8 +53,6 @@ export type ClazzMethodUserData = {
   bindingEventExtension: [];
   bindingExtension: [];
 
-  macro_scope_start: string;
-  macro_scope_end: string;
   commentCppStyle: string;
   isFirst: boolean;
   isLast: boolean;
@@ -60,6 +61,8 @@ export type ClazzMethodUserData = {
 
   suffix_attribute: string;
 
+  macro_scope_start: string;
+  macro_scope_end: string;
   // bp
   bpReturnType: string;
   bpMethodName: string;
