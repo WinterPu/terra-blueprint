@@ -1,5 +1,7 @@
 import path from 'path';
 
+import { start } from 'repl';
+
 import {
   CXXFile,
   CXXTYPE,
@@ -75,12 +77,12 @@ export function createCompilationDirectivesContent(
   }
 
   let startIf = directives.join('\n');
+  startIf = startIf === '\n' ? '' : startIf;
   if (isStart) {
     return startIf;
   }
 
-  let endIf = directives.map((it) => '#endif').join('\n');
-
+  let endIf = directives.map((it) => '\n#endif').join('');
   return endIf;
 }
 

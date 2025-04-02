@@ -15,11 +15,13 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
   'unsigned int': 'int64',
 
   // not builtin type
-  'uint8_t': 'Byte',
+  'uint8_t': 'int', // TBD(WinterPu) should be Byte, however Byte may not be supported in UE4.25
   'int32_t': 'int',
   'uint32_t': 'int64',
   'int64_t': 'int64',
   'uint64_t': 'FString',
+  'int16_t': 'int',
+  'uint16_t': 'int',
 
   'agora::rtc::uid_t': 'int64',
 
@@ -27,7 +29,7 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
 
   // [TBD] some types that may have issues"
   'size_t': 'int64',
-  'void*': 'void*',
+  'void*': 'int64',
 
   'float const[3]': 'FVector',
 
@@ -129,7 +131,6 @@ export const map_cpptype_default_value: { [key: string]: string } = {
   // ==== agora special =====
 };
 
-
 // TBD(WinterPu)
 // 1. const FString & or FString
 
@@ -169,7 +170,6 @@ export type ClazzAddtionalContext_ = {
   InitDecl: string;
   InitImpl: string;
 };
-
 
 export const map_native_ptr_name: { [key: string]: string } = {
   IRtcEngine: 'AgoraUERtcEngine::Get()',
@@ -234,7 +234,7 @@ export const map_class_initialization: {
   IVideoDeviceManager: {
     Inst: `
     UPROPERTY()
-    static UAgoraBPuVideoDeviceManager* VideoDeviceManagerInstance
+    static UAgoraBPuVideoDeviceManager* VideoDeviceManagerInstance;
     `,
     InitDecl: `
     UFUNCTION(BlueprintCallable,Category = "Agora|IVideoDeviceManager")
@@ -323,3 +323,16 @@ export const not_parse_array_type_for_return_type: string[] = [
 export const keep_pointer_type_list: string[] = [
   'agora::rtc::IScreenCaptureSourceList*',
 ];
+
+// be special to one case
+export const map_struct_member_variable_default_value: {
+  [key: string]: string;
+} = {
+  /*
+   * (Recommended) 0: Standard bitrate mode.
+   *
+   * In this mode, the video bitrate is twice the base bitrate.
+   */
+  // const int STANDARD_BITRATE = 0;
+  'agora::rtc::ScreenCaptureParameters.bitrate': '0',
+};

@@ -28,6 +28,7 @@ import {
   map_parse_array_blacklist,
   map_parse_array_whitelist,
   map_setdata_function_name,
+  map_struct_member_variable_default_value,
   not_parse_array_type_based_on_agora,
   not_parse_array_type_for_return_type,
   regex_cpptype_2_uebptype_blacklist,
@@ -674,6 +675,13 @@ export function getBPMemberVariableDefaultValue(
   let bNeedDefaultValue = false;
   let valDefaultVal = undefined;
 
+  if (map_struct_member_variable_default_value[member_variable.fullName]) {
+    valDefaultVal =
+      map_struct_member_variable_default_value[member_variable.fullName];
+    bNeedDefaultValue = true;
+    return [bNeedDefaultValue, valDefaultVal];
+  }
+
   // TBD if there is no default constructor
   if (dictStructInitializer[member_variable.name]) {
     bNeedDefaultValue = true;
@@ -723,7 +731,8 @@ export function getBPMemberVariableDefaultValue(
     );
     let enum_val = BPHelper.getMapCpp2BPEnum().get(cpp_type_without_namespace);
     if (enum_val) {
-      valDefaultVal = `(${AGORA_MUSTACHE_DATA.UABTEnum_WrapWithUE}((int)0))`;
+      const byType = member_variable.type.user_data.bpType;
+      valDefaultVal = `static_cast<${byType.name}>(0)`;
       bNeedDefaultValue = true;
     }
   }
