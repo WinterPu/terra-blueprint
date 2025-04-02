@@ -40,10 +40,10 @@ namespace agora{
                     {{{fullName}}} Result;
     {{#enum_constants}}
     {{#user_data.isFirst}}
-        if ( Val == EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{{fullName}}}; }
+        if ( Val == {{{parent.user_data.bpNodeName}}}::{{{name}}} ){ Result = {{{fullName}}}; }
     {{/user_data.isFirst}}
     {{^user_data.isFirst}}
-        else if ( Val == EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{{fullName}}};}
+        else if ( Val == {{{parent.user_data.bpNodeName}}}::{{{name}}} ){ Result = {{{fullName}}};}
     {{/user_data.isFirst}}
     {{/enum_constants}}
                     return Result;
@@ -52,10 +52,10 @@ namespace agora{
                     {{{user_data.bpNodeName}}} Result;
     {{#enum_constants}}
     {{#user_data.isFirst}}
-        if ( Val == {{{fullName}}} ){ Result = EUABT_{{{parent_name}}}::{{{name}}}; }
+        if ( Val == {{{fullName}}} ){ Result = {{{parent.user_data.bpNodeName}}}::{{{name}}}; }
     {{/user_data.isFirst}}
     {{^user_data.isFirst}}
-        else if ( Val == {{{fullName}}} ){ Result = EUABT_{{{parent_name}}}::{{{name}}};}
+        else if ( Val == {{{fullName}}} ){ Result = {{{parent.user_data.bpNodeName}}}::{{{name}}};}
     {{/user_data.isFirst}}
     {{/enum_constants}}
                     return Result;
