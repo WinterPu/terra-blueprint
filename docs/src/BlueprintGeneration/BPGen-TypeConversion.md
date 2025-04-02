@@ -9,6 +9,8 @@
 1. 使用type.name 还是type.source 作为key 带不带 namespace 以及 const 相关的一些东西
 
 
+## Issues
+* UE 425 不认Byte （待验证）
 
 
 
