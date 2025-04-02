@@ -335,8 +335,6 @@ export function genGeneralTerraData(
           isEnumz: node.__TYPE === CXXTYPE.Enumz,
           isClazz: node.__TYPE === CXXTYPE.Clazz,
 
-          fullTypeWithNamespace: CppHelper.getFullTypeNameWithNamespace(node),
-
           commentCppStyle: CppHelper.formatAsCppComment(node.comment),
 
           bpNodeName: valBPNodeName,

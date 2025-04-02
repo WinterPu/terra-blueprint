@@ -19,7 +19,6 @@ export type TerraNodeUserData = {
   hasSupportApi: boolean;
   prefix_name: string;
 
-  fullTypeWithNamespace: string;
   commentCppStyle: string;
 
   // bp

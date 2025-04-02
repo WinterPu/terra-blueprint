@@ -103,11 +103,3 @@ export function genSuffixAttribute(input: string[]): string {
 export function getFileName(cxxFile: CXXFile): string {
   return Tools.extractFileName(cxxFile.file_path);
 }
-
-export function getFullTypeNameWithNamespace(node: CXXTerraNode): string {
-  let namespace = node.namespaces.join('::');
-  if (node.parent_full_scope_name !== '') {
-    namespace = node.parent_full_scope_name;
-  }
-  return namespace + '::' + node.name;
-}

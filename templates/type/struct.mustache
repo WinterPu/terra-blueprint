@@ -2,7 +2,7 @@
 {{{user_data.commentCppStyle}}}
 
 USTRUCT(BlueprintType)
-struct FUABT_{{name}}{
+struct {{{user_data.bpNodeName}}}{
 
 	GENERATED_BODY()
 public:
@@ -13,20 +13,20 @@ public:
   	{{{type.user_data.bpType.name}}} {{name}} {{{user_data.bpFormatDefaultVal}}};
 {{/member_variables}}
 
-	FUABT_{{name}}(){}
-	FUABT_{{name}}(const {{user_data.fullTypeWithNamespace}} & AgoraData){
+	{{{user_data.bpNodeName}}}(){}
+	{{{user_data.bpNodeName}}}(const {{{fullName}}} & AgoraData){
 
 {{{user_data.bpContextConstructor}}}
 
 	}
 
-	{{user_data.fullTypeWithNamespace}} CreateRawData() const {
+	{{{fullName}}} CreateRawData() const {
 
 {{{user_data.bpContextCreateRawData}}}
 
 	}
 
-	void FreeRawData({{user_data.fullTypeWithNamespace}} & AgoraData) const
+	void FreeRawData({{{fullName}}} & AgoraData) const
 	{
 
 {{{user_data.bpContextFreeRawData}}}

@@ -291,7 +291,7 @@ export function genContext_BPStruct(
   };
 
   // Begin
-  // Ex. {{user_data.fullTypeWithNamespace}} AgoraData;
+  // Ex. {{{fullName}}} AgoraData;
   contextCreateRawData += addOneLineFunc(
     `${Tools.generateFullScopeName(node_struct)} ${
       AGORA_MUSTACHE_DATA.AGORA_DATA

@@ -9,7 +9,7 @@
 {{{user_data.commentCppStyle}}}
 {{#name}}
 UENUM(BlueprintType)
-enum class EUABT_{{name}} : uint8 {
+enum class {{{user_data.bpNodeName}}} : uint8 {
 {{#enum_constants}}
 {{{user_data.commentCppStyle}}}
     {{#user_data.isFirst}}
@@ -36,26 +36,26 @@ namespace agora{
     namespace rtc{
         namespace ue{
             namespace UABTEnum{
-                inline {{user_data.fullTypeWithNamespace}} ToRawValue(EUABT_{{name}} Val){
-                    {{user_data.fullTypeWithNamespace}} Result;
+                inline {{{fullName}}} ToRawValue({{{user_data.bpNodeName}}} Val){
+                    {{{fullName}}} Result;
     {{#enum_constants}}
     {{#user_data.isFirst}}
-        if ( Val == EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}}; }
+        if ( Val == EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{{fullName}}}; }
     {{/user_data.isFirst}}
     {{^user_data.isFirst}}
-        else if ( Val == EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}};}
+        else if ( Val == EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{{fullName}}};}
     {{/user_data.isFirst}}
     {{/enum_constants}}
                     return Result;
                 }
-                inline EUABT_{{name}} WrapWithUE({{user_data.fullTypeWithNamespace}} Val){
-                    EUABT_{{name}} Result;
+                inline {{{user_data.bpNodeName}}} WrapWithUE({{{fullName}}} Val){
+                    {{{user_data.bpNodeName}}} Result;
     {{#enum_constants}}
     {{#user_data.isFirst}}
-        if ( Val == {{user_data.fullTypeWithNamespace}}::{{{name}}} ){ Result = EUABT_{{{parent_name}}}::{{{name}}}; }
+        if ( Val == {{{fullName}}} ){ Result = EUABT_{{{parent_name}}}::{{{name}}}; }
     {{/user_data.isFirst}}
     {{^user_data.isFirst}}
-        else if ( Val == {{user_data.fullTypeWithNamespace}}::{{{name}}} ){ Result = EUABT_{{{parent_name}}}::{{{name}}};}
+        else if ( Val == {{{fullName}}} ){ Result = EUABT_{{{parent_name}}}::{{{name}}};}
     {{/user_data.isFirst}}
     {{/enum_constants}}
                     return Result;
