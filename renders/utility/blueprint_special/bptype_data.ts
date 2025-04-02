@@ -287,6 +287,7 @@ export const map_class_initialization: {
 
 // should exclude
 export const map_parse_array_blacklist: { [key: string]: boolean } = {
+  'unsigned char const*': true,
   'char const*': true, // const char* => const FString &
   'char*': true,
   'float const[3]': true, // float const[3] => FVector
@@ -336,3 +337,12 @@ export const map_struct_member_variable_default_value: {
   // const int STANDARD_BITRATE = 0;
   'agora::rtc::ScreenCaptureParameters.bitrate': '0',
 };
+
+// In Struct, the corresponding size count variable to the target member variable
+export const map_struct_member_variable_size_count: { [key: string]: string } =
+  {
+    'agora::rtc::FocalLengthInfagora::rtc::DownlinkNetworkInfo::PeerDownlinkInfo.peer_downlink_info':
+      'total_received_video_count',
+
+    'agora::rtc::ChannelMediaRelayConfiguration.destInfos': 'destCount',
+  };

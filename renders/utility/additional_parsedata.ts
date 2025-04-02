@@ -107,6 +107,7 @@ export type ParameterUserData = {
   defaultValueComment: string; // used in impl: ex. void Func(int a /*1*/)
   // bp
   bpParameterType: string;
+  bpDelegateType: string;
 };
 
 //////// Define Custom UserData

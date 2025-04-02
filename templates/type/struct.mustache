@@ -10,7 +10,7 @@ public:
 {{#member_variables}}
 {{{user_data.commentCppStyle}}}
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Agora|{{parent_name}}")
-  	{{{type.user_data.bpType.name}}} {{name}} {{{user_data.bpFormatDefaultVal}}};
+  	{{{type.user_data.bpType.declType}}} {{name}} {{{user_data.bpFormatDefaultVal}}};
 {{/member_variables}}
 
 	{{{user_data.bpNodeName}}}(){}

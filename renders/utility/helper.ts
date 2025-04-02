@@ -218,6 +218,11 @@ export function genGeneralTerraData(
             let commentDefaultValue =
               valDefaultVal !== '' ? ' /* ' + valDefaultVal + ' */ ' : '';
             valDefaultVal = valDefaultVal !== '' ? ' = ' + valDefaultVal : '';
+
+            const bpType = BPHelper.genBPParameterType(
+              parameter.type,
+              parameter.is_output
+            );
             const parameterUserData: CustomUserData.ParameterUserData = {
               lenParameters: method.parameters.length,
               commentCppStyle: CppHelper.formatAsCppComment(parameter.comment),
@@ -227,10 +232,8 @@ export function genGeneralTerraData(
               defaultValueComment: commentDefaultValue,
 
               // bp
-              bpParameterType: BPHelper.genBPParameterType(
-                parameter.type,
-                parameter.is_output
-              ),
+              bpParameterType: bpType.source,
+              bpDelegateType: bpType.delegateType,
               ...parameter.user_data,
             };
             parameter.user_data = parameterUserData;

@@ -22,6 +22,7 @@ import {
   BPStructContext,
 } from './bpcontext_data';
 
+import { map_struct_member_variable_size_count } from './bptype_data';
 import { ConversionWayType, UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
@@ -61,9 +62,8 @@ export function genBPReturnType(return_type: SimpleType): string {
 export function genBPParameterType(
   return_type: SimpleType,
   is_output?: boolean
-): string {
-  const bp_type = BPTypeHelper.convertToBPType(return_type, is_output);
-  return bp_type.source;
+): UEBPType {
+  return BPTypeHelper.convertToBPType(return_type, is_output);
 }
 
 export function genBPMethodName(method_name: string): string {
@@ -292,14 +292,14 @@ export function genContext_BPStruct(
   // Begin
   // Ex. {{{fullName}}} AgoraData;
   contextCreateRawData += addOneLineFunc(
-    `${Tools.generateFullScopeName(node_struct)} ${
-      AGORA_MUSTACHE_DATA.AGORA_DATA
-    };`
+    `${node_struct.fullName} ${AGORA_MUSTACHE_DATA.AGORA_DATA};`
   );
 
   node_struct.member_variables.map((member_variable, index) => {
     let type = member_variable.type;
+    let struct_full_name = member_variable?.parent?.fullName ?? '';
     let bpType = BPTypeHelper.convertToBPType(type);
+    const var_SizeCount = getBPSizeCount(node_struct, member_variable);
     const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
     const conv_cppfrombp = bpType.bpConv_CppFromBP;
     let macro_scope_start =
@@ -320,9 +320,21 @@ export function genContext_BPStruct(
 
     // **** Constructor Context ****
     if (conv_bpfromcpp.convNeeded) {
-      contextConstructor += addOneLineFunc(
-        `this->${member_variable.name} = ${conv_bpfromcpp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-      );
+      if (
+        conv_bpfromcpp.convFuncType ===
+        ConversionWayType.BPFromCpp_NewFreeArrayData
+      ) {
+        // Ex. UABT::SetBPArrayData<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
+
+        // TBD(WinterPu): about size
+        contextConstructor += addOneLineFunc(
+          `UABT::SetBPArrayData<${struct_full_name}, ${bpType.name}>(this->${member_variable.name}, ${member_variable.name},${var_SizeCount});`
+        );
+      } else {
+        contextConstructor += addOneLineFunc(
+          `this->${member_variable.name} = ${conv_bpfromcpp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
+        );
+      }
     } else {
       contextConstructor += addOneLineFunc(
         `this->${member_variable.name} = ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name};`
@@ -340,12 +352,20 @@ export function genContext_BPStruct(
           `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${conv_cppfrombp.convFunc}(${member_variable.name});`
         );
       } else if (
+        conv_cppfrombp.convFuncType ===
+        ConversionWayType.CppFromBP_NewFreeArrayData
+      ) {
+        // Ex. 	agora::rtc::FocalLengthInfo* focalLengthInfo = UABT::New_RawDataArray<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
+        contextCreateRawData += addOneLineFunc(
+          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${conv_cppfrombp.convFunc}<${struct_full_name}, ${bpType.name}>(${member_variable.name});`
+        );
+      } else if (
         conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_SetData
       ) {
         // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
         // TBD(WinterPu): need to check the length of the variable
         contextCreateRawData += addOneLineFunc(
-          `${conv_cppfrombp.convFunc}}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, XXXFUABT_UserInfo_UserAccountLength);`
+          `${conv_cppfrombp.convFunc}}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, ${var_SizeCount});`
         );
       } else if (
         conv_cppfrombp.convFuncType ===
@@ -391,6 +411,14 @@ export function genContext_BPStruct(
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
       tmpContextFreeRawData += addOneLineFunc(
         `${conv_cppfrombp.convFuncAdditional01}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
+      );
+    } else if (
+      conv_cppfrombp.convFuncType ===
+      ConversionWayType.CppFromBP_NewFreeArrayData
+    ) {
+      // Ex. UABT::Free_RawDataArray<agora::rtc::DownlinkNetworkInfo::PeerDownlinkInfo, FUABT_PeerDownlinkInfo>(AgoraData.peer_downlink_info, AgoraData.total_received_video_count);
+      tmpContextFreeRawData += addOneLineFunc(
+        `${conv_cppfrombp.convFuncAdditional01}<${struct_full_name}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
       );
     } else if (
       conv_cppfrombp.convFuncType ===
@@ -642,4 +670,40 @@ export function genContext_BPClass(
   // TBD(WinterPu):
   // 1. Impl prefix_indent
   return BPTypeHelper.getContext_BPClass(node_clazz.name);
+}
+
+export function getBPSizeCount(
+  node_struct: Struct,
+  target_member_var: MemberVariable
+): string {
+  const tar_var_name = target_member_var.name;
+
+  if (target_member_var.fullName in map_struct_member_variable_size_count) {
+    return map_struct_member_variable_size_count[target_member_var.fullName];
+  }
+
+  for (const one_var of node_struct.asStruct().member_variables) {
+    if (
+      one_var.name == tar_var_name + 'Size' ||
+      one_var.name == tar_var_name + 'Count'
+    ) {
+      return one_var.name;
+    }
+  }
+
+  const type_size_count = Tools.extractBracketNumber(
+    target_member_var.type.source
+  );
+
+  if (Tools.IsNotEmptyStr(type_size_count)) {
+    return type_size_count;
+  }
+
+  Logger.PrintError(
+    `Unknown size count variable for ${target_member_var.fullName}`
+  );
+
+  // TBD(WinterPu):
+  // FUABT_ChannelMediaRelayConfiguration.srcInfo should be pointer rather than array
+  return '1_ForNow_Unknown_SizeCount';
 }

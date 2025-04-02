@@ -200,6 +200,13 @@ namespace agora {
 					return DstArray;
 				}
 
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void SetBPArrayData(TArray<UABT_TYPE>& Dst, RAW_TYPE* Src, int Size){
+					Dst.Empty();
+					for (int i = 0; i < Size; i++) {
+						Dst[i].Add(Src[i]);
+					}
+				}
 
 #pragma endregion New
 

@@ -83,6 +83,7 @@ export enum ConversionWayType {
   Basic, // need call basic conversion method
 
   // BP = FuncFrom(Cpp);
+  BPFromCpp_NewFreeArrayData, // need memory allocation
 
   // Cpp = FuncTo(BP);
   CppFromBP_NewFreeData, // need memory allocation
@@ -90,6 +91,8 @@ export enum ConversionWayType {
   CppFromBP_CreateFreeOptData, // need memory allocation
   // Example: CreateRawData()
   CppFromBP_NeedCallConvFunc, // need call conversion function
+
+  CppFromBP_NewFreeArrayData, // need memory allocation
 }
 
 export class UEBPType {
@@ -100,8 +103,13 @@ export class UEBPType {
 
   // Direct Convert
   // BP
-  name: string; // [bpTypeName] type name of blueprint: Ex. FString
+  name: string; // [bpTypeName] type name of blueprint: Ex. FString: Usage: Ex. FUABT_Opt_double::FreeRawData(a)
   source: string; // [bpTypeSource] type with full qualifier: Ex. const FString &
+  declType: string; // [bpDeclType] TypeName with some properties: Ex. TArray<FString>
+  delegateType: string; // [bpDelegateType] used in bp multicast-delegate: Ex. const TArray<FString> & (because delegates don't support non-const reference)
+
+  isTArray: boolean;
+  isPointer: boolean;
 
   // bp = FuncFrom(cpp);
   bpConv_BPFromCpp: CppBPConversionData;
@@ -131,6 +139,11 @@ export class UEBPType {
 
     this.name = '';
     this.source = '';
+    this.declType = '';
+    this.delegateType = '';
+
+    this.isTArray = false;
+    this.isPointer = false;
 
     this.bpConv_BPFromCpp = new CppBPConversionData();
     this.bpConv_CppFromBP = new CppBPConversionData();
@@ -150,6 +163,13 @@ export class UEBPType {
         // Blueprint Type Info:
         name: "${this.name}"  // Blueprint type name
         source: "${this.source}"  // Blueprint type with qualifiers
+        declType: "${this.declType}"  // Blueprint type name with properties
+        delegateType: "${
+          this.delegateType
+        }"  // Blueprint type name for delegate
+
+        isTArray: ${this.isTArray}
+        isPointer: ${this.isPointer}
 
         // Conversion from C++ to BP:
         bpConv_BPFromCpp: "${this.bpConv_BPFromCpp.toString()}"
@@ -175,6 +195,7 @@ export class CppBPConversionData {
   convFuncAdditional01: string; // Ex. free data conv function
   convAdditionalFuncParam01: string; // Ex. SetData(a,b,Size)
   bpTypeName: string;
+  dataSize: number;
 
   constructor() {
     this.convNeeded = false;
@@ -183,6 +204,7 @@ export class CppBPConversionData {
     this.convFuncAdditional01 = '';
     this.convAdditionalFuncParam01 = '';
     this.bpTypeName = '';
+    this.dataSize = 0;
   }
   toString(): string {
     return `CppBPConversionData {
@@ -192,10 +214,14 @@ export class CppBPConversionData {
       convFuncAdditional01: ${this.convFuncAdditional01}
       convAdditionalFuncParam01: ${this.convAdditionalFuncParam01}
       bpTypeName: ${this.bpTypeName}
+      dataSize: ${this.dataSize}
     }`;
   }
 }
-function genBPConvertFromRawType(type: SimpleType): CppBPConversionData {
+function genBPConvertFromRawType(
+  type: SimpleType,
+  isTArray: boolean
+): CppBPConversionData {
   // bp = Func(cpp);
   let conversion = new CppBPConversionData();
 
@@ -211,6 +237,13 @@ function genBPConvertFromRawType(type: SimpleType): CppBPConversionData {
     conversion.bpTypeName = bpTypeName;
   }
 
+  if (isTArray) {
+    conversion.convNeeded = true;
+    conversion.convFuncType = ConversionWayType.BPFromCpp_NewFreeArrayData;
+    conversion.convFunc = AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA;
+    conversion.convFuncAdditional01 = '';
+  }
+
   let convert_function = map_cpp2bp_convert_function_name[type.source];
   if (convert_function) {
     conversion.convNeeded = true;
@@ -224,7 +257,10 @@ function genBPConvertFromRawType(type: SimpleType): CppBPConversionData {
   return conversion;
 }
 
-function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
+function genBPConvertToRawType(
+  type: SimpleType,
+  isTArray: boolean
+): CppBPConversionData {
   // cpp = Func(bp);
   let conversion = new CppBPConversionData();
   // UEnum
@@ -251,6 +287,14 @@ function genBPConvertToRawType(type: SimpleType): CppBPConversionData {
       conversion.convFunc = AGORA_MUSTACHE_DATA.CREATE_RAW_DATA;
       conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
     }
+    conversion.bpTypeName = bpTypeName;
+  }
+
+  if (isTArray) {
+    conversion.convNeeded = true;
+    conversion.convFuncType = ConversionWayType.CppFromBP_NewFreeArrayData;
+    conversion.convFunc = AGORA_MUSTACHE_DATA.NEW_RAW_ARRAY_DATA;
+    conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_ARRAY_DATA;
     conversion.bpTypeName = bpTypeName;
   }
 
@@ -606,6 +650,7 @@ export function convertToBPType(
   );
   if (isArray) {
     tmpTypeSource = arrayType;
+    result.isTArray = true;
   }
 
   // is a pointer
@@ -613,7 +658,13 @@ export function convertToBPType(
   let [needKeepPointer, pointerType] = parsePointerType(type, result.name);
   if (needKeepPointer) {
     tmpTypeSource = pointerType;
+
+    // TBD(WinterPu) for now: [isPointer] doesn't influence [isTArray]
+    result.isPointer = true;
   }
+
+  let tmpDeclType = tmpTypeSource;
+  let tmpDelegateType = tmpTypeSource;
 
   // is_const  /  isOutput
   // TBD(WinterPu)
@@ -624,6 +675,9 @@ export function convertToBPType(
     if (isOutput) {
       // isOutput 是 true
       tmpTypeSource = tmpTypeSource + ' &';
+
+      // delegate type: if it is an output type: it cannot be without const, so keep delegateType as source without any qualifier
+      // TBD(WinterPu)
     } else {
       // isOutput 是 false
 
@@ -631,6 +685,9 @@ export function convertToBPType(
       if (type.is_const) {
         tmpTypeSource = 'const ' + tmpTypeSource + ' &';
       }
+
+      // delegate type: if it is not an output type: it would always be with const and &
+      tmpDelegateType = 'const ' + tmpTypeSource + ' &';
     }
   } else {
     // const
@@ -640,10 +697,12 @@ export function convertToBPType(
   }
 
   result.source = tmpTypeSource;
+  result.declType = tmpDeclType;
+  result.delegateType = tmpDelegateType;
 
   // **** Fourth Step: Get Conversion Function ****
-  result.bpConv_BPFromCpp = genBPConvertFromRawType(type);
-  result.bpConv_CppFromBP = genBPConvertToRawType(type);
+  result.bpConv_BPFromCpp = genBPConvertFromRawType(type, result.isTArray);
+  result.bpConv_CppFromBP = genBPConvertToRawType(type, result.isTArray);
 
   // **** Fifth Step: Get Conversion Decl Type ****
   // some types are different during decl type

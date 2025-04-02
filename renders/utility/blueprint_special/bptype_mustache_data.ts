@@ -3,6 +3,9 @@ export const AGORA_MUSTACHE_DATA = {
   AGORA_DATA: 'AgoraData',
   CREATE_RAW_DATA: 'CreateRawData',
   FREE_RAW_DATA: 'FreeRawData',
+  NEW_RAW_ARRAY_DATA: 'New_RawDataArray',
+  FREE_RAW_ARRAY_DATA: 'Free_RawDataArray',
+  SET_BP_ARRAY_DATA: 'SetBPArrayData',
   CREATE_RAW_OPT_DATA: 'CreateRawOptData',
   FREE_RAW_OPT_DATA: 'FreeRawOptData',
 

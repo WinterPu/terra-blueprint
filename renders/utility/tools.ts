@@ -14,17 +14,6 @@ export function removeNamespace(input: string): string {
   return input.replace(/.*::/, '');
 }
 
-export function generateFullScopeName(node: CXXTerraNode): string {
-  let name = node.name;
-  let namespaces = node.namespaces;
-  const separator = '::';
-  if (!namespaces || namespaces.length === 0) {
-    return name;
-  }
-
-  return `${namespaces.join(separator)}${separator}${name}`;
-}
-
 export function isNullOrEmpty(str: string | null | undefined): boolean {
   // including whitespace
   return str === null || str === undefined || str.trim() === '';
