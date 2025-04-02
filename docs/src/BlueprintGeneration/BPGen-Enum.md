@@ -31,5 +31,7 @@ enum class VIDEO_SOURCE_TYPE : uint8{
 
 
 ## Terra
-目前Terra 版本：由于Enum 77 太多了，所以去掉了使用Macro Function 做模板
-直接让Terra 生成原来的函数
+目前Terra 版本：
+1. 由于Enum 77 太多了，所以去掉了使用Macro Function 做模板, 直接让Terra 生成原来的函数
+2. 由于存在相同的enum 值，所以改为if-else
+
