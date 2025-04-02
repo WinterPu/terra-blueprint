@@ -267,6 +267,10 @@ export function getBPStructData_DefaultVal(
     member_variable
   );
 
+  // TBD(WinterPu) some default values are not matched with UE Type
+  // Ex. FString Var = 0;
+  
+
   if (bNeedDefaultVal) {
     outputfomatDefaultVal = `= ${defaultVal}`;
   }

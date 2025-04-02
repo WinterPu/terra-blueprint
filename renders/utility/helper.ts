@@ -282,7 +282,6 @@ export function genGeneralTerraData(
         const dictInitializer = BPHelper.prepareBPStructInitializerDict(
           node.asStruct()
         );
-
         const contextStruct = BPHelper.genContext_BPStruct(node.asStruct(), '		');
 
         const structUserData: CustomUserData.StructUserData = {
@@ -336,7 +335,7 @@ export function genGeneralTerraData(
           isEnumz: node.__TYPE === CXXTYPE.Enumz,
           isClazz: node.__TYPE === CXXTYPE.Clazz,
 
-          fullTypeWithNamespace: node.namespaces.join('::') + '::' + node.name,
+          fullTypeWithNamespace: CppHelper.getFullTypeNameWithNamespace(node),
 
           commentCppStyle: CppHelper.formatAsCppComment(node.comment),
 

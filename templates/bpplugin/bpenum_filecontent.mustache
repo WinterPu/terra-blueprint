@@ -1,3 +1,4 @@
+#pragma once
 // Copyright(c) 2024 Agora.io. All rights reserved.
 
 // [Notice] We use if-else rather than switch-case because of some enum entries with the same value
@@ -39,10 +40,10 @@ namespace agora{
                     {{user_data.fullTypeWithNamespace}} Result;
     {{#enum_constants}}
     {{#user_data.isFirst}}
-        if ( Val ==   EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}}; }
+        if ( Val == EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}}; }
     {{/user_data.isFirst}}
     {{^user_data.isFirst}}
-        else if ( Val ==  EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}};}
+        else if ( Val == EUABT_{{{parent_name}}}::{{{name}}} ){ Result =  {{user_data.fullTypeWithNamespace}}::{{{name}}};}
     {{/user_data.isFirst}}
     {{/enum_constants}}
                     return Result;
