@@ -14,6 +14,8 @@ public:
 {{/member_variables}}
 
 	{{{user_data.bpNodeName}}}(){}
+
+{{{user_data.macro_scope_start}}}
 	{{{user_data.bpNodeName}}}(const {{{fullName}}} & AgoraData){
 
 {{{user_data.bpContextConstructor}}}
@@ -32,4 +34,5 @@ public:
 {{{user_data.bpContextFreeRawData}}}
 
 	}
+{{{user_data.macro_scope_end}}}
 };

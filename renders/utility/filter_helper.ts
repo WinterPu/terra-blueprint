@@ -15,6 +15,12 @@ const map_failure_return_val: Record<string, string> = {
   'agora_refptr<agora::rtc::IMediaPlayer>': 'nullptr',
   'agora_refptr<agora::rtc::IMediaRecorder>': 'nullptr',
   'void': '',
+
+  // // TBD(WinterPu) They are in AgoraBPuAgoraMediaBase.cpp
+  // 'int64': '0',
+  // 'EUABT_VIDEO_FRAME_PROCESS_MODE':
+  //   'EUABT_VIDEO_FRAME_PROCESS_MODE::PROCESS_MODE_READ_WRITE',
+  // 'EUABT_VIDEO_PIXEL_FORMAT': 'EUABT_VIDEO_PIXEL_FORMAT::VIDEO_PIXEL_DEFAULT',
 };
 
 const list_custom_impl_methods = [

@@ -1,3 +1,4 @@
+
 {{#methods}}
 {{user_data.bpCallbackDelegateMacroName}}({{user_data.bpCallbackDelegateTypeName}}{{#user_data.bpIsNoParamCallback}}{{/user_data.bpIsNoParamCallback}}{{^user_data.bpIsNoParamCallback}}, {{/user_data.bpIsNoParamCallback}}{{#parameters}}{{{user_data.bpDelegateType}}}, {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
 {{/methods}}
@@ -6,7 +7,7 @@
 
 // this is a blueprint callback executor which you could add to the target handler
 UCLASS(Blueprintable,Meta = (ShowWorldContextPin))
-class AGORAPLUGIN_API UAgoraBPu{{name}}CBExecutor : public UObject {
+class AGORAPLUGIN_API {{user_data.bpNodeName}}CBExecutor : public UObject {
 	GENERATED_BODY()
 
 public:
@@ -52,7 +53,7 @@ public:
 
   // You could add multiple executors to the target handler
 	UFUNCTION(BlueprintCallable, Category = "Agora|Event")
-	void AddBlueprintCallbackExecutor(UAgoraBPu{{name}}CBExecutor* Executor);
+	void AddBlueprintCallbackExecutor({{user_data.bpNodeName}}CBExecutor* Executor);
 
 	UFUNCTION(BlueprintCallable, Category = "Agora|Event")
 	void RemoveAllBlueprintCallbackExecutors();

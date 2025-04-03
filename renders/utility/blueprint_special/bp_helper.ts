@@ -256,7 +256,8 @@ export function prepareBPStructInitializerDict(
 
 export function getBPStructData_DefaultVal(
   dict_variable_initializer: BPTypeHelper.BPDictInitializer,
-  member_variable: MemberVariable
+  member_variable: MemberVariable,
+  bpType: UEBPType
 ): string {
   let bNeedDefaultVal = false;
   let defaultVal = '';
@@ -264,7 +265,8 @@ export function getBPStructData_DefaultVal(
 
   [bNeedDefaultVal, defaultVal] = BPTypeHelper.getBPMemberVariableDefaultValue(
     dict_variable_initializer,
-    member_variable
+    member_variable,
+    bpType
   );
 
   // TBD(WinterPu) some default values are not matched with UE Type
@@ -328,7 +330,7 @@ export function genContext_BPStruct(
 
         // TBD(WinterPu): about size
         contextConstructor += addOneLineFunc(
-          `UABT::SetBPArrayData<${struct_full_name}, ${bpType.name}>(this->${member_variable.name}, ${member_variable.name},${var_SizeCount});`
+          `${conv_bpfromcpp.convFunc}<${type.name}, ${bpType.name}>(this->${member_variable.name}, ${member_variable.name},${var_SizeCount});`
         );
       } else {
         contextConstructor += addOneLineFunc(
@@ -356,8 +358,10 @@ export function genContext_BPStruct(
         ConversionWayType.CppFromBP_NewFreeArrayData
       ) {
         // Ex. 	agora::rtc::FocalLengthInfo* focalLengthInfo = UABT::New_RawDataArray<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
+
+        //TBD(WinterPu) use inline function to replace macro functions
         contextCreateRawData += addOneLineFunc(
-          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${conv_cppfrombp.convFunc}<${struct_full_name}, ${bpType.name}>(${member_variable.name});`
+          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${conv_cppfrombp.convFunc}<${type.name}, ${bpType.name}>(${member_variable.name});`
         );
       } else if (
         conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_SetData
@@ -418,7 +422,7 @@ export function genContext_BPStruct(
     ) {
       // Ex. UABT::Free_RawDataArray<agora::rtc::DownlinkNetworkInfo::PeerDownlinkInfo, FUABT_PeerDownlinkInfo>(AgoraData.peer_downlink_info, AgoraData.total_received_video_count);
       tmpContextFreeRawData += addOneLineFunc(
-        `${conv_cppfrombp.convFuncAdditional01}<${struct_full_name}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
+        `${conv_cppfrombp.convFuncAdditional01}<${type.name}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
       );
     } else if (
       conv_cppfrombp.convFuncType ===
@@ -559,17 +563,17 @@ function genContext_ConvDeclType(
       if (
         default_conv.convFuncType === ConversionWayType.CppFromBP_NewFreeData
       ) {
-        param.contextFree = `${str_free_func}(${param_name});`;
+        param.contextFree = `${str_free_func}(${name_conv_var});`;
       } else if (
         default_conv.convFuncType ===
         ConversionWayType.CppFromBP_NeedCallConvFunc
       ) {
-        param.contextFree = `${param_name}.${str_free_func}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${param_name});`;
+        param.contextFree = `${param_name}.${str_free_func}(${name_conv_var});`;
       } else if (
         default_conv.convFuncType ===
         ConversionWayType.CppFromBP_CreateFreeOptData
       ) {
-        param.contextFree = `${default_conv.bpTypeName}::${str_free_func}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${param_name});`;
+        param.contextFree = `${default_conv.bpTypeName}::${str_free_func}(${name_conv_var});`;
       }
     }
   }
@@ -705,5 +709,5 @@ export function getBPSizeCount(
 
   // TBD(WinterPu):
   // FUABT_ChannelMediaRelayConfiguration.srcInfo should be pointer rather than array
-  return '1_ForNow_Unknown_SizeCount';
+  return '1';
 }

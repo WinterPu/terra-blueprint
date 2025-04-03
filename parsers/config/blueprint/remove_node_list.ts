@@ -67,8 +67,60 @@ module.exports = [
   'agora::rtc::ICloudSpatialAudioEngine.getTeammates.userCount',
   'agora::rtc::ILocalSpatialAudioEngine.initialize.config',
 
-  // remove 
+  // remove
   // 'agora::rtc::IScreenCaptureSourceList',
+
+  'agora::media::IAudioFrameObserverBase',
+
+  // register observers
+  'agora::rtc::IH265Transcoder.registerTranscoderObserver',
+  'agora::rtc::IH265Transcoder.unregisterTranscoderObserver',
+  'agora::media::IMediaEngine.registerAudioFrameObserver',
+  'agora::media::IMediaEngine.registerVideoFrameObserver',
+  'agora::media::IMediaEngine.registerVideoEncodedFrameObserver',
+  'agora::media::IMediaEngine.registerFaceInfoObserver',
+  'agora::media::IMediaEngine.addVideoFrameRenderer',
+  'agora::media::IMediaEngine.removeVideoFrameRenderer',
+  'agora::media::IMediaEngine.unregisterAudioFrameObserver',
+  'agora::media::IMediaEngine.unregisterVideoFrameObserver',
+  'agora::media::IMediaEngine.unregisterVideoEncodedFrameObserver',
+  'agora::media::IMediaEngine.unregisterFaceInfoObserver',
+  'agora::rtc::IMediaRecorder.setMediaRecorderObserver',
+
+  // some type error
+  'agora::media::IMediaEngine.pushAudioFrame',
+  'agora::media::IMediaEngine.pullAudioFrame',
+  'agora::media::IMediaEngine.setExternalRemoteEglContext',
+  'agora::rtc::IRtcEngine.queryInterface',
+
+  // TBD(WinterPu)
+  // override conflicts
+  'agora::rtc::IMediaPlayer.setPlayerOption',
+
+  // TBD(WinterPu) void
+  'agora::rtc::IMediaPlayerSourceObserver.onMetaData',
+
+  'agora::rtc::IMediaPlayer.registerPlayerSourceObserver',
+  'agora::rtc::IMediaPlayer.unregisterPlayerSourceObserver',
+  'agora::rtc::IMediaPlayer.registerAudioFrameObserver',
+  'agora::rtc::IMediaPlayer.unregisterAudioFrameObserver',
+  'agora::rtc::IMediaPlayer.registerVideoFrameObserver',
+  'agora::rtc::IMediaPlayer.unregisterVideoFrameObserver',
+  'agora::rtc::IMediaPlayer.registerMediaPlayerAudioSpectrumObserver',
+  'agora::rtc::IMediaPlayer.unregisterMediaPlayerAudioSpectrumObserver',
+
+  'agora::rtc::IMusicContentCenter.registerEventHandler',
+  'agora::rtc::IMusicContentCenter.unregisterEventHandler',
+
+  'agora::rtc::IRtcEngine.registerAudioEncodedFrameObserver',
+  'agora::rtc::IRtcEngine.registerAudioSpectrumObserver',
+  'agora::rtc::IRtcEngine.unregisterAudioEncodedFrameObserver',
+  'agora::rtc::IRtcEngine.unregisterAudioSpectrumObserver',
+  'agora::rtc::IRtcEngine.registerEventHandler',
+  'agora::rtc::IRtcEngine.unregisterEventHandler',
+  'agora::rtc::IRtcEngine.registerPacketObserver',
+  'agora::rtc::IRtcEngine.registerMediaMetadataObserver',
+  'agora::rtc::IRtcEngine.unregisterMediaMetadataObserver',
 
   //custom header
   'agora::rtc::IRtcEngine.getVideoDeviceManager',
@@ -77,4 +129,35 @@ module.exports = [
   'agora::rtc::IRtcEngine.getMediaEngine',
   'agora::rtc::IRtcEngine.getLocalSpatialAudioEngine',
   'agora::rtc::IRtcEngine.getH265Transcoder',
+  
+
+  // TBD(WinterPu)
+  // special type
+  // agora_refptr<MusicChartCollection>
+  'agora::rtc::IMusicContentCenterEventHandler',
+  'agora::rtc::IMusicContentCenterEventHandler.onMusicChartsResult',
+  'agora::rtc::IMusicContentCenter.createMusicPlayer',
+  'agora::rtc::IMusicContentCenter.destroyMusicPlayer',
+
+  'agora::rtc::IRtcEngine.createMediaPlayer',
+  'agora::rtc::IRtcEngine.destroyMediaPlayer',
+  'agora::rtc::IRtcEngine.createMediaRecorder',
+  'agora::rtc::IRtcEngine.destroyMediaRecorder',
+  'agora::rtc::IRtcEngine.uploadLogFile',
+  // EUABT_ empty
+  'agora::rtc::IRtcEngine.writeLog',
+  // void type
+  'agora::rtc::IRtcEngine.setExternalMediaProjection',
+
+  // FString agora::util::AString
+  'agora::rtc::IMusicContentCenter',
+  'agora::rtc::IRtcEngine.getCallId',
+  'agora::rtc::IRtcEngineEx.getCallIdEx',
+
+  // Pointer
+  'agora::rtc::IRtcEngine.startDirectCdnStreaming',
+  'agora::rtc::IRtcEngine.getNativeHandle',
+
+  // EventHandler Has Return Value
+  'agora::media::IVideoFrameObserver'
 ];

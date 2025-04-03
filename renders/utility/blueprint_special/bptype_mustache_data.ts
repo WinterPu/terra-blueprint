@@ -3,9 +3,16 @@ export const AGORA_MUSTACHE_DATA = {
   AGORA_DATA: 'AgoraData',
   CREATE_RAW_DATA: 'CreateRawData',
   FREE_RAW_DATA: 'FreeRawData',
-  NEW_RAW_ARRAY_DATA: 'New_RawDataArray',
-  FREE_RAW_ARRAY_DATA: 'Free_RawDataArray',
-  SET_BP_ARRAY_DATA: 'SetBPArrayData',
+
+  // TBD(WinterPu) use inline function to replace macro functions
+  NEW_RAW_ARRAY_DATA: 'UABT::New_RawDataArray',
+  FREE_RAW_ARRAY_DATA: 'UABT::Free_RawDataArray',
+  SET_BP_ARRAY_DATA: 'UABT::SetBPArrayData',
+
+  // NEW_RAW_ARRAY_DATA: 'UABT_NEW_RAW_DATA_ARRAY',
+  // FREE_RAW_ARRAY_DATA: 'UABT_FREE_RAW_DATA_ARRAY',
+  // SET_BP_ARRAY_DATA: 'UABT_SET_TARRAY_DATA',
+
   CREATE_RAW_OPT_DATA: 'CreateRawOptData',
   FREE_RAW_OPT_DATA: 'FreeRawOptData',
 

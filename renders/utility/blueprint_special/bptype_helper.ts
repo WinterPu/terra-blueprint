@@ -24,7 +24,6 @@ import {
   map_cpp2bp_convert_function_name,
   map_cpptype_2_uebptype,
   map_cpptype_default_value,
-  map_native_ptr_name,
   map_parse_array_blacklist,
   map_parse_array_whitelist,
   map_setdata_function_name,
@@ -386,6 +385,11 @@ export function parseArrayType(
   // 如果匹配成功，返回 true 和类型名
   if (basicMatch.isArray || basicMatch.isPointer) {
     // Here, if it is a array, you should use [refBPTypeName]
+
+    if (refBPTypeName.includes(AGORA_MUSTACHE_DATA.UEBP_PREFIX_CLASS)) {
+      // TArray UCLASS should be pointer
+      refBPTypeName = refBPTypeName + ' *';
+    }
     let matched_array_type = 'TArray<' + refBPTypeName + '>';
     return [true, matched_array_type]; // match[1] 是去掉数组标记后的类型名
   }
@@ -681,13 +685,13 @@ export function convertToBPType(
     } else {
       // isOutput 是 false
 
+      // delegate type: if it is not an output type: it would always be with const and &
+      tmpDelegateType = 'const ' + tmpTypeSource + ' &';
+
       // const
       if (type.is_const) {
         tmpTypeSource = 'const ' + tmpTypeSource + ' &';
       }
-
-      // delegate type: if it is not an output type: it would always be with const and &
-      tmpDelegateType = 'const ' + tmpTypeSource + ' &';
     }
   } else {
     // const
@@ -729,7 +733,8 @@ export type BPDictInitializer = { [paramName: string]: ConstructorInitializer };
 
 export function getBPMemberVariableDefaultValue(
   dictStructInitializer: BPDictInitializer,
-  member_variable: MemberVariable
+  member_variable: MemberVariable,
+  bpType: UEBPType
 ): [boolean, string] {
   let bNeedDefaultValue = false;
   let valDefaultVal = undefined;
@@ -738,6 +743,17 @@ export function getBPMemberVariableDefaultValue(
     valDefaultVal =
       map_struct_member_variable_default_value[member_variable.fullName];
     bNeedDefaultValue = true;
+    return [bNeedDefaultValue, valDefaultVal];
+  }
+
+  // UStruct / UClass / TArray  no need default value
+  if (
+    bpType.isTArray ||
+    bpType.declType.includes(AGORA_MUSTACHE_DATA.UEBP_PREFIX_STRUCT) ||
+    bpType.declType.includes(AGORA_MUSTACHE_DATA.UEBP_PREFIX_CLASS)
+  ) {
+    bNeedDefaultValue = false;
+    valDefaultVal = '';
     return [bNeedDefaultValue, valDefaultVal];
   }
 
@@ -847,11 +863,23 @@ export function getBPMemberVariableDefaultValue(
     valDefaultVal = 'Unknown_TBD';
   }
 
+  // TBD(WinterPu)
+  if (bpType.declType === 'FString') {
+    if (
+      valDefaultVal === '0' ||
+      valDefaultVal === 'NULL' ||
+      valDefaultVal === 'nullptr'
+    ) {
+      valDefaultVal = '""';
+    } else {
+      valDefaultVal = `TEXT("${valDefaultVal}")`;
+    }
+  }
   return [bNeedDefaultValue, valDefaultVal];
 }
 
 export function getMethod_NativePtr(node_method: MemberFunction): string {
-  return map_native_ptr_name[node_method.parent_name] ?? '';
+  return map_class_initialization[node_method.parent_name]?.NativePtr ?? '';
 }
 
 export type ClazzAddtionalContext = ClazzAddtionalContext_;

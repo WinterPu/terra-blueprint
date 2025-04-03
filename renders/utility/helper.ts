@@ -305,7 +305,8 @@ export function genGeneralTerraData(
 
           const formatDefaultVal = BPHelper.getBPStructData_DefaultVal(
             dictInitializer,
-            member_variable
+            member_variable,
+            bpType
           );
           const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData =
             {
