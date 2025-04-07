@@ -330,7 +330,7 @@ export function genContext_BPStruct(
 
         // TBD(WinterPu): about size
         contextConstructor += addOneLineFunc(
-          `${conv_bpfromcpp.convFunc}<${type.name}, ${bpType.name}>(this->${member_variable.name}, ${member_variable.name},${var_SizeCount});`
+          `${conv_bpfromcpp.convFunc}<${type.name}, ${bpType.name}>(this->${member_variable.name}, ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
         );
       } else {
         contextConstructor += addOneLineFunc(
@@ -361,7 +361,7 @@ export function genContext_BPStruct(
 
         //TBD(WinterPu) use inline function to replace macro functions
         contextCreateRawData += addOneLineFunc(
-          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${conv_cppfrombp.convFunc}<${type.name}, ${bpType.name}>(${member_variable.name});`
+          `${conv_cppfrombp.convFunc}<${type.name}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount},${member_variable.name});`
         );
       } else if (
         conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_SetData
