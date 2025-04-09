@@ -15,7 +15,7 @@ public:
     {{#methods}}
 {{{user_data.commentCppStyle}}}
     UFUNCTION(BlueprintNativeEvent, Category = "Agora|Event")
-    {{user_data.bpReturnType}} {{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+    {{user_data.bpReturnType}} {{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
     
     {{/methods}}
 };
@@ -39,15 +39,9 @@ public:
 
   {{#methods}}
   {{^user_data.isExcluded}}
-  {{#user_data.hasConditionalDirective}}
-
-  {{{conditional_compilation_directives_infos}}}
-  {{/user_data.hasConditionalDirective}}
+  {{{user_data.macro_scope_start}}}
           virtual {{#return_type}}{{{source}}}{{/return_type}} {{name}} ({{#parameters}}{{{type.source}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}}) override;
-  {{#user_data.hasConditionalDirective}}
-  #endif
-
-  {{/user_data.hasConditionalDirective}}
+  {{{user_data.macro_scope_end}}}
   {{/user_data.isExcluded}}
   {{/methods}}
 

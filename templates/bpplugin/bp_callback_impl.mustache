@@ -6,7 +6,7 @@ void {{{user_data.bpNodeName}}}::AddBlueprintCallbackExecutor({{{user_data.bpNod
 		return;
 	}
     {{#methods}}
-    {{user_data.bpCallbackDelegateVarName}}.AddDynamic(Executor, &UAgoraBPu{{parent.name}}CBExecutor::{{user_data.bpMethodName}});
+    {{user_data.bpCallbackDelegateVarName}}.AddDynamic(Executor, &UAgoraBPu{{parent.name}}CBExecutor::{{user_data.bpNodeName}});
     {{/methods}}
 
 }
@@ -41,7 +41,7 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
                 if(!SelfWeakPtr.IsValid())
                     return;
 
-                {{user_data.bpMethodName}}.Broadcast({{{user_data.bpContextParamsUsage_BPFromCpp}}});
+                {{user_data.bpNodeName}}.Broadcast({{{user_data.bpContextParamsUsage_BPFromCpp}}});
 
                 {{{user_data.bpContextParamsFree_BPFromCpp}}}
 
@@ -53,7 +53,7 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
 
 
 {{#methods}}
-  {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpMethodName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
+  {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
 
     UE_LOG(LogAgora, Warning, TEXT("%s"), *FString(AG_FUNCTION_MACRO));

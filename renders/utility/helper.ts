@@ -29,6 +29,7 @@ import * as CppHelper from './cpp_helper';
 import * as FilterHelper from './filter_helper';
 import * as Logger from './logger';
 import * as Tools from './tools';
+
 // preprocess the nodes
 export function preProcessNode(cxxfiles: CXXFile[]) {
   BPHelper.initMapRegisteredData();
@@ -79,11 +80,40 @@ export function genGeneralTerraData(
 ): any {
   let cxxfiles = parseResult.nodes as CXXFile[];
 
+  // [Step 0: Preparation]
   // bp preprocess: register data
   preProcessNode(cxxfiles);
 
-  //let custom_nodes=
+  // [-- Define Functions]
+  const genBaseUECommonUserData = function (
+    node: CXXTerraNode
+  ): CustomUserData.UECommonUserData {
+    const key_registeredsource = BPHelper.getRegisteredBPSearchKey(node);
+    let [typeCategoryName, valBPNodeName] =
+      BPHelper.getRegisteredBPType(key_registeredsource);
+
+    if (node.__TYPE === CXXTYPE.MemberFunction) {
+      valBPNodeName = BPHelper.genBPMethodName(node.name);
+    }
+
+    const userdata: CustomUserData.UECommonUserData = {
+      commentCppStyle: CppHelper.formatAsCppComment(node.comment),
+      macro_scope_start: CppHelper.createCompilationDirectivesContent(node),
+      macro_scope_end: CppHelper.createCompilationDirectivesContent(
+        node,
+        false
+      ),
+      // bp
+      bpNodeName: valBPNodeName,
+      bpHasRegistered: typeCategoryName !== CXXTYPE.Unknown,
+    };
+
+    return userdata;
+  };
+
+  // [Step 1: Parse the nodes]
   let view = cxxfiles.map((cxxfile: CXXFile) => {
+    // Base Node - File
     const valFileName = CppHelper.getFileName(cxxfile);
     const includeFiles = BPHelper.getIncludeFilesForBP(cxxfile);
     const cxxUserData: CustomUserData.CXXFileUserData = {
@@ -93,38 +123,50 @@ export function genGeneralTerraData(
     };
     cxxfile.user_data = cxxUserData;
 
+    // Apply Filter if defined
     let nodes = cxxfile.nodes;
     if (func_filter_terrnode) {
       nodes = func_filter_terrnode(cxxfile);
     }
 
     cxxfile.nodes = nodes.map((node: CXXTerraNode) => {
+      // Base Node - TerraNode
+      const basedata = genBaseUECommonUserData(node);
+      const terraNodeUserData: CustomUserData.TerraNodeUserData = {
+        ...basedata,
+        isStruct: node.__TYPE === CXXTYPE.Struct,
+        isEnumz: node.__TYPE === CXXTYPE.Enumz,
+        isClazz: node.__TYPE === CXXTYPE.Clazz,
+        isCallback: Tools.isMatch(node.name, 'isCallback'),
+        prefix_name: node.name.replace(new RegExp('^I(.*)'), '$1'),
+      };
+      node.user_data = { ...node.user_data, ...terraNodeUserData };
+
+      // Node - Clazz
       if (node.__TYPE == CXXTYPE.Clazz) {
-        // Only For Clazz
-        let hasSupportApi = false;
+        let bIsCallbackMethod = Tools.isMatch(node.name, 'isCallback');
+
+        let context_clazz = BPHelper.genContext_BPClass(node.asClazz());
+
+        const basedata_clazz = genBaseUECommonUserData(node);
+        const clazzUserData: CustomUserData.ClazzUserData = {
+          ...basedata_clazz,
+          bpContextInst: context_clazz?.Inst ?? '',
+          bpContextInitDecl: context_clazz?.InitDecl ?? '',
+          bpContextInitImpl: context_clazz?.InitImpl ?? '',
+        };
+        node.user_data = { ...node.user_data, ...clazzUserData };
+
+        // Node - Clazz Method
         node.asClazz().methods.map((method, index) => {
-          let bIsCallbackMethod = Tools.isMatch(node.name, 'isCallback');
-
-          // let bDebug = method.name === "getScreenCaptureSources";
-          // if (bDebug){
-          //     debugger
-          // }
-          let context_clazz = BPHelper.genContext_BPClass(node.asClazz());
-          const clazzUserData: CustomUserData.ClazzUserData = {
-            bpContextInst: context_clazz?.Inst ?? '',
-            bpContextInitDecl: context_clazz?.InitDecl ?? '',
-            bpContextInitImpl: context_clazz?.InitImpl ?? '',
-          };
-          node.user_data = clazzUserData;
-
           const contextBPMethod = BPHelper.genContext_BPMethod(
             method,
             '      '
           );
 
+          const basedata_clazzmethod = genBaseUECommonUserData(method);
           const clazzMethodUserData: CustomUserData.ClazzMethodUserData = {
-            hasConditionalDirective:
-              method.conditional_compilation_directives_infos.length > 0,
+            ...basedata_clazzmethod,
             isExcluded: func_exclude_api
               ? func_exclude_api(method.name)
               : false,
@@ -133,11 +175,9 @@ export function genGeneralTerraData(
             ),
             hasReturnVal: method.return_type.source.toLowerCase() != 'void',
 
-            commentCppStyle: CppHelper.formatAsCppComment(method.comment),
             suffix_attribute: CppHelper.genSuffixAttribute(method.attributes),
             isFirst: index === 0,
             isLast: index === node.asClazz().methods.length - 1,
-            isExMethod: method.parent_name === 'IRtcEngineEx',
             callerInstanceName:
               method.parent_name === 'IRtcEngineEx'
                 ? '((IRtcEngineEx*)RtcEngine)'
@@ -146,16 +186,6 @@ export function genGeneralTerraData(
             // bp
             bpReturnType: BPHelper.genBPReturnType(method.return_type),
 
-            bpMethodName: BPHelper.genBPMethodName(method.name),
-
-            macro_scope_start:
-              CppHelper.createCompilationDirectivesContent(method),
-            macro_scope_end: CppHelper.createCompilationDirectivesContent(
-              method,
-              false
-            ),
-
-            bpIsCallback: bIsCallbackMethod,
             bpCallbackDelegateMacroName: bIsCallbackMethod
               ? BPHelper.genbpCallbackDelegateMacroName(
                   method.parameters.length
@@ -189,6 +219,8 @@ export function genGeneralTerraData(
           };
 
           method.user_data = clazzMethodUserData;
+
+          // Handle Variadic Params '....'
           if (method.is_variadic) {
             let param_variadic = new Variable();
             param_variadic.name = '...';
@@ -197,6 +229,8 @@ export function genGeneralTerraData(
             param_variadic.type.clang_qualtype = '';
             method.parameters.push(param_variadic);
           }
+
+          // Node - Clazz Method Parameter
           method.parameters.map((parameter, index) => {
             let valDefaultVal = CppHelper.prettyDefaultValue(
               parseResult,
@@ -211,7 +245,9 @@ export function genGeneralTerraData(
               parameter.type,
               parameter.is_output
             );
+            const basedata_parameter = genBaseUECommonUserData(parameter);
             const parameterUserData: CustomUserData.ParameterUserData = {
+              ...basedata_parameter,
               lenParameters: method.parameters.length,
               commentCppStyle: CppHelper.formatAsCppComment(parameter.comment),
               isFirst: index === 0,
@@ -227,63 +263,39 @@ export function genGeneralTerraData(
             parameter.user_data = parameterUserData;
           });
         });
-
-        const terraNodeUserData: CustomUserData.TerraNodeUserData = {
-          // isStruct: node.__TYPE === CXXTYPE.Struct,
-          // isEnumz: node.__TYPE === CXXTYPE.Enumz,
-          isClazz: node.__TYPE === CXXTYPE.Clazz,
-          prefix_name: node.name.replace(new RegExp('^I(.*)'), '$1'),
-          isCallback: Tools.isMatch(node.name, 'isCallback'),
-          hasBaseClazzs: node.asClazz().base_clazzs.length > 0,
-          hasSupportApi: hasSupportApi,
-
-          ...node.user_data,
-        };
-        node.user_data = terraNodeUserData;
       } else if (node.__TYPE == CXXTYPE.Enumz) {
-        let valLenEnumConstants = node.asEnumz().enum_constants.length;
-        const terraNodeUserData: CustomUserData.TerraNodeUserData = {
-          isEnumz: node.__TYPE === CXXTYPE.Enumz,
-          lenEnumConstants: valLenEnumConstants,
-          bpGenEnumConversionFunction:
-            node.asEnumz().enum_constants.length === 1
-              ? 'GEN_UABTFUNC_SIGNATURE_ENUMCONVERSION_1_ENTRY'
-              : 'GEN_UABTFUNC_SIGNATURE_ENUMCONVERSION_' +
-                valLenEnumConstants +
-                '_ENTRIES',
-          ...node.user_data,
-        };
-        node.user_data = terraNodeUserData;
-
-        // Only For Enumz
+        // Node - Enumz
         node.asEnumz().enum_constants.map((enum_constant, index) => {
+          const basedata_enumconstant = genBaseUECommonUserData(enum_constant);
           const enumConstantsUserData: CustomUserData.EnumConstantsUserData = {
-            commentCppStyle: CppHelper.formatAsCppComment(
-              enum_constant.comment
-            ),
-
+            ...basedata_enumconstant,
             isFirst: index === 0,
-
             isLast: index === node.asEnumz().enum_constants.length - 1,
-
-            ...enum_constant.user_data,
           };
-          enum_constant.user_data = enumConstantsUserData;
+          enum_constant.user_data = {
+            ...enum_constant.user_data,
+            ...enumConstantsUserData,
+          };
         });
       } else if (node.__TYPE == CXXTYPE.Struct) {
+        // Node - Struct
         const dictInitializer = BPHelper.prepareBPStructInitializerDict(
           node.asStruct()
         );
         const contextStruct = BPHelper.genContext_BPStruct(node.asStruct(), '		');
-
+        const basedata_struct = genBaseUECommonUserData(node);
         const structUserData: CustomUserData.StructUserData = {
+          ...basedata_struct,
           bpContextConstructor: contextStruct.contextConstructor,
           bpContextCreateRawData: contextStruct.contextCreateRawData,
           bpContextFreeRawData: contextStruct.contextFreeRawData,
         };
-        node.user_data = structUserData;
+        node.user_data = {
+          ...node.user_data,
+          ...structUserData,
+        };
 
-        // Only For Struct
+        // Node - Struct Member Variable
         node.asStruct().member_variables.map((member_variable, index) => {
           const bpType = BPHelper.getBPType(member_variable.type);
           const simpleTypeUserData: CustomUserData.SimpleTypeUserData = {
@@ -296,50 +308,30 @@ export function genGeneralTerraData(
             member_variable,
             bpType
           );
+
+          const basedata_structmembervariable = genBaseUECommonUserData(member_variable);
           const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData =
             {
-              commentCppStyle: CppHelper.formatAsCppComment(
-                member_variable.comment
-              ),
-
+              ...basedata_structmembervariable,
               bpFormatDefaultVal: formatDefaultVal,
-
-              ...member_variable.user_data,
             };
-          member_variable.user_data = structMemberVariableUserData;
+          member_variable.user_data = {
+            ...member_variable.user_data,
+            ...structMemberVariableUserData,
+          };
         });
       }
 
       return node;
     });
-
     return cxxfile;
   });
 
-  //remove Clazz/Enumz/Struct doesn't exist file
+  // [Step 2: Filter nodes]
+  //remove neither Clazz, Enumz nor Struct exist in the file
   view = view.filter((cxxfile) => {
     return (
       cxxfile.nodes.filter((node) => {
-        const key_registeredsource = BPHelper.getRegisteredBPSearchKey(node);
-        const [typeCategoryName, valBPNodeName] =
-          BPHelper.getRegisteredBPType(key_registeredsource);
-        const terraNodeUserData: CustomUserData.TerraNodeUserData = {
-          isStruct: node.__TYPE === CXXTYPE.Struct,
-          isEnumz: node.__TYPE === CXXTYPE.Enumz,
-          isClazz: node.__TYPE === CXXTYPE.Clazz,
-
-          commentCppStyle: CppHelper.formatAsCppComment(node.comment),
-          macro_scope_start: CppHelper.createCompilationDirectivesContent(node),
-          macro_scope_end: CppHelper.createCompilationDirectivesContent(
-            node,
-            false
-          ),
-          bpNodeName: valBPNodeName,
-          bpHasRegistered: typeCategoryName !== CXXTYPE.Unknown,
-          ...node.user_data,
-        };
-        node.user_data = terraNodeUserData;
-
         return (
           node.__TYPE === CXXTYPE.Clazz ||
           node.__TYPE === CXXTYPE.Enumz ||
