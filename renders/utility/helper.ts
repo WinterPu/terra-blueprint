@@ -28,19 +28,7 @@ import { map_class_initialization } from './blueprint_special/bptype_data';
 import * as CppHelper from './cpp_helper';
 import * as FilterHelper from './filter_helper';
 import * as Logger from './logger';
-
-const regMap: { [key: string]: string } = {
-  isCallback: '.*(Observer|Handler|Callback|Receiver|Sink).*',
-};
-
-export function isMatch(str: string, type: string): boolean {
-  let result = false;
-  if (regMap[type]) {
-    result = new RegExp(regMap[type]).test(str);
-  }
-  return result;
-}
-
+import * as Tools from './tools';
 // preprocess the nodes
 export function preProcessNode(cxxfiles: CXXFile[]) {
   BPHelper.initMapRegisteredData();
@@ -115,7 +103,7 @@ export function genGeneralTerraData(
         // Only For Clazz
         let hasSupportApi = false;
         node.asClazz().methods.map((method, index) => {
-          let bIsCallbackMethod = isMatch(node.name, 'isCallback');
+          let bIsCallbackMethod = Tools.isMatch(node.name, 'isCallback');
 
           // let bDebug = method.name === "getScreenCaptureSources";
           // if (bDebug){
@@ -245,7 +233,7 @@ export function genGeneralTerraData(
           // isEnumz: node.__TYPE === CXXTYPE.Enumz,
           isClazz: node.__TYPE === CXXTYPE.Clazz,
           prefix_name: node.name.replace(new RegExp('^I(.*)'), '$1'),
-          isCallback: isMatch(node.name, 'isCallback'),
+          isCallback: Tools.isMatch(node.name, 'isCallback'),
           hasBaseClazzs: node.asClazz().base_clazzs.length > 0,
           hasSupportApi: hasSupportApi,
 

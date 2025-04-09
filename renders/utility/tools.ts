@@ -3,6 +3,19 @@ import path from 'path';
 import { CXXTerraNode } from '@agoraio-extensions/cxx-parser';
 
 import { AGORA_MUSTACHE_DATA } from './blueprint_special/bptype_mustache_data';
+
+const regMap: { [key: string]: string } = {
+  isCallback: '.*(Observer|Handler|Callback|Receiver|Sink).*',
+};
+
+export function isMatch(str: string, type: string): boolean {
+  let result = false;
+  if (regMap[type]) {
+    result = new RegExp(regMap[type]).test(str);
+  }
+  return result;
+}
+
 export function convertTypeNameToNodeName(input: string): string {
   if (!input) return input; // handle undefined
   return removeNamespace(input);
