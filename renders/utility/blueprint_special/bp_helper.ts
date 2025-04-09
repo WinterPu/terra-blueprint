@@ -187,6 +187,8 @@ export function genBPNameForAgora_Class(clazz_name: string): string {
   // legency issue
   // Because the design previously removed the leading 'I'.
   // ex. IRtcEngine => UAgoraBPuRtcEngine
+  // TBD(WinterPu)
+  // Ex. like Iterator, Interface, etc. Which the leading 'I' is not removed.
   if (clazz_name.startsWith('I')) {
     clazz_name = clazz_name.slice(1); // 去掉开头的 I
   }
