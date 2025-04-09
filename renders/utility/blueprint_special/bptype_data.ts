@@ -765,6 +765,9 @@ export const map_struct_member_variable_default_value: {
    */
   // const int DEFAULT_MIN_BITRATE = -1;
   'agora::rtc::VideoEncoderConfiguration.minBitrate': '-1',
+
+  'agora::rtc::ScreenCaptureParameters.contentHint':
+    'EUABT_VIDEO_CONTENT_HINT::CONTENT_HINT_MOTION',
 };
 
 // In Struct, the corresponding size count variable to the target member variable
