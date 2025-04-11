@@ -24,6 +24,7 @@ import {
 
 import {
   ConversionWayType,
+  map_bptype_conv_data,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
 import { UEBPType } from './bptype_helper';
@@ -45,6 +46,18 @@ export function getIncludeFilesForBP(cxxFile: CXXFile): string[] {
     }
   });
   return includeFiles;
+}
+
+// get custom defined bp types in conv map: Ex. UABT_Opt_int
+export function getCustomDefinedBPTypes_InConvMap(): { [key: string]: string } {
+  const customTypes: { [key: string]: string } = {};
+  for (const typeName in map_bptype_conv_data) {
+    const typeData = map_bptype_conv_data[typeName];
+    if (typeData.isCustomBPType === true) {
+      customTypes[typeName] = typeData.bpType;
+    }
+  }
+  return customTypes;
 }
 
 export function genBPReturnType(return_type: SimpleType): string {
@@ -178,7 +191,7 @@ export function registerBPFileName(file_name: string, bp_filename: string) {
 
 export function registerBPNameForSelfDefinedType() {
   const map_bptypes_custom_defined_in_conv_map =
-    BPTypeHelper.getCustomDefinedBPTypes_InConvMap();
+    getCustomDefinedBPTypes_InConvMap();
 
   for (const [key_cpp, value_bp] of Object.entries(
     map_bptypes_custom_defined_in_conv_map

@@ -14,6 +14,7 @@ import * as BPHelper from './bp_helper';
 
 import {
   ConversionWayType,
+  CppBPConversionData,
   DeclTypeSPRule,
   SpecialDeclTypeRule,
   keep_pointer_type_list,
@@ -25,6 +26,8 @@ import {
   map_cpp2bp_convert_function_name,
   map_cpptype_2_uebptype,
   map_cpptype_default_value,
+  map_one_category_basicconv_bpfromcpp,
+  map_one_category_basicconv_cppfrombp,
   map_parse_array_blacklist,
   map_parse_array_whitelist,
   map_setdata_function_name,
@@ -40,27 +43,20 @@ import {
 } from './bptype_data_makeup';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
-// get custom defined bp types in conv map: Ex. UABT_Opt_int
-export function getCustomDefinedBPTypes_InConvMap(): { [key: string]: string } {
-  const customTypes: { [key: string]: string } = {};
-  for (const typeName in map_bptype_conv_data) {
-    const typeData = map_bptype_conv_data[typeName];
-    if (typeData.isCustomBPType === true) {
-      customTypes[typeName] = typeData.bpType;
-    }
-  }
-  return customTypes;
-}
-
 export class UEBPType {
   cppTypeName: string;
   cppTypeSource: string;
 
   // Direct Convert
   // BP
-  name: string; // [bpTypeName] type name of blueprint: Ex. FString: Usage: Ex. FUABT_Opt_double::FreeRawData(a)
-  source: string; // [bpTypeSource] type with full qualifier: Ex. const FString &
-  declType: string; // [bpDeclType] TypeName with some properties: Ex. TArray<FString>
+  // Ex. cpp type source: const char **
+  // [bpTypeName]: type name of blueprint: Ex. FString: used in the case: call class static method: FString::FromCStr()
+  name: string;
+  // [bpDeclType]: type name with some properties: Ex. TArray<FString>: used in the variable declaration: TArray<FString> MyArray; (usually in the function implementation)
+  declType: string;
+  // [bpTypeSource]: type with full qualifier: Ex. const TArray<FString> &: used in the function parameter: void MyFunc(const TArray<FString> &MyArray);
+  source: string;
+
   delegateType: string; // [bpDelegateType] used in bp multicast-delegate: Ex. const TArray<FString> & (because delegates don't support non-const reference)
 
   isTArray: boolean;
@@ -136,71 +132,65 @@ export class UEBPType {
 // // Declare the function type
 // function genConvDeclType_WithSpecialDeclTypeRule(val: string): ConvDeclTypeData;
 
-export class CppBPConversionData {
-  convNeeded: boolean;
-  convFuncType: ConversionWayType;
-  convFunc: string;
-  convFuncAdditional01: string; // Ex. free data conv function
-  convAdditionalFuncParam01: string; // Ex. SetData(a,b,Size)
-  bpTypeName: string;
-  dataSize: number;
+// export class CppBPConversionData {
+//   convNeeded: boolean;
+//   convFuncType: ConversionWayType;
+//   convFunc: string;
+//   convFuncAdditional01: string; // Ex. free data conv function
+//   convAdditionalFuncParam01: string; // Ex. SetData(a,b,Size)
+//   bpTypeName: string;
+//   dataSize: number;
 
-  constructor() {
-    this.convNeeded = false;
-    this.convFuncType = ConversionWayType.NoNeedConversion;
-    this.convFunc = '';
-    this.convFuncAdditional01 = '';
-    this.convAdditionalFuncParam01 = '';
-    this.bpTypeName = '';
-    this.dataSize = 0;
-  }
-  toString(): string {
-    return `CppBPConversionData {
-      convNeeded: ${this.convNeeded}
-      convFuncType: ${this.convFuncType}
-      convFunc: ${this.convFunc}
-      convFuncAdditional01: ${this.convFuncAdditional01}
-      convAdditionalFuncParam01: ${this.convAdditionalFuncParam01}
-      bpTypeName: ${this.bpTypeName}
-      dataSize: ${this.dataSize}
-    }`;
-  }
-}
+//   constructor() {
+//     this.convNeeded = false;
+//     this.convFuncType = ConversionWayType.NoNeedConversion;
+//     this.convFunc = '';
+//     this.convFuncAdditional01 = '';
+//     this.convAdditionalFuncParam01 = '';
+//     this.bpTypeName = '';
+//     this.dataSize = 0;
+//   }
+//   toString(): string {
+//     return `CppBPConversionData {
+//       convNeeded: ${this.convNeeded}
+//       convFuncType: ${this.convFuncType}
+//       convFunc: ${this.convFunc}
+//       convFuncAdditional01: ${this.convFuncAdditional01}
+//       convAdditionalFuncParam01: ${this.convAdditionalFuncParam01}
+//       bpTypeName: ${this.bpTypeName}
+//       dataSize: ${this.dataSize}
+//     }`;
+//   }
+// }
 
 function genBPConvertFromRawType(
   type: SimpleType,
   isTArray: boolean
 ): CppBPConversionData {
   // bp = Func(cpp);
-  let conversion = new CppBPConversionData();
+  let conversion: CppBPConversionData = {
+    convFuncType: ConversionWayType.NoNeedConversion,
+    convFunc: '',
+    convFuncAdditional01: '',
+  };
 
   // Enum
   const key_registeredsource = BPHelper.getRegisteredBPSearchKey(type);
   let [typeCategory, bpTypeName] =
     BPHelper.getRegisteredBPType(key_registeredsource);
   if (typeCategory == CXXTYPE.Enumz) {
-    conversion.convNeeded = true;
-    conversion.convFuncType = ConversionWayType.Basic;
-    conversion.convFunc = AGORA_MUSTACHE_DATA.UABTEnum_WrapWithUE;
-    conversion.convFuncAdditional01 = '';
+    conversion = map_one_category_basicconv_bpfromcpp.get('Enum')!;
     conversion.bpTypeName = bpTypeName;
   }
 
   if (isTArray) {
-    conversion.convNeeded = true;
-    conversion.convFuncType = ConversionWayType.BPFromCpp_NewFreeArrayData;
-    conversion.convFunc = AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA;
-    conversion.convFuncAdditional01 = '';
+    conversion = map_one_category_basicconv_bpfromcpp.get('TArray')!;
   }
 
-  let convert_function = map_cpp2bp_convert_function_name[type.source];
-  if (convert_function) {
-    conversion.convNeeded = true;
-    conversion.convFuncType = ConversionWayType.Basic;
-    conversion.convFunc = convert_function;
-    conversion.convFuncAdditional01 = '';
+  const type_conv_data = map_bptype_conv_data[type.source];
+  if (type_conv_data.isCustomBPType) {
+    conversion = type_conv_data.convFromCpp;
     conversion.bpTypeName = bpTypeName;
-  } else {
   }
 
   return conversion;
@@ -211,67 +201,42 @@ function genBPConvertToRawType(
   isTArray: boolean
 ): CppBPConversionData {
   // cpp = Func(bp);
-  let conversion = new CppBPConversionData();
+  let conversion: CppBPConversionData = {
+    convFuncType: ConversionWayType.NoNeedConversion,
+    convFunc: '',
+    convFuncAdditional01: '',
+  };
   // UEnum
   const key_registeredsource = BPHelper.getRegisteredBPSearchKey(type);
   let [typeCategory, bpTypeName] =
     BPHelper.getRegisteredBPType(key_registeredsource);
   if (typeCategory == CXXTYPE.Enumz) {
-    conversion.convNeeded = true;
-    conversion.convFuncType = ConversionWayType.Basic;
-    conversion.convFunc = AGORA_MUSTACHE_DATA.UABTEnum_ToRawValue;
-    conversion.convFuncAdditional01 = '';
+    conversion = map_one_category_basicconv_cppfrombp.get('Enum')!;
     conversion.bpTypeName = bpTypeName;
   }
 
   if (typeCategory === CXXTYPE.Clazz || typeCategory === CXXTYPE.Struct) {
     if (Tools.IsOptionalUABTType(bpTypeName)) {
-      conversion.convNeeded = true;
-      conversion.convFuncType = ConversionWayType.CppFromBP_CreateFreeOptData;
-      conversion.convFunc = AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA;
-      conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA;
+      conversion = map_one_category_basicconv_cppfrombp.get('Optional')!;
     } else {
-      conversion.convNeeded = true;
-      conversion.convFuncType = ConversionWayType.CppFromBP_NeedCallConvFunc;
-      conversion.convFunc = AGORA_MUSTACHE_DATA.CREATE_RAW_DATA;
-      conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
+      conversion = map_one_category_basicconv_cppfrombp.get('UCLASS_USTRUCT')!;
     }
     conversion.bpTypeName = bpTypeName;
   }
 
   if (isTArray) {
-    conversion.convNeeded = true;
-    conversion.convFuncType = ConversionWayType.CppFromBP_NewFreeArrayData;
-    conversion.convFunc = AGORA_MUSTACHE_DATA.NEW_RAW_ARRAY_DATA;
-    conversion.convFuncAdditional01 = AGORA_MUSTACHE_DATA.FREE_RAW_ARRAY_DATA;
+    conversion = map_one_category_basicconv_cppfrombp.get('TArray')!;
     conversion.bpTypeName = bpTypeName;
   }
 
-  let convert_function = map_bp2cpp_convert_function_name[type.source];
-  if (convert_function) {
-    conversion.convNeeded = true;
-    conversion.convFuncType = ConversionWayType.Basic;
-    conversion.convFunc = convert_function;
-    conversion.convFuncAdditional01 = '';
-  } else {
-    let func_memorys = map_bp2cpp_memory_handle[type.source];
-    if (func_memorys) {
-      conversion.convNeeded = true;
-      conversion.convFuncType = ConversionWayType.CppFromBP_NewFreeData;
-      conversion.convFunc = func_memorys[0]; // New Data
-      conversion.convFuncAdditional01 = func_memorys[1]; // Free Data
-    } else {
-      let set_data_func = map_setdata_function_name[type.source];
-      if (set_data_func) {
-        conversion.convNeeded = true;
-        conversion.convFuncType = ConversionWayType.CppFromBP_SetData;
-        conversion.convFunc = set_data_func;
-        conversion.convFuncAdditional01 = '';
-        conversion.convAdditionalFuncParam01 = Tools.extractBracketNumber(
-          type.source
-        );
-      }
-    }
+  const type_conv_data = map_bptype_conv_data[type.source];
+  if (type_conv_data) {
+    conversion = type_conv_data.convToCpp;
+    // map_setdata_function_name
+    // ConversionWayType.CppFromBP_SetData
+    conversion.convAdditionalFuncParam01 = Tools.extractBracketNumber(
+      type.source
+    );
   }
 
   return conversion;
@@ -284,7 +249,8 @@ export function parsePointerType(
   // keep the pointer type, not as array type
   // Ex. agora::rtc::IScreenCaptureSourceList* => UAgoraBPuScreenCaptureSourceList *
   const type_source = type.source ?? '';
-  const need_keep = keep_pointer_type_list.includes(type_source);
+  const data_type_conv = map_bptype_conv_data[type_source];
+  const need_keep = data_type_conv.parsePointerForceEnable;
   if (need_keep) {
     return [true, refBPTypeName + ' *'];
   }
@@ -774,7 +740,6 @@ export function getBPMemberVariableDefaultValue(
   //   }
   // }
 
-
   // TBD(WinterPu)
   // For Pointer Type
   // currently, have no idea about this situation.
@@ -883,7 +848,6 @@ function genConvDeclType_WithSpecialDeclTypeRule(
   }
   return result;
 }
-
 
 export { ConversionWayType };
 // ********** End of Special Decl Type Rule **********
