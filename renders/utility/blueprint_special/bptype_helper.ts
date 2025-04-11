@@ -51,6 +51,7 @@ export class UEBPType {
   // BP
   // Ex. cpp type source: const char **
   // [bpTypeName]: type name of blueprint: Ex. FString: used in the case: call class static method: FString::FromCStr()
+  //  or used in template type UABT::SetBPArrayData<FString, TArray<FString>(BPVar, CppArrayVar, CppArraySize);
   name: string;
   // [bpDeclType]: type name with some properties: Ex. TArray<FString>: used in the variable declaration: TArray<FString> MyArray; (usually in the function implementation)
   declType: string;

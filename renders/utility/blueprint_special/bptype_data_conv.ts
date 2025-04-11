@@ -10,6 +10,7 @@ import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 // Ex.
 // cpp type source: const char **
 // [TypeName]: Ex. FString: used in the case: call class static method: FString::FromCStr()
+//  or used in template type UABT::SetBPArrayData<FString, TArray<FString>(BPVar, CppArrayVar, CppArraySize);
 // [DeclType]: Ex. TArray<FString>: used in the variable declaration: TArray<FString> MyArray; (usually in the function implementation)
 // [TypeSource]: Ex. const TArray<FString> &: used in the function parameter: void MyFunc(const TArray<FString> &MyArray);
 
