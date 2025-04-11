@@ -6,9 +6,17 @@ import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 // Type conversion guide:
 // Based on the type, you should know how to call and use it
 
+// Difference between [TypeName], [DeclType] and [TypeSource]
+// Ex.
+// cpp type source: const char **
+// [TypeName]: Ex. FString: used in the case: call class static method: FString::FromCStr()
+// [DeclType]: Ex. TArray<FString>: used in the variable declaration: TArray<FString> MyArray; (usually in the function implementation)
+// [TypeSource]: Ex. const TArray<FString> &: used in the function parameter: void MyFunc(const TArray<FString> &MyArray);
+
 // Here: CppType to BPType
 export type UEBPTypeConvData = {
   bpType: string;
+  bpDesignedDeclType: string | undefined;
   // skip the process, directly assigned the type source
   bpDesignedTypeSource: string | undefined;
   // whether the implementation is user provided. (not the native blueprint type)
@@ -64,6 +72,7 @@ export type CppBPConversionData = {
   convFuncType: ConversionWayType;
   convFunc: string;
   convFuncAdditional01: string; // Ex. free data conv function
+  runtimedata?: any; // Ex. array size
 };
 
 export enum ConversionWayType {
@@ -191,9 +200,73 @@ export const map_decltype_special_rule = new Map<
   ],
 ]);
 
+export const map_one_category_basicconv_bpfromcpp = new Map<
+  string,
+  CppBPConversionData
+>([
+  [
+    'Enum',
+    {
+      convFuncType: ConversionWayType.Basic,
+      convFunc: AGORA_MUSTACHE_DATA.UABTEnum_WrapWithUE,
+      convFuncAdditional01: '',
+    },
+  ],
+  [
+    'TArray',
+    {
+      convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+      convFunc: AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA,
+      convFuncAdditional01: '',
+    },
+  ],
+]);
+
+export const map_one_category_basicconv_cppfrombp = new Map<
+  string,
+  CppBPConversionData
+>([
+  [
+    'Enum',
+    {
+      convFuncType: ConversionWayType.Basic,
+      convFunc: AGORA_MUSTACHE_DATA.UABTEnum_ToRawValue,
+      convFuncAdditional01: '',
+    },
+  ],
+
+  [
+    'Optional',
+    {
+      convFuncType: ConversionWayType.CppFromBP_CreateFreeOptData,
+      convFunc: AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA,
+      convFuncAdditional01: AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA,
+    },
+  ],
+
+  [
+    'UCLASS_USTRUCT',
+    {
+      convFuncType: ConversionWayType.CppFromBP_NeedCallConvFunc,
+      convFunc: AGORA_MUSTACHE_DATA.CREATE_RAW_DATA,
+      convFuncAdditional01: AGORA_MUSTACHE_DATA.FREE_RAW_DATA,
+    },
+  ],
+
+  [
+    'TArray',
+    {
+      convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
+      convFunc: AGORA_MUSTACHE_DATA.NEW_RAW_ARRAY_DATA,
+      convFuncAdditional01: AGORA_MUSTACHE_DATA.FREE_RAW_ARRAY_DATA,
+    },
+  ],
+]);
+
 // =============== Default Template ===============
 const defaultTmpl_BasicType_NoConv: UEBPTypeConvData = {
   bpType: '',
+  bpDesignedDeclType: undefined,
   bpDesignedTypeSource: undefined,
   isCustomBPType: false,
   convFromCpp: {
@@ -230,6 +303,23 @@ const defaultTmpl_FString_NonConst: UEBPTypeConvData = {
     convFuncAdditional01: 'UABT::Free_CharPtr',
   },
   declTypeSPRule: DeclTypeSPRule.SP_String,
+  parseArrayIsInBlackList: true,
+};
+
+const defaultTmpl_FString_NonConst_UnsignedChar: UEBPTypeConvData = {
+  ...defaultTmpl_FString_NonConst,
+  bpType: 'FString',
+  convFromCpp: {
+    convFuncType: ConversionWayType.BPFromCpp_FString,
+    convFunc: 'UTF8_TO_TCHAR',
+    convFuncAdditional01: '',
+  },
+  convToCpp: {
+    convFuncType: ConversionWayType.CppFromBP_NewFreeData,
+    convFunc: 'UABT::New_UnsignedCharPtr',
+    convFuncAdditional01: 'UABT::Free_UnsignedCharPtr',
+  },
+  parseArrayIsInBlackList: true,
 };
 
 const defaultTmpl_FString_Const: UEBPTypeConvData = {
@@ -246,9 +336,10 @@ const defaultTmpl_FString_Const: UEBPTypeConvData = {
     convFuncAdditional01: 'UABT::Free_ConstCharPtr',
   },
   declTypeSPRule: DeclTypeSPRule.SP_String,
+  parseArrayIsInBlackList: true,
 };
 
-const defaultTmpl_FString_Array: UEBPTypeConvData = {
+const defaultTmpl_FString_SetArray: UEBPTypeConvData = {
   ...defaultTmpl_BasicType_NoConv,
   bpType: 'FString',
   convFromCpp: {
@@ -262,6 +353,22 @@ const defaultTmpl_FString_Array: UEBPTypeConvData = {
     convFuncAdditional01: 'UABT::Free_CharArrayPtr',
   },
   declTypeSPRule: DeclTypeSPRule.SP_String,
+  parseArrayIsInBlackList: true,
+};
+
+const defaultTmpl_Int64_Pointer: UEBPTypeConvData = {
+  ...defaultTmpl_BasicType_NoConv,
+  bpType: 'int64',
+  convFromCpp: {
+    convFuncType: ConversionWayType.Basic,
+    convFunc: 'UABT::FromInt64',
+    convFuncAdditional01: '',
+  },
+  convToCpp: {
+    convFuncType: ConversionWayType.Basic,
+    convFunc: 'UABT::ToInt64',
+    convFuncAdditional01: '',
+  },
 };
 
 const defaultTmpl_FUABT_OPT: UEBPTypeConvData = {
@@ -279,21 +386,52 @@ const defaultTmpl_FUABT_OPT: UEBPTypeConvData = {
   },
 };
 
+const defaultTmpl_TrackID: UEBPTypeConvData = {
+  ...defaultTmpl_BasicType_NoConv,
+  bpType: 'int64',
+  convFromCpp: {
+    convFuncType: ConversionWayType.Basic,
+    convFunc: 'UABT::FromTrackID',
+    convFuncAdditional01: '',
+  },
+  convToCpp: {
+    convFuncType: ConversionWayType.Basic,
+    convFunc: 'UABT::ToTrackID',
+    convFuncAdditional01: '',
+  },
+};
+
 // =============== Type 2 Type Conversion ===============
+// also use type source as key
 export const map_cppreg_2_bptype_conv_data = new Map<RegExp, UEBPTypeConvData>([
   [
     // char const[n] => FString
     /(?:const\s+)?char\s*(?:const\s*)?\[\s*\d+\s*\]/g,
     {
-      ...defaultTmpl_FString_Array,
+      ...defaultTmpl_FString_SetArray,
+      bpType: 'FString',
+    },
+  ],
+
+  [
+    /(?:const\s+)?char\s*(?:const\s*)?\[\s*\d+\s*\]/g,
+    {
+      ...defaultTmpl_FString_SetArray,
       bpType: 'FString',
     },
   ],
 ]);
 
+// key is decided to use type source as key
+// if we need to use type name as key, we could make a new map.
 export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
   {
     // Basic Type
+    'bool': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'bool',
+      defaultValue: 'false',
+    },
     'int': {
       ...defaultTmpl_BasicType_NoConv,
       bpType: 'int',
@@ -306,7 +444,7 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
     },
     'double': {
       ...defaultTmpl_BasicType_NoConv,
-      bpType: 'double',
+      bpType: 'FString',
       defaultValue: '0.0',
       convFromCpp: {
         convFuncType: ConversionWayType.Basic,
@@ -321,10 +459,219 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       },
     },
 
+    // basic type
+    'unsigned short': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int',
+      defaultValue: '0',
+    },
+    'unsigned int': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+      defaultValue: '0',
+    },
+    'long': {
+      ...defaultTmpl_Int64_Pointer,
+      bpType: 'int64',
+      defaultValue: '0',
+    },
+
+    'long long': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+      defaultValue: '0',
+    },
+
+    // not builtin type
+    'uint8_t': {
+      // TBD(WinterPu) should be Byte, however Byte may not be supported in UE4.25
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int',
+      defaultValue: '0',
+    },
+    'uint16_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int',
+      defaultValue: '0',
+    },
+    'uint32_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+      defaultValue: '0',
+      convFromCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::FromUint32',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::ToUint32',
+        convFuncAdditional01: '',
+      },
+    },
+    'uint64_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FString',
+      defaultValue: '0',
+    },
+    'int16_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int',
+      defaultValue: '0',
+    },
+    'int32_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int',
+      defaultValue: '0',
+    },
+    'int64_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+      defaultValue: '0',
+    },
+
+    // FVector Related
+    'float const[3]': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FVector',
+      defaultValue: 'FVector(0.0, 0.0, 0.0)',
+      parseArrayIsInBlackList: true,
+    },
+
+    // FString Related
+    'const char*': {
+      ...defaultTmpl_FString_Const,
+    },
+    'char const*': {
+      ...defaultTmpl_FString_Const,
+    },
+    'unsigned char const*': {
+      ...defaultTmpl_FString_Const,
+    },
+    'unsigned char*': {
+      // TBD(WinterPu) check it
+      ...defaultTmpl_FString_NonConst,
+      bpType: 'FString',
+    },
+    'char*': {
+      ...defaultTmpl_FString_NonConst,
+      bpType: 'FString',
+      convFromCpp: {
+        convFuncType: ConversionWayType.BPFromCpp_FString,
+        convFunc: 'UTF8_TO_TCHAR',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_SetData,
+        convFunc: 'UABT::SetCharArrayPtr',
+        convFuncAdditional01: '',
+      },
+    },
+
+    'char const**': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FString',
+      bpDesignedTypeSource: 'TArray<FString>',
+      parsePointerForceEnable: true,
+    },
+
+    'char**': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FString',
+      bpDesignedTypeSource: 'TArray<FString>',
+      parsePointerForceEnable: true,
+      convFromCpp: {
+        convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+        convFunc: '',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_NewFreeData,
+        convFunc: 'UABT::New_CharArrayPtr',
+        convFuncAdditional01: 'UABT::Free_CharArrayPtr',
+      },
+    },
+
+    // Array Related
+
+    'float*': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'TArray<float>',
+      convFromCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::FromFloatArray',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
+        convFunc: 'UABT::New_FloatArrayPtr',
+        convFuncAdditional01: 'UABT::Free_FloatArrayPtr',
+      },
+    },
+
+    'int const*': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int',
+      bpDesignedTypeSource: 'TArray<int>',
+      parsePointerForceEnable: true,
+    },
+
+    'uid_t*': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+      bpDesignedTypeSource: 'TArray<int64>',
+      convFromCpp: {
+        convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+        convFunc: '',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
+        convFunc: 'UABT::New_UIDArrayPtr',
+        convFuncAdditional01: 'UABT::Free_UIDArrayPtr',
+      },
+    },
+
+    'agora::rtc::Music*': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FUABT_Music',
+      parseArrayIsInBlackList: true,
+    },
+
+    'agora::rtc::MusicChartInfo*': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FUABT_MusicChartInfo',
+      parseArrayIsInBlackList: true,
+    },
+    'agora::rtc::IScreenCaptureSourceList*': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FUABT_ScreenCaptureSourceList',
+      parseArrayIsInBlackList: true,
+      parsePointerForceEnable: true,
+    },
+
+    // Pointer Related
+    'void*': {
+      // TBD(WinterPu) check it
+      ...defaultTmpl_Int64_Pointer,
+      bpType: 'int64',
+      defaultValue: '0',
+    },
+
     // Agora Related
     'agora::rtc::uid_t': {
       ...defaultTmpl_BasicType_NoConv,
       bpType: 'int64',
+      convFromCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::FromUID',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::ToUID',
+        convFuncAdditional01: '',
+      },
     },
     'agora::user_id_t': {
       ...defaultTmpl_BasicType_NoConv,
@@ -332,15 +679,96 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
 
       convFromCpp: {
         convFuncType: ConversionWayType.Basic,
-        convFunc: 'UABT::FromUID',
+        convFunc: 'UABT::FromUserID',
         convFuncAdditional01: '',
       },
 
       convToCpp: {
         convFuncType: ConversionWayType.Basic,
-        convFunc: 'UABT::ToUID',
+        convFunc: 'UABT::ToUserID',
         convFuncAdditional01: '',
       },
+    },
+    'agora::view_t': {
+      // TBD(WinterPu) store pointer address
+      // TBD(WinterPu) combine it to tmpl
+      ...defaultTmpl_Int64_Pointer,
+      bpType: 'int64',
+      convFromCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::FromViewToInt',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::ToView',
+        convFuncAdditional01: '',
+      },
+    },
+    'media::base::view_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+      convFromCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::FromViewToInt',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::ToView',
+        convFuncAdditional01: '',
+      },
+    },
+    'base::user_id_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FString',
+    },
+    'rtc::uid_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+    },
+    'rtc::track_id_t': {
+      ...defaultTmpl_TrackID,
+      bpType: 'int64',
+      convFromCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::FromVTID',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::ToVTID',
+        convFuncAdditional01: '',
+      },
+    },
+    'agora::rtc::track_id_t': {
+      ...defaultTmpl_TrackID,
+      bpType: 'int64',
+      // TBD(WinterPu) combine it to tmpl
+      convFromCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::FromVTID',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.Basic,
+        convFunc: 'UABT::ToVTID',
+        convFuncAdditional01: '',
+      },
+    },
+    'agora::rtc::video_track_id_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+    },
+    'agora::util::AString&': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'FString',
+    },
+
+    'size_t': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpType: 'int64',
+      defaultValue: '0',
     },
 
     // Custom Defined Type
@@ -432,9 +860,9 @@ export const map_struct_member_variable_size_count: { [key: string]: string } =
 // [Key] type.source namespace removed
 export const map_cpptype_2_uebptype: { [key: string]: string } = {
   'void': 'void',
-  // 'int': 'int',
-  // 'float': 'float',
-  // 'double': 'FString',
+  'int': 'int',
+  'float': 'float',
+  'double': 'FString',
   'const char*': 'FString',
   'char const*': 'FString',
   'unsigned char const*': 'FString',
@@ -443,7 +871,7 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
   'unsigned short': 'int',
   'unsigned int': 'int64',
 
-  // not builtin type
+  //not builtin type
   'uint8_t': 'int', // TBD(WinterPu) should be Byte, however Byte may not be supported in UE4.25
   'int32_t': 'int',
   'uint32_t': 'int64',
@@ -466,7 +894,7 @@ export const map_cpptype_2_uebptype: { [key: string]: string } = {
   'void*': 'int64', // TBD(WinterPu)
   'long': 'int64', // TBD(WinterPu) check it
 
-  'long long': 'int64',
+  // 'long long': 'int64',
 
   // [TBD] some types that may have issues"
   'size_t': 'int64',

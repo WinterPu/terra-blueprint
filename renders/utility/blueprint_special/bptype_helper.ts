@@ -13,13 +13,13 @@ import * as Tools from '../tools';
 import * as BPHelper from './bp_helper';
 
 import {
-  ClazzAddtionalContext_,
+  ConversionWayType,
+  DeclTypeSPRule,
   SpecialDeclTypeRule,
   keep_pointer_type_list,
   map_bp2cpp_convert_function_name,
   map_bp2cpp_memory_handle,
   map_bptype_conv_data,
-  map_class_initialization,
   map_convdecltype_bp2cpp,
   map_convdecltype_cpp2bp,
   map_cpp2bp_convert_function_name,
@@ -34,6 +34,10 @@ import {
   regex_cpptype_2_uebptype_blacklist,
   regex_parse_array_blacklist,
 } from './bptype_data_conv';
+import {
+  ClazzAddtionalContext_,
+  map_class_initialization,
+} from './bptype_data_makeup';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
 // get custom defined bp types in conv map: Ex. UABT_Opt_int
@@ -48,66 +52,9 @@ export function getCustomDefinedBPTypes_InConvMap(): { [key: string]: string } {
   return customTypes;
 }
 
-export class ConvDeclTypeData {
-  convDeclType: string;
-
-  // Special Rule
-  // Example:
-  // std::string a = TCHAR_TO_UTF8(*b);
-  // usage: a.c_str()
-  enableSpecialRule: boolean;
-  specialRuleConvType: ConversionWayType;
-  convFunc: string;
-  needDereference: boolean; // as arg: TCHAR_TO_UTF8(*b)
-  useMemberFunc: string; // as a.c_str()
-  numSetDataSize: string; // SetData(a,b,numSetDataSize)
-  constructor() {
-    this.convDeclType = '';
-
-    this.enableSpecialRule = false;
-    this.specialRuleConvType = ConversionWayType.NoNeedConversion;
-    this.convFunc = '';
-    this.needDereference = false;
-    this.useMemberFunc = '';
-    this.numSetDataSize = '';
-  }
-  toString(): string {
-    return `ConvDeclTypeData {
-      convDeclType: ${this.convDeclType}
-
-      // Special Rule ..... 
-      enableSpecialRule: ${this.enableSpecialRule}
-      specialRuleConvType: ${this.specialRuleConvType}
-      convFunc: ${this.convFunc}
-      needDereference: ${this.needDereference}
-      useMemberFunc: ${this.useMemberFunc}
-      numSetDataSize: ${this.numSetDataSize}
-    }`;
-  }
-}
-
-export enum ConversionWayType {
-  NoNeedConversion, // no need conversion
-  Basic, // need call basic conversion method
-
-  // BP = FuncFrom(Cpp);
-  BPFromCpp_NewFreeArrayData, // need memory allocation
-
-  // Cpp = FuncTo(BP);
-  CppFromBP_NewFreeData, // need memory allocation
-  CppFromBP_SetData, // directly set data
-  CppFromBP_CreateFreeOptData, // need memory allocation
-  // Example: CreateRawData()
-  CppFromBP_NeedCallConvFunc, // need call conversion function
-
-  CppFromBP_NewFreeArrayData, // need memory allocation
-}
-
 export class UEBPType {
   cppTypeName: string;
   cppTypeSource: string;
-  cppTypeNameWithoutNamespace: string;
-  cppTypeSourceWithoutNamespace: string;
 
   // Direct Convert
   // BP
@@ -136,14 +83,11 @@ export class UEBPType {
   // bpNameConvFuncAdditional_CppFromBP: string;
 
   // Convert In Impl:
-  bpConvDeclType_BPFromCpp: ConvDeclTypeData;
-  bpConvDeclType_CppFromBP: ConvDeclTypeData;
+  bpConvDeclTypeSPRule: DeclTypeSPRule;
 
   constructor() {
     this.cppTypeName = '';
     this.cppTypeSource = '';
-    this.cppTypeNameWithoutNamespace = '';
-    this.cppTypeSourceWithoutNamespace = '';
 
     this.name = '';
     this.source = '';
@@ -156,8 +100,7 @@ export class UEBPType {
     this.bpConv_BPFromCpp = new CppBPConversionData();
     this.bpConv_CppFromBP = new CppBPConversionData();
 
-    this.bpConvDeclType_BPFromCpp = new ConvDeclTypeData();
-    this.bpConvDeclType_CppFromBP = new ConvDeclTypeData();
+    this.bpConvDeclTypeSPRule = DeclTypeSPRule.DefaultNoSP;
   }
 
   toString(): string {
@@ -165,8 +108,6 @@ export class UEBPType {
         // C++ Type Info:
         cppTypeName: "${this.cppTypeName}"
         cppTypeSource: "${this.cppTypeSource}"
-        cppTypeNameWithoutNamespace: "${this.cppTypeNameWithoutNamespace}"
-        cppTypeSourceWithoutNamespace: "${this.cppTypeSourceWithoutNamespace}"
 
         // Blueprint Type Info:
         name: "${this.name}"  // Blueprint type name
@@ -185,9 +126,8 @@ export class UEBPType {
         // Conversion from BP to C++:
         bpConv_CppFromBP: "${this.bpConv_CppFromBP.toString()}"
 
-        // Convert In Impl:
-        bpConvDeclTypeSpecialRule_BPFromCpp: "${this.bpConvDeclType_BPFromCpp.toString()}"
-        bpConvDeclTypeSpecialRule_CppFromBP: "${this.bpConvDeclType_CppFromBP.toString()}"
+        // Decl Type:
+        bpConvDeclTypeSPRule: "${this.bpConvDeclTypeSPRule}"
     }`;
   }
 }
@@ -226,6 +166,7 @@ export class CppBPConversionData {
     }`;
   }
 }
+
 function genBPConvertFromRawType(
   type: SimpleType,
   isTArray: boolean
@@ -748,6 +689,7 @@ export function getBPMemberVariableDefaultValue(
   let bNeedDefaultValue = false;
   let valDefaultVal = undefined;
 
+  // [Step 01]: Directly Assigned
   if (map_struct_member_variable_default_value[member_variable.fullName]) {
     valDefaultVal =
       map_struct_member_variable_default_value[member_variable.fullName];
@@ -784,6 +726,7 @@ export function getBPMemberVariableDefaultValue(
     }
   }
 
+  // check default value in conv map with key [key in dict]
   if (valDefaultVal === undefined) {
     let cpp_type = dictStructInitializer[member_variable.name]?.type;
     let cpp_type_without_namespace = Tools.removeNamespace(cpp_type);
@@ -796,6 +739,7 @@ export function getBPMemberVariableDefaultValue(
     }
   }
 
+  // recheck default value in conv map with key: [member_variable.type.source]
   if (valDefaultVal === undefined) {
     let cpp_type_without_namespace = Tools.removeNamespace(
       member_variable.type.source
@@ -809,6 +753,7 @@ export function getBPMemberVariableDefaultValue(
     }
   }
 
+  // Enum default value
   if (valDefaultVal === undefined) {
     let cpp_type_without_namespace = Tools.convertTypeNameToNodeName(
       member_variable.type.source
@@ -821,38 +766,17 @@ export function getBPMemberVariableDefaultValue(
     }
   }
 
-  if (valDefaultVal === undefined) {
-    let cpp_type_without_namespace = Tools.convertTypeNameToNodeName(
-      member_variable.type.source
-    );
-    if (
-      BPHelper.getMapCpp2BPClass().has(cpp_type_without_namespace) ||
-      BPHelper.getMapCpp2BPStruct().has(cpp_type_without_namespace)
-    ) {
-      bNeedDefaultValue = false;
-    }
-  }
+  // // Optional Value Remove Default Value
+  // // this should already be included in the UCLASS Exempt.
+  // if (valDefaultVal === undefined) {
+  //   if (member_variable.type.name == 'Optional') {
+  //     bNeedDefaultValue = false;
+  //   }
+  // }
 
-  if (valDefaultVal === undefined) {
-    if (member_variable.type.name == 'Optional') {
-      bNeedDefaultValue = false;
-    }
-  }
-
-  if (valDefaultVal === undefined) {
-    let [bIsArray, original_type] = parseArrayType(member_variable.type.source);
-    console.log(
-      member_variable.type.source,
-      'getBPMemberVariableDefaultValue parseArrayType',
-      bIsArray,
-      original_type
-    );
-    if (bIsArray) {
-      bNeedDefaultValue = false;
-    }
-  }
 
   // TBD(WinterPu)
+  // For Pointer Type
   // currently, have no idea about this situation.
   // need to check in the future
   if (valDefaultVal === undefined) {
@@ -864,7 +788,8 @@ export function getBPMemberVariableDefaultValue(
       pointer_type
     );
     if (bNeedPointer) {
-      bNeedDefaultValue = false;
+      bNeedDefaultValue = true;
+      valDefaultVal = 'nullptr';
     }
   }
 
@@ -873,6 +798,7 @@ export function getBPMemberVariableDefaultValue(
   }
 
   // TBD(WinterPu)
+  // Special Case: FString
   if (bpType.declType === 'FString') {
     if (
       valDefaultVal === '0' ||
@@ -884,6 +810,7 @@ export function getBPMemberVariableDefaultValue(
       valDefaultVal = `TEXT("${valDefaultVal}")`;
     }
   }
+
   return [bNeedDefaultValue, valDefaultVal];
 }
 
@@ -957,4 +884,6 @@ function genConvDeclType_WithSpecialDeclTypeRule(
   return result;
 }
 
+
+export { ConversionWayType };
 // ********** End of Special Decl Type Rule **********

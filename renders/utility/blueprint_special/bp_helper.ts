@@ -22,8 +22,11 @@ import {
   BPStructContext,
 } from './bpcontext_data';
 
-import { map_struct_member_variable_size_count } from './bptype_data';
-import { ConversionWayType, UEBPType } from './bptype_helper';
+import {
+  ConversionWayType,
+  map_struct_member_variable_size_count,
+} from './bptype_data_conv';
+import { UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
