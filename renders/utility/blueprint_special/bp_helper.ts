@@ -174,12 +174,13 @@ export function registerBPFileName(file_name: string, bp_filename: string) {
 }
 
 export function registerBPNameForSelfDefinedType() {
-  const map_conv_cpp2bp = BPTypeHelper.getConvMap_CppToBP();
-  for (const [key_cpp, value_bp] of Object.entries(map_conv_cpp2bp)) {
-    // Optional Value
-    if (Tools.IsOptionalUABTType(value_bp)) {
-      mapCpp2BPStruct.set(key_cpp, value_bp);
-    }
+  const map_bptypes_custom_defined_in_conv_map =
+    BPTypeHelper.getCustomDefinedBPTypes_InConvMap();
+
+  for (const [key_cpp, value_bp] of Object.entries(
+    map_bptypes_custom_defined_in_conv_map
+  )) {
+    mapCpp2BPStruct.set(key_cpp, value_bp);
   }
 }
 

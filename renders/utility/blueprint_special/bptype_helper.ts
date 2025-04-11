@@ -18,6 +18,7 @@ import {
   keep_pointer_type_list,
   map_bp2cpp_convert_function_name,
   map_bp2cpp_memory_handle,
+  map_bptype_conv_data,
   map_class_initialization,
   map_convdecltype_bp2cpp,
   map_convdecltype_cpp2bp,
@@ -32,11 +33,19 @@ import {
   not_parse_array_type_for_return_type,
   regex_cpptype_2_uebptype_blacklist,
   regex_parse_array_blacklist,
-} from './bptype_data';
+} from './bptype_data_conv';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
-export function getConvMap_CppToBP() {
-  return map_cpptype_2_uebptype;
+// get custom defined bp types in conv map: Ex. UABT_Opt_int
+export function getCustomDefinedBPTypes_InConvMap(): { [key: string]: string } {
+  const customTypes: { [key: string]: string } = {};
+  for (const typeName in map_bptype_conv_data) {
+    const typeData = map_bptype_conv_data[typeName];
+    if (typeData.isCustomBPType === true) {
+      customTypes[typeName] = typeData.bpType;
+    }
+  }
+  return customTypes;
 }
 
 export class ConvDeclTypeData {
