@@ -30,6 +30,7 @@ import {
   map_decltype_special_rule,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
+import {map_includefiles} from './bpincludefiles_data';
 import { UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
@@ -37,6 +38,12 @@ import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
 export function getIncludeFilesForBP(cxxFile: CXXFile): string[] {
   let includeFiles: string[] = [];
+  
+  // Directly Assigned
+  if(map_includefiles[cxxFile.fileName]){
+    return map_includefiles[cxxFile.fileName];
+  }
+
   cxxFile.nodes.forEach((node: CXXTerraNode) => {
     if (node.__TYPE == CXXTYPE.IncludeDirective) {
       let inc_dir = node.asIncludeDirective();

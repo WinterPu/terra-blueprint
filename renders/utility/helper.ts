@@ -24,7 +24,6 @@ import * as CustomUserData from './additional_parsedata';
 
 import * as BPHelper from './blueprint_special/bp_helper';
 
-import { map_class_initialization } from './blueprint_special/bptype_data';
 import * as CppHelper from './cpp_helper';
 import * as FilterHelper from './filter_helper';
 import * as Logger from './logger';

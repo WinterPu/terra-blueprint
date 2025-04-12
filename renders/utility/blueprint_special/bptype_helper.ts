@@ -44,7 +44,7 @@ export function getBPTypeConvData(typeSource: string): UEBPTypeConvData | undefi
         return regex_bptype_convdata;
       }
     }
-    Logger.PrintWarning("" + typeSource + " not found in map_bptype_conv_data");
+    Logger.PrintWarn("" + typeSource + " not found in map_bptype_conv_data");
   }
   return data_bptype_conv;
 }
