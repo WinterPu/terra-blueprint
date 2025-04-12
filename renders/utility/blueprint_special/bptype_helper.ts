@@ -16,35 +16,42 @@ import {
   ConversionWayType,
   CppBPConversionData,
   DeclTypeSPRule,
-  SpecialDeclTypeRule,
-  keep_pointer_type_list,
-  map_bp2cpp_convert_function_name,
-  map_bp2cpp_memory_handle,
   map_bptype_conv_data,
-  map_convdecltype_bp2cpp,
-  map_convdecltype_cpp2bp,
-  map_cpp2bp_convert_function_name,
-  map_cpptype_2_uebptype,
-  map_cpptype_default_value,
+  map_cppreg_2_bptype_conv_data,
   map_one_category_basicconv_bpfromcpp,
   map_one_category_basicconv_cppfrombp,
-  map_parse_array_blacklist,
-  map_parse_array_whitelist,
-  map_setdata_function_name,
   map_struct_member_variable_default_value,
-  not_parse_array_type_based_on_agora,
-  not_parse_array_type_for_return_type,
-  regex_cpptype_2_uebptype_blacklist,
-  regex_parse_array_blacklist,
+  UEBPTypeConvData,
 } from './bptype_data_conv';
 import {
   ClazzAddtionalContext_,
   map_class_initialization,
 } from './bptype_data_makeup';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
+import { get } from 'lodash';
+
+export function getBPTypeConvData(typeSource: string): UEBPTypeConvData | undefined {
+  const data_bptype_conv = map_bptype_conv_data[typeSource];
+  if(!data_bptype_conv){
+    for (const [regex, regex_bptype_convdata] of map_cppreg_2_bptype_conv_data.entries()) {
+      // TBD(WinterPu):
+      // what if one pattern meets multiple regex
+  
+      // reset regex lastIndex:
+      // so it would not be affected by previous test
+      regex.lastIndex = 0;
+      if (regex.test(typeSource)) {
+        return regex_bptype_convdata;
+      }
+    }
+    Logger.PrintWarning("" + typeSource + " not found in map_bptype_conv_data");
+  }
+  return data_bptype_conv;
+}
 
 export class UEBPType {
   cppTypeName: string;
+  cppDeclType: string;
   cppTypeSource: string;
 
   // Direct Convert
@@ -57,8 +64,10 @@ export class UEBPType {
   declType: string;
   // [bpTypeSource]: type with full qualifier: Ex. const TArray<FString> &: used in the function parameter: void MyFunc(const TArray<FString> &MyArray);
   source: string;
-
-  delegateType: string; // [bpDelegateType] used in bp multicast-delegate: Ex. const TArray<FString> & (because delegates don't support non-const reference)
+  
+  // Extra:
+  // [bpDelegateType] used in bp multicast-delegate: Ex. const TArray<FString> & (because delegates don't support non-const reference)
+  delegateType: string;
 
   isTArray: boolean;
   isPointer: boolean;
@@ -84,6 +93,7 @@ export class UEBPType {
 
   constructor() {
     this.cppTypeName = '';
+    this.cppDeclType = '';
     this.cppTypeSource = '';
 
     this.name = '';
@@ -94,8 +104,17 @@ export class UEBPType {
     this.isTArray = false;
     this.isPointer = false;
 
-    this.bpConv_BPFromCpp = new CppBPConversionData();
-    this.bpConv_CppFromBP = new CppBPConversionData();
+    this.bpConv_BPFromCpp = {
+      convFuncType: ConversionWayType.NoNeedConversion,
+      convFunc: '',
+      convFuncAdditional01: '',
+    } as CppBPConversionData;
+
+    this.bpConv_CppFromBP = {
+      convFuncType: ConversionWayType.NoNeedConversion,
+      convFunc: '',
+      convFuncAdditional01: '',
+    } as CppBPConversionData;
 
     this.bpConvDeclTypeSPRule = DeclTypeSPRule.DefaultNoSP;
   }
@@ -104,6 +123,7 @@ export class UEBPType {
     return `UEBPType {
         // C++ Type Info:
         cppTypeName: "${this.cppTypeName}"
+        cppTypeDeclType: "${this.cppDeclType}"
         cppTypeSource: "${this.cppTypeSource}"
 
         // Blueprint Type Info:
@@ -129,41 +149,6 @@ export class UEBPType {
   }
 }
 
-// No need to declare first
-// // Declare the function type
-// function genConvDeclType_WithSpecialDeclTypeRule(val: string): ConvDeclTypeData;
-
-// export class CppBPConversionData {
-//   convNeeded: boolean;
-//   convFuncType: ConversionWayType;
-//   convFunc: string;
-//   convFuncAdditional01: string; // Ex. free data conv function
-//   convAdditionalFuncParam01: string; // Ex. SetData(a,b,Size)
-//   bpTypeName: string;
-//   dataSize: number;
-
-//   constructor() {
-//     this.convNeeded = false;
-//     this.convFuncType = ConversionWayType.NoNeedConversion;
-//     this.convFunc = '';
-//     this.convFuncAdditional01 = '';
-//     this.convAdditionalFuncParam01 = '';
-//     this.bpTypeName = '';
-//     this.dataSize = 0;
-//   }
-//   toString(): string {
-//     return `CppBPConversionData {
-//       convNeeded: ${this.convNeeded}
-//       convFuncType: ${this.convFuncType}
-//       convFunc: ${this.convFunc}
-//       convFuncAdditional01: ${this.convFuncAdditional01}
-//       convAdditionalFuncParam01: ${this.convAdditionalFuncParam01}
-//       bpTypeName: ${this.bpTypeName}
-//       dataSize: ${this.dataSize}
-//     }`;
-//   }
-// }
-
 function genBPConvertFromRawType(
   type: SimpleType,
   isTArray: boolean
@@ -181,7 +166,6 @@ function genBPConvertFromRawType(
     BPHelper.getRegisteredBPType(key_registeredsource);
   if (typeCategory == CXXTYPE.Enumz) {
     conversion = map_one_category_basicconv_bpfromcpp.get('Enum')!;
-    conversion.bpTypeName = bpTypeName;
   }
 
   if (isTArray) {
@@ -189,9 +173,8 @@ function genBPConvertFromRawType(
   }
 
   const type_conv_data = map_bptype_conv_data[type.source];
-  if (type_conv_data.isCustomBPType) {
+  if (type_conv_data?.isCustomBPType) {
     conversion = type_conv_data.convFromCpp;
-    conversion.bpTypeName = bpTypeName;
   }
 
   return conversion;
@@ -213,7 +196,6 @@ function genBPConvertToRawType(
     BPHelper.getRegisteredBPType(key_registeredsource);
   if (typeCategory == CXXTYPE.Enumz) {
     conversion = map_one_category_basicconv_cppfrombp.get('Enum')!;
-    conversion.bpTypeName = bpTypeName;
   }
 
   if (typeCategory === CXXTYPE.Clazz || typeCategory === CXXTYPE.Struct) {
@@ -222,22 +204,15 @@ function genBPConvertToRawType(
     } else {
       conversion = map_one_category_basicconv_cppfrombp.get('UCLASS_USTRUCT')!;
     }
-    conversion.bpTypeName = bpTypeName;
   }
 
   if (isTArray) {
     conversion = map_one_category_basicconv_cppfrombp.get('TArray')!;
-    conversion.bpTypeName = bpTypeName;
   }
 
-  const type_conv_data = map_bptype_conv_data[type.source];
+  const type_conv_data = getBPTypeConvData(type.source);
   if (type_conv_data) {
     conversion = type_conv_data.convToCpp;
-    // map_setdata_function_name
-    // ConversionWayType.CppFromBP_SetData
-    conversion.convAdditionalFuncParam01 = Tools.extractBracketNumber(
-      type.source
-    );
   }
 
   return conversion;
@@ -250,8 +225,8 @@ export function parsePointerType(
   // keep the pointer type, not as array type
   // Ex. agora::rtc::IScreenCaptureSourceList* => UAgoraBPuScreenCaptureSourceList *
   const type_source = type.source ?? '';
-  const data_type_conv = map_bptype_conv_data[type_source];
-  const need_keep = data_type_conv.parsePointerForceEnable;
+  const data_type_conv = getBPTypeConvData(type_source);
+  const need_keep = data_type_conv?.parsePointerForceEnable ?? false;
   if (need_keep) {
     return [true, refBPTypeName + ' *'];
   }
@@ -278,27 +253,22 @@ export function parseArrayType(
 
   let basicMatch = analyzeBasicArrayType(typeSource, isReturnType, options);
 
+  const data_bptype_conv = getBPTypeConvData(typeSource);
+
   // Black List
-  if (map_parse_array_blacklist[typeSource]) {
+  if (data_bptype_conv && data_bptype_conv.parseArrayIsInBlackList) {
     return [false, typeSource];
   }
-
-  // return in ForEach would not stop the loop
-  if (regex_parse_array_blacklist.some((regex) => regex.test(typeSource))) {
-    return [false, typeSource];
-  }
-
   // White List
   // TBD(WinterPu):
   // It would have (const int* list, int listNum)
   // Should combine them together
-  if (map_parse_array_whitelist[typeSource]) {
-    return [true, map_parse_array_whitelist[typeSource]];
+  if (data_bptype_conv && data_bptype_conv.parseArrayDesignedType) {
+    return [false, data_bptype_conv.parseArrayDesignedType];
   }
 
   // TBD(WinterPu):
   // you may defined in [map_parse_array_whitelist] and it doesn't match [refBPTypeName]
-
   // 如果匹配成功，返回 true 和类型名
   if (basicMatch.isArray || basicMatch.isPointer) {
     // Here, if it is a array, you should use [refBPTypeName]
@@ -327,6 +297,8 @@ export function analyzeBasicArrayType(
   isNamespaced: boolean;
   isSpecialExempt?: boolean;
 } {
+  const data_bptype_conv = getBPTypeConvData(typeSource);
+
   // 去掉const关键字和规范化空格
   let normalizedType = typeSource.replace(/\bconst\b/g, '').trim();
   normalizedType = normalizedType.replace(/\s+/g, ' ');
@@ -347,11 +319,9 @@ export function analyzeBasicArrayType(
   }
 
   //[Exclude] 检查是否是豁免的特殊类型（包含Observer或EventHandler的类型）
-  for (const rule of not_parse_array_type_based_on_agora) {
-    if (typeSource.toLowerCase().includes(rule)) {
-      result.isSpecialExempt = true;
-      return result;
-    }
+  if (Tools.isMatch(typeSource,"isCallback")) {
+    result.isSpecialExempt = true;
+    return result;
   }
 
   // [Exclude]
@@ -360,13 +330,14 @@ export function analyzeBasicArrayType(
     return result;
   }
 
-  // [Exclude]
-  if (isReturnType) {
-    if (not_parse_array_type_for_return_type.includes(typeSource)) {
-      result.isSpecialExempt = true;
-      return result;
-    }
-  }
+  // // [Exclude]
+  // if (isReturnType) {
+  //   if (not_parse_array_type_for_return_type.includes(typeSource)) {
+  //     result.isSpecialExempt = true;
+  //     return result;
+  //   }
+  // }
+
   // 检查是否是数组类型，例如 T[N]
   const arrayRegex = /^(.+?)\s*\[(\d+)\]$/;
   const arrayMatch = normalizedType.match(arrayRegex);
@@ -504,31 +475,8 @@ export function convertToBPType(
   // [ nameType / SourceType ] => [ bpTypeName ]
 
   // Here, almost you got the built-in unreal blueprint type
-  let tmpTypeName_DirectMappingResult = map_cpptype_2_uebptype[type.source];
-  if (Tools.isNullOrEmpty(tmpTypeName_DirectMappingResult)) {
-    tmpTypeName_DirectMappingResult = map_cpptype_2_uebptype[type.name];
-  } else if (Tools.isNullOrEmpty(tmpTypeName_DirectMappingResult)) {
-    tmpTypeName_DirectMappingResult =
-      map_cpptype_2_uebptype[Tools.removeNamespace(type.source)];
-  } else if (Tools.isNullOrEmpty(tmpTypeName_DirectMappingResult)) {
-    tmpTypeName_DirectMappingResult =
-      map_cpptype_2_uebptype[Tools.removeNamespace(type.name)];
-  }
-
-  for (const [regex, replacement] of regex_cpptype_2_uebptype_blacklist) {
-    // TBD(WinterPu):
-    // what if one pattern meets multiple regex
-
-    // reset regex lastIndex:
-    // so it would not be affected by previous test
-    regex.lastIndex = 0;
-    if (regex.test(type.source)) {
-      tmpTypeName_DirectMappingResult = replacement;
-    }
-    if (regex.test(Tools.removeNamespace(type.source))) {
-      tmpTypeName_DirectMappingResult = replacement;
-    }
-  }
+  const data_bptype_conv =getBPTypeConvData(type.source);
+  const tmpTypeName_DirectMappingResult = data_bptype_conv?.bpTypeName ?? '';
 
   if (!Tools.isNullOrEmpty(tmpTypeName_DirectMappingResult)) {
     result.name = tmpTypeName_DirectMappingResult;
@@ -628,19 +576,8 @@ export function convertToBPType(
   // **** Fifth Step: Get Conversion Decl Type ****
   // some types are different during decl type
   // default DeclType: is result.name
-  const originalConvDeclType_BPFromCpp =
-    map_convdecltype_cpp2bp[type.source] ?? result.name;
-
-  result.bpConvDeclType_BPFromCpp = genConvDeclType_WithSpecialDeclTypeRule(
-    originalConvDeclType_BPFromCpp
-  );
-
-  // default DeclType: is type.name
-  const originalConvDeclType_CppFromBP =
-    map_convdecltype_bp2cpp[type.source] ?? type.name;
-  result.bpConvDeclType_CppFromBP = genConvDeclType_WithSpecialDeclTypeRule(
-    originalConvDeclType_CppFromBP
-  );
+  result.bpConvDeclTypeSPRule = data_bptype_conv?.declTypeSPRule ?? DeclTypeSPRule.DefaultNoSP;
+  result.cppDeclType = data_bptype_conv?.cppDesignedDeclType ?? type.name;
 
   return result;
 }
@@ -655,6 +592,7 @@ export function getBPMemberVariableDefaultValue(
 ): [boolean, string] {
   let bNeedDefaultValue = false;
   let valDefaultVal = undefined;
+  const data_bptype_conv = getBPTypeConvData(member_variable.type.source);
 
   // [Step 01]: Directly Assigned
   if (map_struct_member_variable_default_value[member_variable.fullName]) {
@@ -693,31 +631,11 @@ export function getBPMemberVariableDefaultValue(
     }
   }
 
-  // check default value in conv map with key [key in dict]
-  if (valDefaultVal === undefined) {
-    let cpp_type = dictStructInitializer[member_variable.name]?.type;
-    let cpp_type_without_namespace = Tools.removeNamespace(cpp_type);
-    if (
-      cpp_type_without_namespace &&
-      map_cpptype_default_value[cpp_type_without_namespace]
-    ) {
-      valDefaultVal = map_cpptype_default_value[cpp_type_without_namespace];
-      bNeedDefaultValue = true;
-    }
-  }
-
-  // recheck default value in conv map with key: [member_variable.type.source]
-  if (valDefaultVal === undefined) {
-    let cpp_type_without_namespace = Tools.removeNamespace(
-      member_variable.type.source
-    );
-    if (
-      cpp_type_without_namespace &&
-      map_cpptype_default_value[cpp_type_without_namespace]
-    ) {
-      valDefaultVal = map_cpptype_default_value[cpp_type_without_namespace];
-      bNeedDefaultValue = true;
-    }
+  // directly assigned: use type default value
+  const tmpVal = data_bptype_conv?.defaultValue ?? undefined;
+  if(tmpVal){
+    valDefaultVal = tmpVal;
+    bNeedDefaultValue = true;
   }
 
   // Enum default value
@@ -788,67 +706,3 @@ export type ClazzAddtionalContext = ClazzAddtionalContext_;
 export function getContext_BPClass(clazz_name: string): ClazzAddtionalContext_ {
   return map_class_initialization[clazz_name];
 }
-
-// ********** Special Decl Type Rule **********
-
-function checkNeedApplySpecialDeclTypeRule(val: string): boolean {
-  return Object.values(SpecialDeclTypeRule).includes(
-    val as SpecialDeclTypeRule
-  );
-}
-
-function genConvDeclType_WithSpecialDeclTypeRule(
-  val: string
-): ConvDeclTypeData {
-  let result = new ConvDeclTypeData();
-  result.convDeclType = val;
-  if (!checkNeedApplySpecialDeclTypeRule(val)) {
-    return result;
-  }
-
-  // Apply Special Rule
-  result.enableSpecialRule = true;
-  const rule = val as SpecialDeclTypeRule;
-  if (rule === SpecialDeclTypeRule.RULE_STR_BP2CPP) {
-    // decl: std::string a = TCHAR_TO_UTF8(*b);
-    // usage: a.c_str();
-    // free: none
-    result.specialRuleConvType = ConversionWayType.CppFromBP_NeedCallConvFunc;
-    result.convDeclType = 'std::string';
-    result.convFunc = 'TCHAR_TO_UTF8';
-    result.needDereference = true;
-    result.useMemberFunc = '.c_str()';
-  } else if (rule === SpecialDeclTypeRule.RULE_STR_CPP2BP) {
-    // decl: FString a = UTF8_TO_TCHAR(b);
-    // usage: a;
-    // free: none
-    result.specialRuleConvType = ConversionWayType.CppFromBP_NeedCallConvFunc;
-    result.convDeclType = 'FString';
-    result.convFunc = 'UTF8_TO_TCHAR';
-    result.needDereference = false;
-    result.useMemberFunc = '';
-  } else if (rule === SpecialDeclTypeRule.RULE_FVECTOR_BP2CPP) {
-    // decl: float[3] a; UABT::SetFloatArray(b,a,3);
-    // usage: a;
-    // free: none
-    result.specialRuleConvType = ConversionWayType.CppFromBP_SetData;
-    result.convDeclType = 'float[3]';
-    result.convFunc = 'UABT::SetFloatArray';
-    result.needDereference = false;
-    result.useMemberFunc = '';
-    result.numSetDataSize = '';
-  } else if (rule === SpecialDeclTypeRule.RULE_FVECTOR_CPP2BP) {
-    // decl: FVector a = UABT::FromFloatArray(b);
-    // usage: a;
-    // free: none
-    result.specialRuleConvType = ConversionWayType.CppFromBP_NeedCallConvFunc;
-    result.convDeclType = 'FVector';
-    result.convFunc = 'UABT::FromFloatArray';
-    result.needDereference = false;
-    result.useMemberFunc = '';
-  }
-  return result;
-}
-
-export { ConversionWayType };
-// ********** End of Special Decl Type Rule **********

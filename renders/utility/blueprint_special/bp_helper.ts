@@ -9,6 +9,7 @@ import {
   MemberVariable,
   SimpleType,
   Struct,
+  Variable,
 } from '@agoraio-extensions/cxx-parser';
 
 import * as CppHelper from '../cpp_helper';
@@ -24,7 +25,9 @@ import {
 
 import {
   ConversionWayType,
+  DeclTypeSPRule,
   map_bptype_conv_data,
+  map_decltype_special_rule,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
 import { UEBPType } from './bptype_helper';
@@ -54,7 +57,7 @@ export function getCustomDefinedBPTypes_InConvMap(): { [key: string]: string } {
   for (const typeName in map_bptype_conv_data) {
     const typeData = map_bptype_conv_data[typeName];
     if (typeData.isCustomBPType === true) {
-      customTypes[typeName] = typeData.bpType;
+      customTypes[typeName] = typeData.bpTypeName;
     }
   }
   return customTypes;
@@ -310,7 +313,7 @@ export function genContext_BPStruct(
     return Tools.addOneLine_Format(line, prefix_indent);
   };
 
-  // Begin
+  // [Step 01] Begin
   // Ex. {{{fullName}}} AgoraData;
   contextCreateRawData += addOneLineFunc(
     `${node_struct.fullName} ${AGORA_MUSTACHE_DATA.AGORA_DATA};`
@@ -323,14 +326,8 @@ export function genContext_BPStruct(
     const var_SizeCount = getBPSizeCount(node_struct, member_variable);
     const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
     const conv_cppfrombp = bpType.bpConv_CppFromBP;
-    let macro_scope_start =
-      CppHelper.createCompilationDirectivesContent(member_variable);
-
-    let macro_scope_end = CppHelper.createCompilationDirectivesContent(
-      member_variable,
-      false
-    );
-
+    const macro_scope_start =member_variable.user_data?.macro_scope_start;
+    const macro_scope_end = member_variable.user_data?.macro_scope_end;
     if (
       Tools.IsNotEmptyStr(macro_scope_start) &&
       Tools.IsNotEmptyStr(macro_scope_end)
@@ -340,30 +337,30 @@ export function genContext_BPStruct(
     }
 
     // **** Constructor Context ****
-    if (conv_bpfromcpp.convNeeded) {
+    if (conv_bpfromcpp.convFuncType !== ConversionWayType.NoNeedConversion) {
       if (
         conv_bpfromcpp.convFuncType ===
         ConversionWayType.BPFromCpp_NewFreeArrayData
       ) {
         // Ex. UABT::SetBPArrayData<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
-
-        // TBD(WinterPu): about size
         contextConstructor += addOneLineFunc(
           `${conv_bpfromcpp.convFunc}<${type.name}, ${bpType.name}>(this->${member_variable.name}, ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
         );
       } else {
+        // Basic Conversion
         contextConstructor += addOneLineFunc(
           `this->${member_variable.name} = ${conv_bpfromcpp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
         );
       }
     } else {
+      // No Need Conversion
       contextConstructor += addOneLineFunc(
         `this->${member_variable.name} = ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name};`
       );
     }
 
     // **** CreateRawData Context ****
-    if (conv_cppfrombp.convNeeded) {
+    if (conv_cppfrombp.convFuncType !== ConversionWayType.NoNeedConversion) {
       if (
         conv_cppfrombp.convFuncType === ConversionWayType.Basic ||
         conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData
@@ -421,6 +418,7 @@ export function genContext_BPStruct(
         }
       }
     } else {
+      // No Need Conversion
       contextCreateRawData += addOneLineFunc(
         `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
       );
@@ -504,106 +502,114 @@ export function genContext_BPStruct(
   return result;
 }
 
+
+
+
 function genContext_ConvDeclType(
-  param_name: string,
-  param_conv_prefix: string,
-  default_conv: BPTypeHelper.CppBPConversionData,
-  data: BPTypeHelper.ConvDeclTypeData
+  param : Variable,
+  bpType: UEBPType,
+  bIsCppFromBP: boolean,
 ): BPParamContext {
-  let param = new BPParamContext();
+  const prefix_var_name = bIsCppFromBP ? AGORA_MUSTACHE_DATA.RAW_ : AGORA_MUSTACHE_DATA.UEBP_;
+  const param_name = param.name;
+  const decl_var_name = prefix_var_name + param_name;
 
-  let name_conv_var = param_conv_prefix + param_name;
-  param.contextDecl = `${data.convDeclType} ${name_conv_var}= ${param_name};`;
-  param.contextUsage = `${name_conv_var}`;
-  param.contextFree = '';
+  const addOneLineFunc = function (line: string): string {
+    return Tools.addOneLine_Format(line, '');
+  };
 
-  // default DeclType A = B;
+  function extractArraySizeFromType(bpType: UEBPType){
+    return Tools.extractBracketNumber(bpType.source);
+  }
 
-  // [Step 01]: if it has special rule, directly use it
-  if (data.enableSpecialRule) {
-    // decl
-    const str_dereference = data.needDereference ? '*' : '';
-    const str_conv_func = data.convFunc ? data.convFunc : '';
+  const data_conv = bIsCppFromBP ? bpType.bpConv_CppFromBP : bpType.bpConv_BPFromCpp;
+  const decl_type =  bIsCppFromBP ? bpType.cppDeclType : bpType.declType;
 
-    const str_name_param = `${str_dereference}${param_name}`;
+  let result = new BPParamContext();
+  // Default: DeclType A = B;
+  result.contextDecl = `${decl_type} ${decl_var_name} = ${param_name};`;
+  result.contextUsage = `${decl_var_name}`;
+  result.contextFree = '';
 
-    // usage
-    const str_usage_postfix = data.useMemberFunc ? data.useMemberFunc : '';
-
-    if (
-      data.specialRuleConvType === ConversionWayType.CppFromBP_NeedCallConvFunc
-    ) {
-      param.contextDecl = `${data.convDeclType} ${name_conv_var} = ${str_conv_func}(${str_name_param});`;
-
-      param.contextUsage = `${name_conv_var}${str_usage_postfix}`;
-      param.contextFree = '';
-    } else if (
-      data.specialRuleConvType === ConversionWayType.CppFromBP_SetData
-    ) {
-      // Example: float[3] a; UABT::SetFloatArray(b,a);
-      const str_num_setdata_size = data.numSetDataSize
-        ? ', ' + data.numSetDataSize
-        : '';
-      param.contextDecl = `${data.convDeclType} ${name_conv_var}; ${str_conv_func}(${str_name_param},${name_conv_var}${str_num_setdata_size});`;
-
-      param.contextUsage = `${name_conv_var}${str_usage_postfix}`;
-      param.contextFree = '';
+   // [Step 01]: if it has special rule, directly use it
+  if(bpType.bpConvDeclTypeSPRule !== DeclTypeSPRule.DefaultNoSP) {
+    const full_data_rule = map_decltype_special_rule.get(bpType.bpConvDeclTypeSPRule);
+    const data_rule = bIsCppFromBP ? full_data_rule?.CppFromBP : full_data_rule?.BPFromCpp;
+    if(data_rule) {
+      result.contextDecl = `${data_rule.funcDecl(decl_var_name, param_name)}`;
+      result.contextUsage = `${data_rule.funcUsage(decl_var_name)}`;
+      result.contextFree = `${data_rule.funcFree()}`;
     }
-  } else if (default_conv.convNeeded) {
-    // [Step 02]: reference its default conv (used in parameters)
-    const str_conv_func = default_conv.convFunc ? default_conv.convFunc : '';
-
-    const str_free_func =
-      default_conv.convFuncAdditional01 &&
-      default_conv.convFuncAdditional01 !== ''
-        ? default_conv.convFuncAdditional01
-        : '';
+  }
+  else if(data_conv.convFuncType !== ConversionWayType.NoNeedConversion) {
+    // [Step 02]: Use Default Basic Conversion
+    const str_conv_func = Tools.IsNotEmptyStr(data_conv.convFunc) ? data_conv.convFunc : '';
+    const str_free_func = Tools.IsNotEmptyStr(data_conv.convFuncAdditional01) ? data_conv.convFuncAdditional01 : '';
+    const convWayType = data_conv.convFuncType;
+    
+    // [Part - Decl]
     if (
-      default_conv.convFuncType ===
+      convWayType ===
         ConversionWayType.CppFromBP_NeedCallConvFunc ||
-      default_conv.convFuncType ===
+        convWayType ===
         ConversionWayType.CppFromBP_CreateFreeOptData
     ) {
-      param.contextDecl = `${data.convDeclType} ${name_conv_var} =${param_name}.${str_conv_func}();`;
+      result.contextDecl = addOneLineFunc(
+        `${decl_type} ${decl_var_name} =${param_name}.${str_conv_func}();`
+      );
     } else if (
-      default_conv.convFuncType === ConversionWayType.CppFromBP_SetData
+      convWayType === ConversionWayType.CppFromBP_SetData
     ) {
-      const str_additional_size = default_conv.convAdditionalFuncParam01
-        ? ', ' + default_conv.convAdditionalFuncParam01
-        : '';
-      param.contextDecl = `${data.convDeclType} ${name_conv_var}; ${str_conv_func}(${param_name},${name_conv_var}${str_additional_size});`;
+      let str_size = extractArraySizeFromType(bpType);
+      str_size = Tools.IsNotEmptyStr(str_size) ? ', ' + str_size : '';
+      result.contextDecl = addOneLineFunc(
+        `${decl_type} ${decl_var_name}; ${str_conv_func}(${param_name},${decl_var_name}${str_size});`
+      );
     } else {
-      param.contextDecl = `${data.convDeclType} ${name_conv_var} = ${str_conv_func}(${param_name});`;
+      result.contextDecl = addOneLineFunc(
+        `${decl_type} ${decl_var_name} = ${str_conv_func}(${param_name});`
+      );
     }
 
-    param.contextUsage = `${name_conv_var}`;
+    // [Part - Usage]
+    result.contextUsage = addOneLineFunc(`${decl_var_name}`);
 
-    if (str_free_func && str_free_func !== '') {
+    // [Part - Free]
+    if (str_free_func !== '') {
       if (
-        default_conv.convFuncType === ConversionWayType.CppFromBP_NewFreeData
+        convWayType === ConversionWayType.CppFromBP_NewFreeData
       ) {
-        param.contextFree = `${str_free_func}(${name_conv_var});`;
+        result.contextFree = addOneLineFunc(
+          `${str_free_func}(${decl_var_name});` 
+        );
       } else if (
-        default_conv.convFuncType ===
+        convWayType ===
         ConversionWayType.CppFromBP_NeedCallConvFunc
       ) {
-        param.contextFree = `${param_name}.${str_free_func}(${name_conv_var});`;
+        result.contextFree = addOneLineFunc(`${param_name}.${str_free_func}(${decl_var_name});`);
       } else if (
-        default_conv.convFuncType ===
+        convWayType ===
         ConversionWayType.CppFromBP_CreateFreeOptData
       ) {
-        param.contextFree = `${default_conv.bpTypeName}::${str_free_func}(${name_conv_var});`;
+        const bpTypeName = bpType.name;
+        result.contextFree = addOneLineFunc(`${bpTypeName}::${str_free_func}(${decl_var_name});`);
       }
     }
   }
 
-  return param;
+  return result;
 }
+
 
 export function genContext_BPMethod(
   node_method: MemberFunction,
   prefix_indent: string = ''
 ): BPMethodContext {
+
+  const addOneLineFunc = function (line: string): string {
+    return Tools.addOneLine_Format(line, prefix_indent);
+  };
+
   // Example:
 
   // decl: std::string a = TCHAR_TO_UTF8(*b);
@@ -618,29 +624,19 @@ export function genContext_BPMethod(
 
   let result = new BPMethodContext();
 
-  const addOneLineFunc = function (line: string): string {
-    return Tools.addOneLine_Format(line, prefix_indent);
-  };
-
   node_method.parameters.map((param, index) => {
-    const type = param.type;
     const bptype = BPTypeHelper.convertToBPType(param.type);
 
-    const default_conv_bpfromcpp = bptype.bpConv_BPFromCpp;
-    const default_conv_cppfrombp = bptype.bpConv_CppFromBP;
-
     contextParam_BPFromCpp = genContext_ConvDeclType(
-      param.name,
-      AGORA_MUSTACHE_DATA.UEBP_,
-      default_conv_bpfromcpp,
-      bptype.bpConvDeclType_BPFromCpp
+      param,
+      bptype,
+      false,
     );
 
     contextParam_CppFromBP = genContext_ConvDeclType(
-      param.name,
-      AGORA_MUSTACHE_DATA.RAW_,
-      default_conv_cppfrombp,
-      bptype.bpConvDeclType_CppFromBP
+      param,
+      bptype,
+      true,
     );
 
     // Usage
