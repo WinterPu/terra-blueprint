@@ -102,14 +102,14 @@ export function genGeneralTerraData(
         isStruct: node.__TYPE === CXXTYPE.Struct,
         isEnumz: node.__TYPE === CXXTYPE.Enumz,
         isClazz: node.__TYPE === CXXTYPE.Clazz,
-        isCallback: Tools.isMatch(node.name, 'isCallback'),
+        isCallback: CppHelper.isCallbackClazz(node),
         prefix_name: node.name.replace(new RegExp('^I(.*)'), '$1'),
       };
       node.user_data = { ...node.user_data, ...terraNodeUserData };
 
       // Node - Clazz
       if (node.__TYPE == CXXTYPE.Clazz) {
-        let bIsCallbackMethod = Tools.isMatch(node.name, 'isCallback');
+        let bIsCallbackMethod = CppHelper.isCallbackClazz(node);
 
         let context_clazz = BPHelper.genContext_BPClass(node.asClazz());
 

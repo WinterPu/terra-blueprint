@@ -319,8 +319,11 @@ export function analyzeBasicArrayType(
     return result;
   }
 
+  // TBD(WinterPu)
+  // cause Circular Reference
   //[Exclude] 检查是否是豁免的特殊类型（包含Observer或EventHandler的类型）
-  if (Tools.isMatch(typeSource, 'isCallback')) {
+  const map_clazz = BPHelper.getMapCpp2BPClass();
+  if (map_clazz.has(typeSource) && Tools.isMatch(typeSource, 'isCallback')) {
     result.isSpecialExempt = true;
     return result;
   }

@@ -664,6 +664,12 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpTypeName: 'int64',
       defaultValue: '0',
     },
+    'agora::view_t*': {
+      // TBD(WinterPu) check it
+      ...defaultTmpl_Int64_Pointer,
+      bpTypeName: 'int64',
+      defaultValue: '0',
+    },
 
     // Agora Related
     'agora::rtc::uid_t': {

@@ -1,16 +1,13 @@
 import { SimpleType } from '@agoraio-extensions/cxx-parser';
 import {
-  CXXFile,
   CXXTYPE,
   CXXTerraNode,
   MemberFunction,
 } from '@agoraio-extensions/cxx-parser/src/cxx_terra_node';
 
-import * as CppHelper from '../cpp_helper';
 import * as Logger from '../logger';
 import * as Tools from '../tools';
 
-import { map_empty_name_enum } from './bptype_data_conv';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
 export enum BPNodeCategoryType {
@@ -52,6 +49,8 @@ export function getBPTypeRegisteredKey(node: CXXTerraNode): string {
   //   };
   //   */
   //   'agora::media::IAudioFrameObserverBase': 'MAX_HANDLE_TIME_CNT',
+  //  [Error]: agora::media::IAudioFrameObserverBase::?? Result;
+
   //   if (node.__TYPE === CXXTYPE.Enumz && key_registeredtype === '') {
   //     key_registeredtype = map_empty_name_enum[node.parent_full_scope_name ?? ''];
   //   }

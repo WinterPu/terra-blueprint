@@ -105,3 +105,9 @@ export function genSuffixAttribute(input: string[]): string {
 export function getFileName(cxxFile: CXXFile): string {
   return Tools.extractFileName(cxxFile.file_path);
 }
+
+export function isCallbackClazz(node: CXXTerraNode): boolean {
+  return (
+    node.__TYPE === CXXTYPE.Clazz && Tools.isMatch(node.name, 'isCallback')
+  );
+}
