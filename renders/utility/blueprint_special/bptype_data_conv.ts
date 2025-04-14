@@ -68,7 +68,7 @@ export type UEBPTypeConvData = {
   // free: none
   declTypeSPRule: DeclTypeSPRule;
 
-  // default: 
+  // default:
   // [bp] -> TypeName or bpDesignedDeclType
   // [cpp] -> type name or cppDesignedDeclType
   cppDesignedDeclType: string | undefined;
@@ -137,7 +137,7 @@ export enum DeclTypeSPRule {
 export type DeclTypeFuncData = {
   funcDecl: (decl_var: string, param: string) => string;
   funcUsage: (decl_var: string) => string;
-  funcFree: (bpTypeName?:string) => string;
+  funcFree: (bpTypeName?: string) => string;
 };
 
 export type DeclTypeItemData = {
@@ -862,6 +862,46 @@ export const map_struct_member_variable_size_count: { [key: string]: string } =
 
     'agora::rtc::ChannelMediaRelayConfiguration.destInfos': 'destCount',
   };
+
+// Ex.
+export const map_empty_name_enum: { [key: string]: string } = {
+  /*
+    class IAudioFrameObserverBase {
+    public:
+    enum { MAX_HANDLE_TIME_CNT = 10 };
+  };
+  */
+  'agora::media::IAudioFrameObserverBase': 'MAX_HANDLE_TIME_CNT',
+
+  /*
+  #ifndef OPTIONAL_ENUM_SIZE_T
+  #if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800)
+  #define OPTIONAL_ENUM_SIZE_T enum : size_t
+  #else
+  #define OPTIONAL_ENUM_SIZE_T enum
+  #endif
+  #endif
+
+  struct VideoFormat {
+    OPTIONAL_ENUM_SIZE_T{
+        kMaxWidthInPixels = 3840,
+        kMaxHeightInPixels = 2160,
+        kMaxFps = 60,
+    };
+  };
+  */
+  'agora::rtc::VideoFormat': 'VideoFormat_OPTIONAL_ENUM_SIZE_T',
+
+  /*
+  struct AudioPcmFrame {
+    OPTIONAL_ENUM_SIZE_T{
+        kMaxDataSizeSamples = 3840,
+        kMaxDataSizeBytes = kMaxDataSizeSamples * sizeof(int16_t),
+    };
+  };
+  */
+  'agora::rtc::AudioPcmFrame': 'AudioPcmFrame_OPTIONAL_ENUM_SIZE_T',
+};
 
 // // For parameters' type
 // // [Key] type.source namespace removed

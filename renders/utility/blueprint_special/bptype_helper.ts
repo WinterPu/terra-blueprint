@@ -6,37 +6,45 @@ import {
   SimpleType,
 } from '@agoraio-extensions/cxx-parser/src/cxx_terra_node';
 
+import { get } from 'lodash';
+
 import * as Logger from '../logger';
 
 import * as Tools from '../tools';
 
 import * as BPHelper from './bp_helper';
 
+import * as BPNameHelper from './bpname_helper';
+
 import {
   ConversionWayType,
   CppBPConversionData,
   DeclTypeSPRule,
+  UEBPTypeConvData,
   map_bptype_conv_data,
   map_cppreg_2_bptype_conv_data,
   map_one_category_basicconv_bpfromcpp,
   map_one_category_basicconv_cppfrombp,
   map_struct_member_variable_default_value,
-  UEBPTypeConvData,
 } from './bptype_data_conv';
 import {
   ClazzAddtionalContext_,
   map_class_initialization,
 } from './bptype_data_makeup';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
-import { get } from 'lodash';
 
-export function getBPTypeConvData(typeSource: string): UEBPTypeConvData | undefined {
+export function getBPTypeConvData(
+  typeSource: string
+): UEBPTypeConvData | undefined {
   const data_bptype_conv = map_bptype_conv_data[typeSource];
-  if(!data_bptype_conv){
-    for (const [regex, regex_bptype_convdata] of map_cppreg_2_bptype_conv_data.entries()) {
+  if (!data_bptype_conv) {
+    for (const [
+      regex,
+      regex_bptype_convdata,
+    ] of map_cppreg_2_bptype_conv_data.entries()) {
       // TBD(WinterPu):
       // what if one pattern meets multiple regex
-  
+
       // reset regex lastIndex:
       // so it would not be affected by previous test
       regex.lastIndex = 0;
@@ -44,7 +52,7 @@ export function getBPTypeConvData(typeSource: string): UEBPTypeConvData | undefi
         return regex_bptype_convdata;
       }
     }
-    Logger.PrintWarn("" + typeSource + " not found in map_bptype_conv_data");
+    Logger.PrintWarn('' + typeSource + ' not found in map_bptype_conv_data');
   }
   return data_bptype_conv;
 }
@@ -64,7 +72,7 @@ export class UEBPType {
   declType: string;
   // [bpTypeSource]: type with full qualifier: Ex. const TArray<FString> &: used in the function parameter: void MyFunc(const TArray<FString> &MyArray);
   source: string;
-  
+
   // Extra:
   // [bpDelegateType] used in bp multicast-delegate: Ex. const TArray<FString> & (because delegates don't support non-const reference)
   delegateType: string;
@@ -159,12 +167,8 @@ function genBPConvertFromRawType(
     convFunc: '',
     convFuncAdditional01: '',
   };
-
   // Enum
-  const key_registeredsource = BPHelper.getRegisteredBPSearchKey(type);
-  let [typeCategory, bpTypeName] =
-    BPHelper.getRegisteredBPType(key_registeredsource);
-  if (typeCategory == CXXTYPE.Enumz) {
+  if (type.__TYPE == CXXTYPE.Enumz) {
     conversion = map_one_category_basicconv_bpfromcpp.get('Enum')!;
   }
 
@@ -191,15 +195,12 @@ function genBPConvertToRawType(
     convFuncAdditional01: '',
   };
   // UEnum
-  const key_registeredsource = BPHelper.getRegisteredBPSearchKey(type);
-  let [typeCategory, bpTypeName] =
-    BPHelper.getRegisteredBPType(key_registeredsource);
-  if (typeCategory == CXXTYPE.Enumz) {
+  if (type.__TYPE == CXXTYPE.Enumz) {
     conversion = map_one_category_basicconv_cppfrombp.get('Enum')!;
   }
 
-  if (typeCategory === CXXTYPE.Clazz || typeCategory === CXXTYPE.Struct) {
-    if (Tools.IsOptionalUABTType(bpTypeName)) {
+  if (type.__TYPE === CXXTYPE.Clazz || type.__TYPE === CXXTYPE.Struct) {
+    if (BPNameHelper.isCustomDefinedBPType_Optional(type)) {
       conversion = map_one_category_basicconv_cppfrombp.get('Optional')!;
     } else {
       conversion = map_one_category_basicconv_cppfrombp.get('UCLASS_USTRUCT')!;
@@ -319,7 +320,7 @@ export function analyzeBasicArrayType(
   }
 
   //[Exclude] 检查是否是豁免的特殊类型（包含Observer或EventHandler的类型）
-  if (Tools.isMatch(typeSource,"isCallback")) {
+  if (Tools.isMatch(typeSource, 'isCallback')) {
     result.isSpecialExempt = true;
     return result;
   }
@@ -475,7 +476,7 @@ export function convertToBPType(
   // [ nameType / SourceType ] => [ bpTypeName ]
 
   // Here, almost you got the built-in unreal blueprint type
-  const data_bptype_conv =getBPTypeConvData(type.source);
+  const data_bptype_conv = getBPTypeConvData(type.source);
   const tmpTypeName_DirectMappingResult = data_bptype_conv?.bpTypeName ?? '';
 
   if (!Tools.isNullOrEmpty(tmpTypeName_DirectMappingResult)) {
@@ -490,9 +491,7 @@ export function convertToBPType(
     // type.name has namespace
     // TBD(WinterPu):
     // 1. is it possible to have namespace in the middle[ex. Optional<agora::rtc::RtcConnection>]
-    const key_registeredsource = BPHelper.getRegisteredBPSearchKey(type);
-    let [typeCategory, bpTypeNameTmp] =
-      BPHelper.getRegisteredBPType(key_registeredsource);
+    let [typeCategory, bpTypeNameTmp] = BPHelper.getBPName(type);
 
     if (typeCategory != CXXTYPE.Unknown) {
       result.name = bpTypeNameTmp;
@@ -576,7 +575,8 @@ export function convertToBPType(
   // **** Fifth Step: Get Conversion Decl Type ****
   // some types are different during decl type
   // default DeclType: is result.name
-  result.bpConvDeclTypeSPRule = data_bptype_conv?.declTypeSPRule ?? DeclTypeSPRule.DefaultNoSP;
+  result.bpConvDeclTypeSPRule =
+    data_bptype_conv?.declTypeSPRule ?? DeclTypeSPRule.DefaultNoSP;
   result.cppDeclType = data_bptype_conv?.cppDesignedDeclType ?? type.name;
 
   return result;
@@ -633,7 +633,7 @@ export function getBPMemberVariableDefaultValue(
 
   // directly assigned: use type default value
   const tmpVal = data_bptype_conv?.defaultValue ?? undefined;
-  if(tmpVal){
+  if (tmpVal) {
     valDefaultVal = tmpVal;
     bNeedDefaultValue = true;
   }

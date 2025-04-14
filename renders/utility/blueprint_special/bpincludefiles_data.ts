@@ -1,9 +1,5 @@
-export const map_includefiles: {[key: string]: string[]} = {
-    "AgoraBase.h": [
-        "",
-    ],
+export const map_includefiles: { [key: string]: string[] } = {
+  'AgoraBase.h': [''],
 
-    "AgoraMediaBase.h":[
-        '#include "AgoraBPuAgoraBase.h"',
-    ]
-}
+  'AgoraMediaBase.h': ['#include "AgoraBPuAgoraBase.h"'],
+};

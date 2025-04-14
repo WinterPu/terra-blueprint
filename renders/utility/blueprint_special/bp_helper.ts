@@ -17,12 +17,16 @@ import * as Logger from '../logger';
 
 import * as Tools from '../tools';
 
+import * as AgoraHelper from './agora_helper';
 import {
   BPMethodContext,
   BPParamContext,
   BPStructContext,
 } from './bpcontext_data';
+import { map_includefiles } from './bpincludefiles_data';
+import * as BPNameHelper from './bpname_helper';
 
+import { BPNodeCategoryType } from './bpname_helper';
 import {
   ConversionWayType,
   DeclTypeSPRule,
@@ -30,17 +34,21 @@ import {
   map_decltype_special_rule,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
-import {map_includefiles} from './bpincludefiles_data';
 import { UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
+// [Step 01]: About BP Include Files
+export function getBPFileName(file_name: string): string {
+  return BPNameHelper.genBPFileName(file_name);
+}
+
 export function getIncludeFilesForBP(cxxFile: CXXFile): string[] {
   let includeFiles: string[] = [];
-  
+
   // Directly Assigned
-  if(map_includefiles[cxxFile.fileName]){
+  if (map_includefiles[cxxFile.fileName]) {
     return map_includefiles[cxxFile.fileName];
   }
 
@@ -58,87 +66,7 @@ export function getIncludeFilesForBP(cxxFile: CXXFile): string[] {
   return includeFiles;
 }
 
-// get custom defined bp types in conv map: Ex. UABT_Opt_int
-export function getCustomDefinedBPTypes_InConvMap(): { [key: string]: string } {
-  const customTypes: { [key: string]: string } = {};
-  for (const typeName in map_bptype_conv_data) {
-    const typeData = map_bptype_conv_data[typeName];
-    if (typeData.isCustomBPType === true) {
-      customTypes[typeName] = typeData.bpTypeName;
-    }
-  }
-  return customTypes;
-}
-
-export function genBPReturnType(return_type: SimpleType): string {
-  let isReturnType = true;
-  let options: BPTypeHelper.AnalysisOptions = {
-    isAgoraType: isAgoraClassType(return_type),
-  };
-
-  const bp_type = BPTypeHelper.convertToBPType(
-    return_type,
-    undefined,
-    isReturnType,
-    options
-  );
-  return bp_type.source;
-}
-
-export function genBPParameterType(
-  return_type: SimpleType,
-  is_output?: boolean
-): UEBPType {
-  return BPTypeHelper.convertToBPType(return_type, is_output);
-}
-
-export function genBPMethodName(method_name: string): string {
-  if (!method_name) return method_name; // handle empty string
-  return method_name.charAt(0).toUpperCase() + method_name.slice(1);
-}
-
-const bp_multicast_number_prefix: string[] = [
-  'One',
-  'Two',
-  'Three',
-  'Four',
-  'Five',
-  'Six',
-  'Seven',
-  'Eight',
-  'Nine',
-];
-
-export function genbpCallbackDelegateMacroName(len_params: number): string {
-  if (len_params > 9) {
-    Logger.PrintError(`Error: Invalid number of parameters: ${len_params}`);
-    return 'NoDelegate';
-  } else if (len_params == 0) {
-    return 'DECLARE_DYNAMIC_MULTICAST_DELEGATE';
-  } else if (len_params == 1) {
-    return 'DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam';
-  } else {
-    return `DECLARE_DYNAMIC_MULTICAST_DELEGATE_${
-      bp_multicast_number_prefix[len_params - 1]
-    }Params`;
-  }
-}
-
-export function genbpCallbackDelegateTypeName(method_name: string): string {
-  let BPMethodName = genBPMethodName(method_name);
-  return `F${BPMethodName}`;
-}
-
-export function genbpCallbackDelegateVarName(method_name: string): string {
-  let BPMethodName = genBPMethodName(method_name);
-  return `${BPMethodName}`;
-}
-
-export function getBPType(type: SimpleType): UEBPType {
-  return BPTypeHelper.convertToBPType(type);
-}
-
-// About BP Name
+// [Step 02]: About BP Name
 const mapFileName2BPName: Map<string, string> = new Map();
 const mapCpp2BPClass: Map<string, string> = new Map();
 const mapCpp2BPStruct: Map<string, string> = new Map();
@@ -160,112 +88,120 @@ export function getMapCpp2BPEnum(): Map<string, string> {
   return mapCpp2BPEnum;
 }
 
-export function isAgoraClassType(type: SimpleType): boolean {
-  // TBD(WinterPu):
-  // Custom Header would add namespace ext Ex. agora::rtc::ext::AudioDeviceInfo
-  // Notice: AudioDeviceInfo is defined in custom headers
-  return type.name.toLowerCase().includes('::ext::');
-}
-
-export function initMapRegisteredData() {
+export function registerBPTypes(cxxfiles: CXXFile[]) {
   mapCpp2BPClass.clear();
   mapCpp2BPStruct.clear();
   mapCpp2BPEnum.clear();
   mapFileName2BPName.clear();
-}
 
-export function registerBPNameForAgora_Class(
-  clazz_name: string,
-  bp_name: string
-) {
-  mapCpp2BPClass.set(clazz_name, bp_name);
-}
+  cxxfiles.map((cxxfile: CXXFile) => {
+    const fileName = CppHelper.getFileName(cxxfile);
+    const bpFileName = BPNameHelper.genBPFileName(fileName);
+    mapFileName2BPName.set(fileName, bpFileName);
 
-export function registerBPNameForAgora_Struct(
-  struct_name: string,
-  bp_name: string
-) {
-  mapCpp2BPStruct.set(struct_name, bp_name);
-}
+    cxxfile.nodes.map((node) => {
+      const key_registeredtype = BPNameHelper.getBPTypeRegisteredKey(node);
+      // Only For Clazz
+      if (node.__TYPE == CXXTYPE.Clazz) {
+        const bp_name = BPNameHelper.genBPNodeName(
+          key_registeredtype,
+          BPNodeCategoryType.UClass
+        );
+        mapCpp2BPClass.set(key_registeredtype, bp_name);
+      } else if (node.__TYPE == CXXTYPE.Struct) {
+        // Only For Struct
+        const bp_name = BPNameHelper.genBPNodeName(
+          key_registeredtype,
+          BPNodeCategoryType.UStruct
+        );
+        mapCpp2BPStruct.set(key_registeredtype, bp_name);
+      } else if (node.__TYPE == CXXTYPE.Enumz) {
+        // Only For Enumz
+        const bp_name = BPNameHelper.genBPNodeName(
+          key_registeredtype,
+          BPNodeCategoryType.UEnum
+        );
+        mapCpp2BPEnum.set(key_registeredtype, bp_name);
+      }
+    });
+  });
 
-export function registerBPNameForAgora_Enum(
-  enum_name: string,
-  bp_name: string
-) {
-  mapCpp2BPEnum.set(enum_name, bp_name);
-}
-
-export function registerBPFileName(file_name: string, bp_filename: string) {
-  mapFileName2BPName.set(file_name, bp_filename);
+  registerBPNameForSelfDefinedType();
 }
 
 export function registerBPNameForSelfDefinedType() {
-  const map_bptypes_custom_defined_in_conv_map =
-    getCustomDefinedBPTypes_InConvMap();
-
-  for (const [key_cpp, value_bp] of Object.entries(
-    map_bptypes_custom_defined_in_conv_map
-  )) {
-    mapCpp2BPStruct.set(key_cpp, value_bp);
-  }
-}
-
-export function genBPNameForAgora_Class(clazz_name: string): string {
-  // legency issue
-  // Because the design previously removed the leading 'I'.
-  // ex. IRtcEngine => UAgoraBPuRtcEngine
+  // register some type you defined in conversion map
+  // get custom defined bp types in conv map: Ex. FUABT_Opt_int
   // TBD(WinterPu)
-  // Ex. like Iterator, Interface, etc. Which the leading 'I' is not removed.
-  if (clazz_name.startsWith('I')) {
-    clazz_name = clazz_name.slice(1); // 去掉开头的 I
-  }
-  return AGORA_MUSTACHE_DATA.UEBP_PREFIX_CLASS + clazz_name;
-}
-
-export function genBPNameForAgora_Struct(struct_name: string): string {
-  return AGORA_MUSTACHE_DATA.UEBP_PREFIX_STRUCT + struct_name;
-}
-
-export function genBPNameForAgora_Enum(enum_name: string): string {
-  return AGORA_MUSTACHE_DATA.UEBP_PREFIX_ENUM + enum_name;
-}
-
-export function genBPFileName(file_name: string): string {
-  let res_name = file_name;
-  if (res_name.startsWith('I')) {
-    res_name = res_name.slice(1); // 去掉开头的 I
-  }
-  return AGORA_MUSTACHE_DATA.BPFileName_Prefix + res_name;
-}
-
-export function getRegisteredBPSearchKey(node: CXXTerraNode): string {
-  let search_key = node.name ?? '';
-  if (node.__TYPE === CXXTYPE.SimpleType) {
-    if (search_key.includes('Optional')) {
-      search_key = node.source;
+  // For now, all custom defined bp types are structs
+  for (const [typeName, typeData] of Object.entries(map_bptype_conv_data)) {
+    if (typeData.isCustomBPType === true) {
+      mapCpp2BPStruct.set(typeName, typeData.bpTypeName);
     }
-    search_key = Tools.convertTypeNameToNodeName(search_key);
   }
-  return search_key;
 }
-export function getRegisteredBPType(node_name: string): [CXXTYPE, string] {
+
+export function getBPName(node: CXXTerraNode): [CXXTYPE, string] {
+  const key_registeredtype = BPNameHelper.getBPTypeRegisteredKey(node);
   let typeCategory = CXXTYPE.Unknown;
-  let bpTypeName = node_name;
+  let bpTypeName = key_registeredtype;
 
-  if (mapCpp2BPClass.has(node_name)) {
+  if (mapCpp2BPClass.has(key_registeredtype)) {
     typeCategory = CXXTYPE.Clazz;
-    bpTypeName = mapCpp2BPClass.get(node_name) ?? node_name;
-  } else if (mapCpp2BPStruct.has(node_name)) {
+    bpTypeName = mapCpp2BPClass.get(key_registeredtype) ?? key_registeredtype;
+  } else if (mapCpp2BPStruct.has(key_registeredtype)) {
     typeCategory = CXXTYPE.Struct;
-    bpTypeName = mapCpp2BPStruct.get(node_name) ?? node_name;
-  } else if (mapCpp2BPEnum.has(node_name)) {
+    bpTypeName = mapCpp2BPStruct.get(key_registeredtype) ?? key_registeredtype;
+  } else if (mapCpp2BPEnum.has(key_registeredtype)) {
     typeCategory = CXXTYPE.Enumz;
-    bpTypeName = mapCpp2BPEnum.get(node_name) ?? node_name;
+    bpTypeName = mapCpp2BPEnum.get(key_registeredtype) ?? key_registeredtype;
   }
-
+  if (node.__TYPE === CXXTYPE.MemberFunction) {
+    // For Callback Delegate: call [getBPMethodNameFullData]
+    typeCategory = CXXTYPE.MemberFunction;
+    const dataBPMethodName = BPNameHelper.genBPMethodName(
+      node.asMemberFunction()
+    );
+    bpTypeName = dataBPMethodName.methodName;
+  }
   return [typeCategory, bpTypeName];
 }
 
+export function getBPMethodNameFullData(
+  node_method: MemberFunction,
+  isCallback: boolean
+): BPNameHelper.BPMethodName {
+  return BPNameHelper.genBPMethodName(node_method, isCallback);
+}
+
+// [Step 03]: About BP Type
+export function getBPType(type: SimpleType): UEBPType {
+  return BPTypeHelper.convertToBPType(type);
+}
+
+export function genBPReturnType(return_type: SimpleType): string {
+  let isReturnType = true;
+  let options: BPTypeHelper.AnalysisOptions = {
+    isAgoraType: AgoraHelper.isAgoraClassType(return_type),
+  };
+
+  const bp_type = BPTypeHelper.convertToBPType(
+    return_type,
+    undefined,
+    isReturnType,
+    options
+  );
+  return bp_type.source;
+}
+
+export function genBPParameterType(
+  return_type: SimpleType,
+  is_output?: boolean
+): UEBPType {
+  return BPTypeHelper.convertToBPType(return_type, is_output);
+}
+
+// [Step 04]: About BP default Value
 export function prepareBPStructInitializerDict(
   node_struct: Struct
 ): BPTypeHelper.BPDictInitializer {
@@ -308,6 +244,7 @@ export function getBPStructData_DefaultVal(
   return outputfomatDefaultVal;
 }
 
+// [Step 05]: About BP Context
 export function genContext_BPStruct(
   node_struct: Struct,
   prefix_indent: string = ''
@@ -333,7 +270,7 @@ export function genContext_BPStruct(
     const var_SizeCount = getBPSizeCount(node_struct, member_variable);
     const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
     const conv_cppfrombp = bpType.bpConv_CppFromBP;
-    const macro_scope_start =member_variable.user_data?.macro_scope_start;
+    const macro_scope_start = member_variable.user_data?.macro_scope_start;
     const macro_scope_end = member_variable.user_data?.macro_scope_end;
     if (
       Tools.IsNotEmptyStr(macro_scope_start) &&
@@ -509,15 +446,14 @@ export function genContext_BPStruct(
   return result;
 }
 
-
-
-
 function genContext_ConvDeclType(
-  param : Variable,
+  param: Variable,
   bpType: UEBPType,
-  bIsCppFromBP: boolean,
+  bIsCppFromBP: boolean
 ): BPParamContext {
-  const prefix_var_name = bIsCppFromBP ? AGORA_MUSTACHE_DATA.RAW_ : AGORA_MUSTACHE_DATA.UEBP_;
+  const prefix_var_name = bIsCppFromBP
+    ? AGORA_MUSTACHE_DATA.RAW_
+    : AGORA_MUSTACHE_DATA.UEBP_;
   const param_name = param.name;
   const decl_var_name = prefix_var_name + param_name;
 
@@ -525,12 +461,14 @@ function genContext_ConvDeclType(
     return Tools.addOneLine_Format(line, '');
   };
 
-  function extractArraySizeFromType(bpType: UEBPType){
+  function extractArraySizeFromType(bpType: UEBPType) {
     return Tools.extractBracketNumber(bpType.source);
   }
 
-  const data_conv = bIsCppFromBP ? bpType.bpConv_CppFromBP : bpType.bpConv_BPFromCpp;
-  const decl_type =  bIsCppFromBP ? bpType.cppDeclType : bpType.declType;
+  const data_conv = bIsCppFromBP
+    ? bpType.bpConv_CppFromBP
+    : bpType.bpConv_BPFromCpp;
+  const decl_type = bIsCppFromBP ? bpType.cppDeclType : bpType.declType;
 
   let result = new BPParamContext();
   // Default: DeclType A = B;
@@ -538,35 +476,38 @@ function genContext_ConvDeclType(
   result.contextUsage = `${decl_var_name}`;
   result.contextFree = '';
 
-   // [Step 01]: if it has special rule, directly use it
-  if(bpType.bpConvDeclTypeSPRule !== DeclTypeSPRule.DefaultNoSP) {
-    const full_data_rule = map_decltype_special_rule.get(bpType.bpConvDeclTypeSPRule);
-    const data_rule = bIsCppFromBP ? full_data_rule?.CppFromBP : full_data_rule?.BPFromCpp;
-    if(data_rule) {
+  // [Step 01]: if it has special rule, directly use it
+  if (bpType.bpConvDeclTypeSPRule !== DeclTypeSPRule.DefaultNoSP) {
+    const full_data_rule = map_decltype_special_rule.get(
+      bpType.bpConvDeclTypeSPRule
+    );
+    const data_rule = bIsCppFromBP
+      ? full_data_rule?.CppFromBP
+      : full_data_rule?.BPFromCpp;
+    if (data_rule) {
       result.contextDecl = `${data_rule.funcDecl(decl_var_name, param_name)}`;
       result.contextUsage = `${data_rule.funcUsage(decl_var_name)}`;
       result.contextFree = `${data_rule.funcFree()}`;
     }
-  }
-  else if(data_conv.convFuncType !== ConversionWayType.NoNeedConversion) {
+  } else if (data_conv.convFuncType !== ConversionWayType.NoNeedConversion) {
     // [Step 02]: Use Default Basic Conversion
-    const str_conv_func = Tools.IsNotEmptyStr(data_conv.convFunc) ? data_conv.convFunc : '';
-    const str_free_func = Tools.IsNotEmptyStr(data_conv.convFuncAdditional01) ? data_conv.convFuncAdditional01 : '';
+    const str_conv_func = Tools.IsNotEmptyStr(data_conv.convFunc)
+      ? data_conv.convFunc
+      : '';
+    const str_free_func = Tools.IsNotEmptyStr(data_conv.convFuncAdditional01)
+      ? data_conv.convFuncAdditional01
+      : '';
     const convWayType = data_conv.convFuncType;
-    
+
     // [Part - Decl]
     if (
-      convWayType ===
-        ConversionWayType.CppFromBP_NeedCallConvFunc ||
-        convWayType ===
-        ConversionWayType.CppFromBP_CreateFreeOptData
+      convWayType === ConversionWayType.CppFromBP_NeedCallConvFunc ||
+      convWayType === ConversionWayType.CppFromBP_CreateFreeOptData
     ) {
       result.contextDecl = addOneLineFunc(
         `${decl_type} ${decl_var_name} =${param_name}.${str_conv_func}();`
       );
-    } else if (
-      convWayType === ConversionWayType.CppFromBP_SetData
-    ) {
+    } else if (convWayType === ConversionWayType.CppFromBP_SetData) {
       let str_size = extractArraySizeFromType(bpType);
       str_size = Tools.IsNotEmptyStr(str_size) ? ', ' + str_size : '';
       result.contextDecl = addOneLineFunc(
@@ -583,23 +524,21 @@ function genContext_ConvDeclType(
 
     // [Part - Free]
     if (str_free_func !== '') {
-      if (
-        convWayType === ConversionWayType.CppFromBP_NewFreeData
-      ) {
+      if (convWayType === ConversionWayType.CppFromBP_NewFreeData) {
         result.contextFree = addOneLineFunc(
-          `${str_free_func}(${decl_var_name});` 
+          `${str_free_func}(${decl_var_name});`
+        );
+      } else if (convWayType === ConversionWayType.CppFromBP_NeedCallConvFunc) {
+        result.contextFree = addOneLineFunc(
+          `${param_name}.${str_free_func}(${decl_var_name});`
         );
       } else if (
-        convWayType ===
-        ConversionWayType.CppFromBP_NeedCallConvFunc
-      ) {
-        result.contextFree = addOneLineFunc(`${param_name}.${str_free_func}(${decl_var_name});`);
-      } else if (
-        convWayType ===
-        ConversionWayType.CppFromBP_CreateFreeOptData
+        convWayType === ConversionWayType.CppFromBP_CreateFreeOptData
       ) {
         const bpTypeName = bpType.name;
-        result.contextFree = addOneLineFunc(`${bpTypeName}::${str_free_func}(${decl_var_name});`);
+        result.contextFree = addOneLineFunc(
+          `${bpTypeName}::${str_free_func}(${decl_var_name});`
+        );
       }
     }
   }
@@ -607,12 +546,10 @@ function genContext_ConvDeclType(
   return result;
 }
 
-
 export function genContext_BPMethod(
   node_method: MemberFunction,
   prefix_indent: string = ''
 ): BPMethodContext {
-
   const addOneLineFunc = function (line: string): string {
     return Tools.addOneLine_Format(line, prefix_indent);
   };
@@ -634,17 +571,9 @@ export function genContext_BPMethod(
   node_method.parameters.map((param, index) => {
     const bptype = BPTypeHelper.convertToBPType(param.type);
 
-    contextParam_BPFromCpp = genContext_ConvDeclType(
-      param,
-      bptype,
-      false,
-    );
+    contextParam_BPFromCpp = genContext_ConvDeclType(param, bptype, false);
 
-    contextParam_CppFromBP = genContext_ConvDeclType(
-      param,
-      bptype,
-      true,
-    );
+    contextParam_CppFromBP = genContext_ConvDeclType(param, bptype, true);
 
     // Usage
     const param_delimiter =

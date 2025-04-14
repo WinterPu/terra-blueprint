@@ -29,45 +29,14 @@ import * as FilterHelper from './filter_helper';
 import * as Logger from './logger';
 import * as Tools from './tools';
 
-// preprocess the nodes
 export function preProcessNode(cxxfiles: CXXFile[]) {
-  BPHelper.initMapRegisteredData();
-
-  cxxfiles.map((cxxfile: CXXFile) => {
-    const fileName = CppHelper.getFileName(cxxfile);
-    BPHelper.registerBPFileName(fileName, BPHelper.genBPFileName(fileName));
-    cxxfile.nodes.map((node) => {
-      if (node.__TYPE == CXXTYPE.Clazz) {
-        // Only For Clazz
-        BPHelper.registerBPNameForAgora_Class(
-          node.name,
-          BPHelper.genBPNameForAgora_Class(node.name)
-        );
-      } else if (node.__TYPE == CXXTYPE.Struct) {
-        // Only For Struct
-        BPHelper.registerBPNameForAgora_Struct(
-          node.name,
-          BPHelper.genBPNameForAgora_Struct(node.name)
-        );
-      } else if (node.__TYPE == CXXTYPE.Enumz) {
-        // Only For Enumz
-        BPHelper.registerBPNameForAgora_Enum(
-          node.name,
-          BPHelper.genBPNameForAgora_Enum(node.name)
-        );
-      }
-    });
-  });
-
-  // register some type you defined in conversion map
-  BPHelper.registerBPNameForSelfDefinedType();
+  // bp preprocess: register data
+  BPHelper.registerBPTypes(cxxfiles);
 }
 
 export type FilterTerraNodeFunction = (cxxfile: CXXFile) => CXXTerraNode[];
 
 export type ExcludeApiFunction = (method_name: string) => boolean;
-
-const STR_NO_CALLBACK: string = 'NotCallbackMethod';
 
 // main function
 export function genGeneralTerraData(
@@ -80,20 +49,13 @@ export function genGeneralTerraData(
   let cxxfiles = parseResult.nodes as CXXFile[];
 
   // [Step 0: Preparation]
-  // bp preprocess: register data
   preProcessNode(cxxfiles);
 
   // [-- Define Functions]
   const genBaseUECommonUserData = function (
     node: CXXTerraNode
   ): CustomUserData.UECommonUserData {
-    const key_registeredsource = BPHelper.getRegisteredBPSearchKey(node);
-    let [typeCategoryName, valBPNodeName] =
-      BPHelper.getRegisteredBPType(key_registeredsource);
-
-    if (node.__TYPE === CXXTYPE.MemberFunction) {
-      valBPNodeName = BPHelper.genBPMethodName(node.name);
-    }
+    let [typeCategoryName, valBPNodeName] = BPHelper.getBPName(node);
 
     const userdata: CustomUserData.UECommonUserData = {
       commentCppStyle: CppHelper.formatAsCppComment(node.comment),
@@ -117,7 +79,7 @@ export function genGeneralTerraData(
     const includeFiles = BPHelper.getIncludeFilesForBP(cxxfile);
     const cxxUserData: CustomUserData.CXXFileUserData = {
       fileName: valFileName,
-      bpFileName: BPHelper.genBPFileName(valFileName),
+      bpFileName: BPHelper.getBPFileName(valFileName),
       bpIncludeFiles: includeFiles,
     };
     cxxfile.user_data = cxxUserData;
@@ -162,7 +124,10 @@ export function genGeneralTerraData(
             method,
             '      '
           );
-
+          const bpMethodNameFullData = BPHelper.getBPMethodNameFullData(
+            method,
+            bIsCallbackMethod
+          );
           const basedata_clazzmethod = genBaseUECommonUserData(method);
           const clazzMethodUserData: CustomUserData.ClazzMethodUserData = {
             ...basedata_clazzmethod,
@@ -185,19 +150,10 @@ export function genGeneralTerraData(
             // bp
             bpReturnType: BPHelper.genBPReturnType(method.return_type),
 
-            bpCallbackDelegateMacroName: bIsCallbackMethod
-              ? BPHelper.genbpCallbackDelegateMacroName(
-                  method.parameters.length
-                )
-              : STR_NO_CALLBACK,
-            bpCallbackDelegateTypeName: bIsCallbackMethod
-              ? BPHelper.genbpCallbackDelegateTypeName(method.name)
-              : STR_NO_CALLBACK,
-            bpCallbackDelegateVarName: bIsCallbackMethod
-              ? BPHelper.genbpCallbackDelegateVarName(method.name)
-              : STR_NO_CALLBACK,
-            bpIsNoParamCallback:
-              bIsCallbackMethod && method.parameters.length === 0,
+            bpCallbackDelegateMacroName: bpMethodNameFullData.delegateMacroName,
+            bpCallbackDelegateTypeName: bpMethodNameFullData.delegateTypeName,
+            bpCallbackDelegateVarName: bpMethodNameFullData.delegateVarName,
+            bpCallbackIsNoParam: bpMethodNameFullData.delegateIsNoParam,
 
             bpContextParamsDecl_BPFromCpp:
               contextBPMethod.contextParam_BPFromCpp.contextDecl,
@@ -308,7 +264,8 @@ export function genGeneralTerraData(
             bpType
           );
 
-          const basedata_structmembervariable = genBaseUECommonUserData(member_variable);
+          const basedata_structmembervariable =
+            genBaseUECommonUserData(member_variable);
           const structMemberVariableUserData: CustomUserData.StructMemberVariableUserData =
             {
               ...basedata_structmembervariable,
