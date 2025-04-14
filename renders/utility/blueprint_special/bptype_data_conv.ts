@@ -410,6 +410,8 @@ const defaultTmpl_TrackID: UEBPTypeConvData = {
 
 // =============== Type 2 Type Conversion ===============
 // also use type source as key
+// but when the type is not on the map: we would use type.name to see if the base type is on the map
+// Ex. uint8_t* => uint8_t => TArray<int>
 export const map_cppreg_2_bptype_conv_data = new Map<RegExp, UEBPTypeConvData>([
   [
     // char const[n] => FString

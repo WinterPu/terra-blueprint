@@ -487,6 +487,14 @@ export function convertToBPType(
   } else {
     // Not Founded
 
+    // Array Type
+    let bFounded = false;
+    const data_bptype_conv_typename = getBPTypeConvData(type.name);
+    if (data_bptype_conv_typename) {
+      result.name = data_bptype_conv_typename.bpTypeName;
+      bFounded = true;
+    }
+
     // **** Second Step: If failed, analyze the type ****
     // Try to get [bpTypeName]
 
@@ -499,10 +507,12 @@ export function convertToBPType(
     if (typeCategory != CXXTYPE.Unknown) {
       result.name = bpTypeNameTmp;
     } else {
-      Logger.PrintError(
-        `convertToBPType: No Conversion Mapping ${type.source}`
-      );
-      result.name = type.name;
+      if (!bFounded) {
+        Logger.PrintError(
+          `convertToBPType: No Conversion Mapping ${type.source}`
+        );
+        result.name = type.name;
+      }
     }
   }
 
