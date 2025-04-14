@@ -39,6 +39,10 @@ import { UEBPType } from './bptype_helper';
 import * as BPTypeHelper from './bptype_helper';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
+export function filterEmptyNameNode(node: CXXTerraNode): boolean {
+  return node.__TYPE === CXXTYPE.Enumz && node.name === '';
+}
+
 // [Step 01]: About BP Include Files
 export function getBPFileName(file_name: string): string {
   return BPNameHelper.genBPFileName(file_name);
@@ -100,6 +104,9 @@ export function registerBPTypes(cxxfiles: CXXFile[]) {
     mapFileName2BPName.set(fileName, bpFileName);
 
     cxxfile.nodes.map((node) => {
+      if (filterEmptyNameNode(node)) {
+        return;
+      }
       const key_registeredtype = BPNameHelper.getBPTypeRegisteredKey(node);
       // Only For Clazz
       if (node.__TYPE == CXXTYPE.Clazz) {

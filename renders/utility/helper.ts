@@ -90,6 +90,10 @@ export function genGeneralTerraData(
       nodes = func_filter_terrnode(cxxfile);
     }
 
+    nodes = nodes.filter((node) => {
+      return !BPHelper.filterEmptyNameNode(node);
+    });
+
     cxxfile.nodes = nodes.map((node: CXXTerraNode) => {
       // Base Node - TerraNode
       const basedata = genBaseUECommonUserData(node);

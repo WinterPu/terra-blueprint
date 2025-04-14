@@ -43,9 +43,18 @@ export function getBPTypeRegisteredKey(node: CXXTerraNode): string {
     key_registeredtype = Tools.convertTypeNameToNodeName(key_registeredtype);
   }
 
-  if (node.__TYPE === CXXTYPE.Enumz && key_registeredtype === '') {
-    key_registeredtype = map_empty_name_enum[node.parent_name ?? ''];
-  }
+  // TBD(WinterPu)
+  // Currently skip it: because anonymous enum has no idea about cpp type
+  // Ex.
+  //   class IAudioFrameObserverBase {
+  //   public:
+  //   enum { MAX_HANDLE_TIME_CNT = 10 };
+  //   };
+  //   */
+  //   'agora::media::IAudioFrameObserverBase': 'MAX_HANDLE_TIME_CNT',
+  //   if (node.__TYPE === CXXTYPE.Enumz && key_registeredtype === '') {
+  //     key_registeredtype = map_empty_name_enum[node.parent_full_scope_name ?? ''];
+  //   }
 
   return key_registeredtype;
 }
