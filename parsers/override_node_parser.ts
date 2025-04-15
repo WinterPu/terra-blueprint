@@ -10,13 +10,15 @@ import { fillParentNode_ForParseResult } from '@agoraio-extensions/cxx-parser/sr
 import { ParseResult, TerraContext } from '@agoraio-extensions/terra-core';
 
 import {
+  applyIrisApiId,
+  getIrisApiIdValue,
+} from '@agoraio-extensions/terra_shared_configs/src/parsers/iris_api_id_parser';
+import {
   CommentConfig,
   CommentConfigKey,
   generateNodes,
   getConfigsFromComments,
-} from '../utils/parser_utils';
-
-import { applyIrisApiId, getIrisApiIdValue } from './iris_api_id_parser';
+} from '@agoraio-extensions/terra_shared_configs/src/utils/parser_utils';
 
 export type OverrideNodeParserArgs = CXXParserConfigs & {
   customHeaderFileNamePrefix?: string;
@@ -98,7 +100,13 @@ export const OverrideNodeParser = (
         overrideNodesFullNameMap.forEach((value, _) => {
           if (!value.isVisited) {
             if (!filterCXXTypes.includes(value.value.__TYPE)) {
-              (existedFile as CXXFile).nodes.push(value.value);
+              // the rest node would be : struct
+              // they would be used in the following method,
+              // therefore, the order should be at the top, use [unshift] rather than [push]
+              // Ex.
+              // SDKBuildInfo
+              // used in getVersion
+              (existedFile as CXXFile).nodes.unshift(value.value);
             }
           }
         });
