@@ -472,8 +472,7 @@ export function convertToBPType(
   let result = new UEBPType();
   result.cppTypeName = type.name;
   result.cppTypeSource = type.source;
-  console.log('convertToBPType', type.source);
-
+  Logger.Print(`convertToBPType: ${type.source}`);
   // **** First Step: Directly Searching in the map ****
   // Try to get [bpTypeName]
 
@@ -684,11 +683,8 @@ export function getBPMemberVariableDefaultValue(
   // need to check in the future
   if (valDefaultVal === undefined) {
     let [bNeedPointer, pointer_type] = parsePointerType(member_variable.type);
-    console.log(
-      member_variable.type.source,
-      'getBPMemberVariableDefaultValue parsePointerType',
-      bNeedPointer,
-      pointer_type
+    Logger.Print(
+      `${member_variable.type.source} getBPMemberVariableDefaultValue parsePointerType ${bNeedPointer} ${pointer_type}`
     );
     if (bNeedPointer) {
       bNeedDefaultValue = true;
