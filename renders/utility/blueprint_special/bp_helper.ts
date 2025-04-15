@@ -337,7 +337,7 @@ export function genContext_BPStruct(
         // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
         // TBD(WinterPu): need to check the length of the variable
         contextCreateRawData += addOneLineFunc(
-          `${conv_cppfrombp.convFunc}}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, ${var_SizeCount});`
+          `${conv_cppfrombp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, ${var_SizeCount});`
         );
       } else if (
         conv_cppfrombp.convFuncType ===

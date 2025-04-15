@@ -350,14 +350,14 @@ const defaultTmpl_FString_SetArray: UEBPTypeConvData = {
   ...defaultTmpl_BasicType_NoConv,
   bpTypeName: 'FString',
   convFromCpp: {
-    convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
-    convFunc: 'UABT::SetBPArrayData',
+    convFuncType: ConversionWayType.BPFromCpp_FString,
+    convFunc: 'UTF8_TO_TCHAR',
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
-    convFunc: 'UABT::New_CharArrayPtr',
-    convFuncAdditional01: 'UABT::Free_CharArrayPtr',
+    convFuncType: ConversionWayType.CppFromBP_SetData,
+    convFunc: 'UABT::SetCharArrayPtr',
+    convFuncAdditional01: '',
   },
   declTypeSPRule: DeclTypeSPRule.SP_String,
   parseArrayIsInBlackList: true,
@@ -508,13 +508,13 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpTypeName: 'int64',
       defaultValue: '0',
       convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
-        convFunc: 'UABT::FromUint32',
+        convFuncType: ConversionWayType.NoNeedConversion,
+        convFunc: '',
         convFuncAdditional01: '',
       },
       convToCpp: {
         convFuncType: ConversionWayType.Basic,
-        convFunc: 'UABT::ToUint32',
+        convFunc: 'UABT::ToUInt32',
         convFuncAdditional01: '',
       },
     },
@@ -556,11 +556,21 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
     },
     'unsigned char const*': {
       ...defaultTmpl_FString_Const,
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_NewFreeData,
+        convFunc: 'UABT::New_UnsignedCharPtr',
+        convFuncAdditional01: 'UABT::Free_UnsignedCharPtr',
+      },
     },
     'unsigned char*': {
       // TBD(WinterPu) check it
       ...defaultTmpl_FString_NonConst,
       bpTypeName: 'FString',
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_NewFreeData,
+        convFunc: 'UABT::New_UnsignedCharPtr',
+        convFuncAdditional01: 'UABT::Free_UnsignedCharPtr',
+      },
     },
     'char*': {
       ...defaultTmpl_FString_NonConst,
