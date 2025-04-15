@@ -487,7 +487,7 @@ export function convertToBPType(
   } else {
     // Not Founded
 
-    // Array Type
+    // use [type name] to get a bp type name
     let bFounded = false;
     const data_bptype_conv_typename = getBPTypeConvData(type.name);
     if (data_bptype_conv_typename) {
@@ -495,19 +495,19 @@ export function convertToBPType(
       bFounded = true;
     }
 
-    // **** Second Step: If failed, analyze the type ****
-    // Try to get [bpTypeName]
+    if (!bFounded) {
+      // **** Second Step: If failed, analyze the type ****
+      // Try to get [bpTypeName]
 
-    // Enum / Class / Struct's name is without namespace
-    // type.name has namespace
-    // TBD(WinterPu):
-    // 1. is it possible to have namespace in the middle[ex. Optional<agora::rtc::RtcConnection>]
-    let [typeCategory, bpTypeNameTmp] = BPHelper.getBPName(type);
+      // Enum / Class / Struct's name is without namespace
+      // type.name has namespace
+      // TBD(WinterPu):
+      // 1. is it possible to have namespace in the middle[ex. Optional<agora::rtc::RtcConnection>]
+      let [typeCategory, bpTypeNameTmp] = BPHelper.getBPName(type);
 
-    if (typeCategory != CXXTYPE.Unknown) {
-      result.name = bpTypeNameTmp;
-    } else {
-      if (!bFounded) {
+      if (typeCategory != CXXTYPE.Unknown) {
+        result.name = bpTypeNameTmp;
+      } else {
         Logger.PrintError(
           `convertToBPType: No Conversion Mapping ${type.source}`
         );
@@ -577,8 +577,9 @@ export function convertToBPType(
     }
   }
 
-  result.source = tmpTypeSource;
-  result.declType = tmpDeclType;
+  // assign result
+  result.source = data_bptype_conv?.bpDesignedTypeSource ?? tmpTypeSource;
+  result.declType = data_bptype_conv?.bpDesignedDeclType ?? tmpDeclType;
   result.delegateType = tmpDelegateType;
 
   // **** Fourth Step: Get Conversion Function ****

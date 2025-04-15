@@ -274,6 +274,7 @@ export function genContext_BPStruct(
     let type = member_variable.type;
     let struct_full_name = member_variable?.parent?.fullName ?? '';
     let bpType = BPTypeHelper.convertToBPType(type);
+    const cpp_decl_type = bpType.cppDeclType;
     const var_SizeCount = getBPSizeCount(node_struct, member_variable);
     const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
     const conv_cppfrombp = bpType.bpConv_CppFromBP;
@@ -295,7 +296,7 @@ export function genContext_BPStruct(
       ) {
         // Ex. UABT::SetBPArrayData<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
         contextConstructor += addOneLineFunc(
-          `${conv_bpfromcpp.convFunc}<${type.name}, ${bpType.name}>(this->${member_variable.name}, ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
+          `${conv_bpfromcpp.convFunc}<${cpp_decl_type}, ${bpType.name}>(this->${member_variable.name}, ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
         );
       } else {
         // Basic Conversion
@@ -328,7 +329,7 @@ export function genContext_BPStruct(
 
         //TBD(WinterPu) use inline function to replace macro functions
         contextCreateRawData += addOneLineFunc(
-          `${conv_cppfrombp.convFunc}<${type.name}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount},${member_variable.name});`
+          `${conv_cppfrombp.convFunc}<${cpp_decl_type}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount},${member_variable.name});`
         );
       } else if (
         conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_SetData
@@ -390,7 +391,7 @@ export function genContext_BPStruct(
     ) {
       // Ex. UABT::Free_RawDataArray<agora::rtc::DownlinkNetworkInfo::PeerDownlinkInfo, FUABT_PeerDownlinkInfo>(AgoraData.peer_downlink_info, AgoraData.total_received_video_count);
       tmpContextFreeRawData += addOneLineFunc(
-        `${conv_cppfrombp.convFuncAdditional01}<${type.name}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
+        `${conv_cppfrombp.convFuncAdditional01}<${cpp_decl_type}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
       );
     } else if (
       conv_cppfrombp.convFuncType ===

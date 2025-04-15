@@ -580,14 +580,8 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
     'char const**': {
       ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'FString',
-      bpDesignedTypeSource: 'TArray<FString>',
-      parsePointerForceEnable: true,
-    },
-
-    'char**': {
-      ...defaultTmpl_BasicType_NoConv,
-      bpTypeName: 'FString',
-      bpDesignedTypeSource: 'TArray<FString>',
+      bpDesignedTypeSource: 'const TArray<FString> &',
+      bpDesignedDeclType: 'TArray<FString>',
       parsePointerForceEnable: true,
       convFromCpp: {
         convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
@@ -599,6 +593,26 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
         convFunc: 'UABT::New_CharArrayPtr',
         convFuncAdditional01: 'UABT::Free_CharArrayPtr',
       },
+      cppDesignedDeclType: 'char**',
+    },
+
+    'char**': {
+      ...defaultTmpl_BasicType_NoConv,
+      bpTypeName: 'FString',
+      bpDesignedTypeSource: 'TArray<FString>',
+      bpDesignedDeclType: 'TArray<FString>',
+      parsePointerForceEnable: true,
+      convFromCpp: {
+        convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+        convFunc: '',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_NewFreeData,
+        convFunc: 'UABT::New_CharArrayPtr',
+        convFuncAdditional01: 'UABT::Free_CharArrayPtr',
+      },
+      cppDesignedDeclType: 'char**',
     },
 
     // Array Related

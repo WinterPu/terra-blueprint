@@ -59,7 +59,7 @@ export class ClazzMethodUserData extends UECommonUserData {
   bpCallbackDelegateMacroName: string = '';
   bpCallbackDelegateTypeName: string = '';
   bpCallbackDelegateVarName: string = '';
-  bpIsNoParamCallback: boolean = false;
+  bpCallbackIsNoParam: boolean = false;
 
   bpContextParamsDecl_CppFromBP: string = '';
   bpContextParamsUsage_CppFromBP: string = '';
@@ -87,7 +87,6 @@ export class StructMemberVariableUserData extends UECommonUserData {
 }
 
 export class ParameterUserData extends UECommonUserData {
-  lenParameters: number = 0;
   isFirst: boolean = false;
   isLast: boolean = false;
   defaultValue: string = '';

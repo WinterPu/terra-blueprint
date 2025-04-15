@@ -1,6 +1,6 @@
 
 {{#methods}}
-{{user_data.bpCallbackDelegateMacroName}}({{user_data.bpCallbackDelegateTypeName}}{{#user_data.bpIsNoParamCallback}}{{/user_data.bpIsNoParamCallback}}{{^user_data.bpIsNoParamCallback}}, {{/user_data.bpIsNoParamCallback}}{{#parameters}}{{{user_data.bpDelegateType}}}, {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+{{user_data.bpCallbackDelegateMacroName}}({{user_data.bpCallbackDelegateTypeName}}{{#user_data.bpCallbackIsNoParam}}{{/user_data.bpCallbackIsNoParam}}{{^user_data.bpCallbackIsNoParam}}, {{/user_data.bpCallbackIsNoParam}}{{#parameters}}{{{user_data.bpDelegateType}}}, {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
 {{/methods}}
 
 

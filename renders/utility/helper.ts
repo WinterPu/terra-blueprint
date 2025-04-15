@@ -207,7 +207,6 @@ export function genGeneralTerraData(
             const basedata_parameter = genBaseUECommonUserData(parameter);
             const parameterUserData: CustomUserData.ParameterUserData = {
               ...basedata_parameter,
-              lenParameters: method.parameters.length,
               commentCppStyle: CppHelper.formatAsCppComment(parameter.comment),
               isFirst: index === 0,
               isLast: index === method.parameters.length - 1,
