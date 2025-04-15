@@ -1,5 +1,6 @@
 import {
   CXXFile,
+  CXXTYPE,
   CXXTerraNode,
   MemberFunction,
 } from '@agoraio-extensions/cxx-parser';
@@ -14,7 +15,45 @@ import {
 } from '@agoraio-extensions/terra_shared_configs/src/index';
 import { getConfigs } from '@agoraio-extensions/terra_shared_configs/src/utils/parser_utils';
 
-const defaultConfig = require('../../configs/rtc/merge_node_list.ts');
+const defaultConfig = require('@agoraio-extensions/terra_shared_configs/configs/rtc/merge_node_list.ts');
+
+export function ResolveMergedNodeDependencies(
+  sourceFile: CXXFile | undefined,
+  targetFile: CXXFile | undefined,
+  sourceClazz: CXXTerraNode | undefined,
+  targetClazz: CXXTerraNode | undefined
+) {
+  if (!sourceFile || !targetFile || !sourceClazz || !targetClazz) {
+    return;
+  }
+  // move sourceClazz dependency
+  let visitedNodes = new Set<string>();
+  const deletedSourceNodes = new Set<CXXTerraNode>();
+  targetFile?.nodes.forEach((node) => {
+    if (node.__TYPE === CXXTYPE.Clazz && node.name === targetClazz.name) {
+      node.asClazz().methods.forEach((method) => {
+        method.parameters.forEach((param) => {
+          if (!param.type.is_builtin_type) {
+            visitedNodes.add(param.type.name);
+          }
+        });
+      });
+    }
+  });
+  sourceFile?.nodes.forEach((node) => {
+    if (visitedNodes.has(node.fullName)) {
+      targetFile?.nodes.unshift(node);
+      deletedSourceNodes.add(node);
+    }
+  });
+
+  for (let node of deletedSourceNodes) {
+    console.log('remove node' + node.fullName);
+  }
+  sourceFile!.nodes = sourceFile!.nodes.filter(
+    (node) => !deletedSourceNodes.has(node)
+  );
+}
 
 export interface MergeNodeParserUserData {
   sourceClazzName: string;
@@ -37,6 +76,10 @@ export function MergeNodeParser(
     for (let config of configs) {
       let sourceClazz: CXXTerraNode | undefined = undefined;
       let targetClazz: CXXTerraNode | undefined = undefined;
+
+      let sourceFile: CXXFile | undefined = undefined;
+      let targetFile: CXXFile | undefined = undefined;
+
       for (
         let fileIndex = 0;
         fileIndex < preParseResult.nodes.length;
@@ -47,7 +90,7 @@ export function MergeNodeParser(
           for (let index = 0; index < file.nodes.length; index++) {
             if (file.nodes[index]?.fullName === config.source) {
               sourceClazz = file.nodes[index];
-
+              sourceFile = file;
               //根据deleteSource来决定找到后是否删除source
               if (config.deleteSource) {
                 // delete file.nodes[index];
@@ -61,6 +104,7 @@ export function MergeNodeParser(
           for (let node of file.nodes) {
             if (node?.fullName === config.target) {
               targetClazz = node;
+              targetFile = file;
               break;
             }
           }
@@ -124,6 +168,14 @@ export function MergeNodeParser(
           });
         }
       }
+
+      // Resolve Dependency
+      ResolveMergedNodeDependencies(
+        sourceFile,
+        targetFile,
+        sourceClazz,
+        targetClazz
+      );
     }
   }
   return preParseResult;
