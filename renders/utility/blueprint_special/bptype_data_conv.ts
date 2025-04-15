@@ -635,8 +635,19 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
     'int const*': {
       ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'int',
-      bpDesignedTypeSource: 'TArray<int>',
-      parsePointerForceEnable: true,
+      bpDesignedDeclType: 'TArray<int>',
+      bpDesignedTypeSource: 'const TArray<int> &',
+      convFromCpp: {
+        convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+        convFunc: '',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
+        convFunc: 'New_RawDataArray',
+        convFuncAdditional01: 'Free_RawData',
+      },
+      cppDesignedDeclType: 'int*',
     },
 
     'uid_t*': {
@@ -668,7 +679,7 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
     },
     'agora::rtc::IScreenCaptureSourceList*': {
       ...defaultTmpl_BasicType_NoConv,
-      bpTypeName: 'FUABT_ScreenCaptureSourceList',
+      bpTypeName: 'UAgoraBPuScreenCaptureSourceList',
       parseArrayIsInBlackList: true,
       parsePointerForceEnable: true,
     },

@@ -167,8 +167,11 @@ function genBPConvertFromRawType(
     convFunc: '',
     convFuncAdditional01: '',
   };
+
+  const [typeCategory, bpTypeNameTmp] = BPHelper.getBPName(type);
+
   // Enum
-  if (type.__TYPE == CXXTYPE.Enumz) {
+  if (typeCategory == CXXTYPE.Enumz) {
     conversion = map_one_category_basicconv_bpfromcpp.get('Enum')!;
   }
 
@@ -194,12 +197,14 @@ function genBPConvertToRawType(
     convFunc: '',
     convFuncAdditional01: '',
   };
+
+  const [typeCategory, bpTypeNameTmp] = BPHelper.getBPName(type);
   // UEnum
-  if (type.__TYPE == CXXTYPE.Enumz) {
+  if (typeCategory == CXXTYPE.Enumz) {
     conversion = map_one_category_basicconv_cppfrombp.get('Enum')!;
   }
 
-  if (type.__TYPE === CXXTYPE.Clazz || type.__TYPE === CXXTYPE.Struct) {
+  if (typeCategory === CXXTYPE.Clazz || typeCategory === CXXTYPE.Struct) {
     if (BPNameHelper.isCustomDefinedBPType_Optional(type)) {
       conversion = map_one_category_basicconv_cppfrombp.get('Optional')!;
     } else {
