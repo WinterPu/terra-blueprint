@@ -19,7 +19,7 @@ parsers:
 
 
   - name: OverrideNodeParser
-    package: '@agoraio-extensions/terra_shared_configs'
+    path: ../parsers/override_node_parser.ts
     args:
       customHeaderFileNamePrefix: 'Custom'
       includeHeaderDirs:
