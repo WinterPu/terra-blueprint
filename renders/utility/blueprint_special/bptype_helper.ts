@@ -179,11 +179,11 @@ function genBPConvertFromRawType(
     conversion = map_one_category_basicconv_bpfromcpp.get('TArray')!;
   }
 
-  const type_conv_data = map_bptype_conv_data[type.source];
-  if (type_conv_data?.isCustomBPType) {
+  const type_conv_data = getBPTypeConvData(type.source);
+  if (type_conv_data) {
     conversion = type_conv_data.convFromCpp;
   }
-
+  
   return conversion;
 }
 
