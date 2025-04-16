@@ -159,5 +159,15 @@ module.exports = [
   'agora::rtc::IRtcEngine.getNativeHandle',
 
   // EventHandler Has Return Value
-  'agora::media::IVideoFrameObserver'
+  'agora::media::IVideoFrameObserver',
+
+
+  // TBD(WinterPu)
+  // Observer
+  // 'agora::rtc::IMediaPlayerSourceObserver',
+  'agora::rtc::IMediaPlayerVideoFrameObserver',
+  'agora::rtc::IAudioEncodedFrameObserver',
+  'agora::rtc::IPacketObserver',
+  'agora::media::IAudioPcmFrameSink',
+  'agora::rtc::IMediaPlayerVideoFrameObserver',
 ];

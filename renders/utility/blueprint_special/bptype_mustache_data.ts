@@ -5,9 +5,9 @@ export const AGORA_MUSTACHE_DATA = {
   FREE_RAW_DATA: 'FreeRawData',
 
   // TBD(WinterPu) use inline function to replace macro functions
-  NEW_RAW_ARRAY_DATA: 'UABT::New_RawDataArray',
-  FREE_RAW_ARRAY_DATA: 'UABT::Free_RawDataArray',
-  SET_BP_ARRAY_DATA: 'UABT::SetBPArrayData',
+  NEW_RAW_ARRAY_DATA: 'UABT::New_CustomRawDataArray',
+  FREE_RAW_ARRAY_DATA: 'UABT::Free_CustomRawDataArray',
+  SET_BP_ARRAY_DATA: 'UABT::SetBPDataArray',
 
   // NEW_RAW_ARRAY_DATA: 'UABT_NEW_RAW_DATA_ARRAY',
   // FREE_RAW_ARRAY_DATA: 'UABT_FREE_RAW_DATA_ARRAY',
@@ -28,4 +28,17 @@ export const AGORA_MUSTACHE_DATA = {
   UABTEnum_ToRawValue: 'UABTEnum::ToRawValue',
 
   BPFileName_Prefix: 'AgoraBPu',
+
+  // Conv Func
+  ConvFunc_New_RawDataPtr1D: 'UABT::New_RawDataPtr1D',
+  ConvFunc_Free_RawDataPtr1D: 'UABT::Free_RawDataPtr1D',
+
+  ConvFunc_New_CustomRawDataPtr1D: 'UABT::New_CustomRawDataPtr1D',
+  ConvFunc_Free_CustomRawDataPtr1D: 'UABT::Free_CustomRawDataPtr1D',
+
+  ConvFunc_New_CustomRawDataArray: 'UABT::New_CustomRawDataArray',
+  ConvFunc_Free_CustomRawDataArray: 'UABT::Free_CustomRawDataArray',
+
+  ConvFunc_Set_BPDataArray: 'UABT::SetBPDataArray',
+  ConvFunc_Set_RawDataArray: 'UABT::SetRawDataArray',
 };

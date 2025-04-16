@@ -74,6 +74,14 @@ enum class EAgoraOptional : uint8 {
 };
 
 
+
+// naming rules:
+// 1. RAW_DATA - BP_DATA
+// 2. Custom: means it would call CreateRawData() / FreeRawData() to create / release the raw data.
+// 3. DataPtr1D: means it would handle 1d pointer data.
+// 4. DataPtr2D: means it would handle 2d pointer data.
+// 5. DataArray: means it would set the data to array.
+
 namespace agora {
 	namespace rtc {
 		namespace ue {
@@ -85,6 +93,13 @@ namespace agora {
 
 
 #pragma region To
+
+				// the reason for not using Polymorphism is that: 
+				// sometimes: the same source type would be converted to different types.
+				// Ex. 
+				// 1. uid_t ToRawType(int64);   
+				// 2. uint32_t ToRawType(int64);
+
 				// UE Blueprint Type To Agora Blueprint Type
 				static inline agora::rtc::uid_t ToUID(int64 num) {
 					if (num < 0 || num > static_cast<int64>(std::numeric_limits<agora::rtc::uid_t>::max())) {
@@ -143,8 +158,15 @@ namespace agora {
 #pragma region From
 				// From Agora Type to UE Blueprint Type
 
+				static inline int64 FromUID(agora::rtc::uid_t uid) {
+					return (int64)uid;
+				}
 
-				static inline int64 FromViewToInt(agora::view_t view) {
+				static inline int64 FromVTID(agora::rtc::track_id_t ID) {
+					return (int64)ID;
+				}
+
+				static inline int64 FromView(agora::view_t view) {
 					return (int64)view;
 				}
 
@@ -167,7 +189,7 @@ namespace agora {
 
 #pragma region New
 
-				static inline char* New_CharPtr(const FString& Str) {
+				static inline char* New_CharPtr1D(const FString& Str) {
 					FTCHARToUTF8 TempUTF8String(*(Str));
 					char* TempCharPtr = new char[TempUTF8String.Length() + 1];
 					FMemory::Memcpy(TempCharPtr, TempUTF8String.Get(), TempUTF8String.Length());
@@ -175,7 +197,7 @@ namespace agora {
 					return TempCharPtr;
 				}
 
-				static inline unsigned char* New_UnsignedCharPtr(const FString& Str) {
+				static inline unsigned char* New_UnsignedCharPtr1D(const FString& Str) {
 					FTCHARToUTF8 TempUTF8String(*(Str));
 					unsigned char* TempCharPtr = new unsigned char[TempUTF8String.Length() + 1];
 					FMemory::Memcpy(TempCharPtr, TempUTF8String.Get(), TempUTF8String.Length());
@@ -183,61 +205,130 @@ namespace agora {
 					return TempCharPtr;
 				}
 
-				static inline char** New_CharArrayPtr(const TArray<FString> & StrList){
+
+				static inline char** New_CharPtr2D(const TArray<FString> & StrList){
 				
 					char** Result = new char* [StrList.Num()]; 
 					for (unsigned int i = 0; i < static_cast<unsigned int>(StrList.Num()); i++) {
-							
-						Result[i] = UABT::New_CharPtr(StrList[i]);
+						Result[i] = UABT::New_CharPtr1D(StrList[i]);
+					}
+					return Result;
+
+				}
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline RAW_TYPE* New_RawDataPtr1D(const TArray<UABT_TYPE>& SrcArray, int SizeCount) {
+					RAW_TYPE* Result = new RAW_TYPE[SizeCount];
+					for (int i = 0; i < SizeCount; i++) {
+						Result[i] = static_cast<RAW_TYPE>(SrcArray[i]);
 					}
 					return Result;
 				}
 
 
-				static inline agora::rtc::uid_t* New_UIDArrayPtr(const TArray<int64> UEBP_TARRAY){
-				
-					agora::rtc::uid_t* Tmp = new agora::rtc::uid_t[UEBP_TARRAY.Num()];
-					for (unsigned int i = 0; i < static_cast<unsigned int>(UEBP_TARRAY.Num()); i++) {
-							
-							(Tmp)[i] = static_cast<agora::rtc::uid_t>((UEBP_TARRAY)[i]);
-						}
-					return Tmp;
-				}
-
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline RAW_TYPE* New_RawData(const UABT_TYPE& Val){
-					RAW_TYPE* Result = new RAW_TYPE;
-					RAW_TYPE RawData = Val.CreateRawData();
-					// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
-					FMemory::Memcpy(Result,&(RawData),sizeof(RAW_TYPE));
-
-					// Val's pointer is copied to Result, it is owned by Result;
+				static inline RAW_TYPE* New_CustomRawDataPtr1D(const TArray<UABT_TYPE>& SrcArray, int SizeCount) {
+					RAW_TYPE* Result = new RAW_TYPE[SizeCount];
+					for (int i = 0; i < SizeCount; i++) {
+						// Create a temporary variable to hold the raw data
+						RAW_TYPE RawData = SrcArray[i].CreateRawData();
+						// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
+						FMemory::Memcpy(&Result[i], &(RawData), sizeof(RAW_TYPE));
+					}
 
 					return Result;
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline RAW_TYPE* New_RawDataArray(const TArray<UABT_TYPE>& SrcArray) {
-					int Num = SrcArray.Num();
-					RAW_TYPE* DstArray = new RAW_TYPE[Num];
-					for (int i = 0; i < Num; i++) {
+				static inline void New_CustomRawDataArray(RAW_TYPE* DstArray, int SizeCount , const TArray<UABT_TYPE>& SrcArray) {
+					for (int i = 0; i < SizeCount; i++) {
 						// Create a temporary variable to hold the raw data
 						RAW_TYPE RawData = SrcArray[i].CreateRawData();
 						// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
 						FMemory::Memcpy(&DstArray[i], &(RawData), sizeof(RAW_TYPE));
 					}
-					return DstArray;
 				}
 
-				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void SetBPArrayData(TArray<UABT_TYPE>& Dst, RAW_TYPE* Src, int Size){
-					Dst.Empty();
-					for (int i = 0; i < Size; i++) {
-						Dst[i].Add(Src[i]);
+
+#pragma endregion New
+
+
+#pragma region Free
+				
+				
+				template<typename T>
+				static inline void Free_Ptr1D(T* & Ptr){
+					if (Ptr) {
+						delete[] Ptr;
+						Ptr = nullptr;
 					}
 				}
 
-#pragma endregion New
+				
+				template<typename T>
+				static inline void Free_Ptr2D(T**& Ptr,unsigned int Size) {
+					if (Ptr) {
+						for (unsigned int i = 0; i < Size; i++) {
+							Free_Ptr1D<T>(Ptr[i]);
+						}
+						delete[] Ptr;
+						Ptr = nullptr;
+					}
+				}
+
+
+
+				static inline void Free_CharPtr1D(const char* & Ptr){
+					Free_Ptr1D<const char>(Ptr);
+				}
+
+				static inline void Free_UnsignedCharPtr1D(unsigned char*& Ptr) {
+					Free_Ptr1D<unsigned char>(Ptr);
+				}
+
+				static inline void Free_CharPtr2D(const char** & ptr,int size){
+					if (ptr) {
+						for (unsigned int i = 0; i < static_cast<unsigned int>(size); i++) {
+							Free_CharPtr1D(ptr[i]);
+						}
+						delete[] ptr;
+						ptr = nullptr;
+					}
+
+				}
+
+				static inline void Free_UIDPtr1D(agora::rtc::uid_t*& Ptr) {
+					Free_Ptr1D<agora::rtc::uid_t>(Ptr);
+				}
+
+				static inline void Free_RawDataPtr1D(RAW_TYPE*& Ptr) {
+					Free_Ptr1D<RAW_TYPE>(Ptr);
+				}
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void Free_CustomRawDataPtr1D(RAW_TYPE * & Ptr) {
+					if (Ptr){
+						UABT_TYPE ReleaseOperator;
+						ReleaseOperator.FreeRawData(*Ptr);
+						delete[] Ptr;
+						Ptr = nullptr;
+					}
+				}
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void Free_CustomRawDataArray(RAW_TYPE* & Ptr,int Count) {
+					if(Ptr){
+						for (int i = 0; i < Count; i++) {
+							UABT_TYPE ReleaseOperator;
+							ReleaseOperator.FreeRawData(Ptr[i]);
+						}
+						//delete[] Ptr;
+						//Ptr = nullptr;
+					}
+				}
+
+#pragma endregion Free
+
 
 
 #pragma region Set
@@ -250,7 +341,7 @@ namespace agora {
 				}
 
 
-				static inline void SetCharArrayPtr(char* Dst, FString Src, int MaxSize){
+				static inline void SetCharArray(char* Dst, FString Src, int MaxSize){
 				
 					std::string cstr = TCHAR_TO_UTF8(*(Src));
 					if (cstr.length() + 1 <= (MaxSize)) {
@@ -265,81 +356,23 @@ namespace agora {
 				}
 
 
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void SetBPDataArray(TArray<UABT_TYPE>& Dst, RAW_TYPE* Src, int Size){
+					Dst.Empty();
+					for (int i = 0; i < Size; i++) {
+						Dst[i].Add(Src[i]);
+					}
+				}
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void SetRawDataArray(RAW_TYPE* Dst, int Size , TArray<UABT_TYPE>& Src){
+					for (int i = 0; i < Size; i++) {
+						Dst[i] = static_cast<RAW_TYPE>(Src[i]);
+					}
+				}
+
 
 #pragma endregion Set
-
-#pragma region Free
-				
-				
-				template<typename T>
-				static inline void Free_Ptr(T* & Ptr){
-					if (Ptr) {
-						delete[] Ptr;
-						Ptr = nullptr;
-					}
-				}
-
-				template<typename T>
-				static inline void Free_ArrayPtr(T**& Ptr,unsigned int Size) {
-					if (Ptr) {
-						for (unsigned int i = 0; i < Size; i++) {
-							Free_Ptr<T>(Ptr[i]);
-						}
-						delete[] Ptr;
-						Ptr = nullptr;
-					}
-				}
-
-				static inline void Free_CharPtr(const char* & Ptr){
-					Free_Ptr<const char>(Ptr);
-				}
-
-				static inline void Free_UnsignedCharPtr(unsigned char*& Ptr) {
-					Free_Ptr<unsigned char>(Ptr);
-				}
-
-
-				static inline void Free_CharArrayPtr(const char** & ptr,int size){
-					if (ptr) {
-						for (unsigned int i = 0; i < static_cast<unsigned int>(size); i++) {
-							Free_CharPtr(ptr[i]);
-						}
-						delete[] ptr;
-						ptr = nullptr;
-					}
-
-				}
-
-
-				static inline void Free_UIDArrayPtr(agora::rtc::uid_t*& Ptr) {
-					Free_Ptr<agora::rtc::uid_t>(Ptr);
-				}
-
-
-				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void Free_RawData(RAW_TYPE * & Ptr) {
-					if (Ptr){
-						UABT_TYPE ReleaseOperator;
-						ReleaseOperator.FreeRawData(*Ptr);
-						delete[] Ptr;
-						Ptr = nullptr;
-					}
-				}
-
-				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void Free_RawDataArray(RAW_TYPE* & Ptr,int Count) {
-					if(Ptr){
-						for (int i = 0; i < Count; i++) {
-							UABT_TYPE ReleaseOperator;
-							ReleaseOperator.FreeRawData(Ptr[i]);
-						}
-						delete[] Ptr;
-						Ptr = nullptr;
-					}
-				}
-
-#pragma endregion Free
-
 
 			};
 		}
@@ -851,6 +884,36 @@ public:
 #pragma endregion Optional Value
 
 
+// Custom Header!
+
+namespace agora {
+	namespace rtc {
+
+		// virtual const char* getVersion(int* build) = 0;
+		struct SDKBuildInfo {
+			int build;
+			const char* version;
+		};
+
+		// IVideoDeviceCollection
+		// virtual int getDevice(int index, char deviceName[MAX_DEVICE_ID_LENGTH],
+		//                        char deviceId[MAX_DEVICE_ID_LENGTH]) = 0;
+		struct VideoDeviceInfo {
+			const char* deviceId;
+			const char* deviceName;
+		};
 
 
+		// IAudioDeviceCollection
+		// virtual int getDevice(int index, char deviceName[MAX_DEVICE_ID_LENGTH], char deviceTypeName[MAX_DEVICE_ID_LENGTH],
+		//                       char deviceId[MAX_DEVICE_ID_LENGTH]) = 0;
+		struct AudioDeviceInfo {
+			const char* deviceId;
+			const char* deviceTypeName;
+			const char* deviceName;
+		};
+
+
+	}
+}
 

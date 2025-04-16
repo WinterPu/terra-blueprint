@@ -292,17 +292,25 @@ export function genContext_BPStruct(
     if (conv_bpfromcpp.convFuncType !== ConversionWayType.NoNeedConversion) {
       if (
         conv_bpfromcpp.convFuncType ===
-        ConversionWayType.BPFromCpp_NewFreeArrayData
+        ConversionWayType.BPFromCpp_SetBPDataArray
       ) {
         // Ex. UABT::SetBPArrayData<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
         contextConstructor += addOneLineFunc(
           `${conv_bpfromcpp.convFunc}<${cpp_decl_type}, ${bpType.name}>(this->${member_variable.name}, ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
         );
       } else {
-        // Basic Conversion
-        contextConstructor += addOneLineFunc(
-          `this->${member_variable.name} = ${conv_bpfromcpp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-        );
+
+        if(conv_bpfromcpp.convFuncType === ConversionWayType.DirectlyConv_StaticCast){
+          // static cast
+          contextConstructor += addOneLineFunc(
+            `this->${member_variable.name} =static_cast<${cpp_decl_type}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
+          );
+        }else{
+          // Basic Conversion
+          contextConstructor += addOneLineFunc(
+            `this->${member_variable.name} = ${conv_bpfromcpp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
+          );
+        }
       }
     } else {
       // No Need Conversion
@@ -314,8 +322,8 @@ export function genContext_BPStruct(
     // **** CreateRawData Context ****
     if (conv_cppfrombp.convFuncType !== ConversionWayType.NoNeedConversion) {
       if (
-        conv_cppfrombp.convFuncType === ConversionWayType.Basic ||
-        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData
+        conv_cppfrombp.convFuncType === ConversionWayType.BasicConvFunc ||
+        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc
       ) {
         // Ex. AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
         contextCreateRawData += addOneLineFunc(
@@ -323,7 +331,7 @@ export function genContext_BPStruct(
         );
       } else if (
         conv_cppfrombp.convFuncType ===
-        ConversionWayType.CppFromBP_NewFreeArrayData
+        ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc
       ) {
         // Ex. 	agora::rtc::FocalLengthInfo* focalLengthInfo = UABT::New_RawDataArray<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
 
@@ -332,7 +340,7 @@ export function genContext_BPStruct(
           `${conv_cppfrombp.convFunc}<${cpp_decl_type}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount},${member_variable.name});`
         );
       } else if (
-        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_SetData
+        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc
       ) {
         // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
         // TBD(WinterPu): need to check the length of the variable
@@ -341,7 +349,7 @@ export function genContext_BPStruct(
         );
       } else if (
         conv_cppfrombp.convFuncType ===
-        ConversionWayType.CppFromBP_NeedCallConvFunc
+        ConversionWayType.CppFromBP_NeedCallCustomConvFunc
       ) {
         // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
         contextCreateRawData += addOneLineFunc(
@@ -354,6 +362,14 @@ export function genContext_BPStruct(
         // Ex. AgoraData.{{name}} = {{name}}.CreateRawOptData();
         contextCreateRawData += addOneLineFunc(
           `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA}();`
+        );
+      } else if (
+        conv_cppfrombp.convFuncType ===
+        ConversionWayType.DirectlyConv_StaticCast
+      ) {
+        // static cast
+        contextCreateRawData += addOneLineFunc(
+          `this->${member_variable.name} =static_cast<${cpp_decl_type}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
         );
       } else {
         if (mapCpp2BPStruct.has(type.name)) {
@@ -379,7 +395,7 @@ export function genContext_BPStruct(
     // **** FreeRawData Context ****
     let tmpContextFreeRawData = '';
     if (
-      conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData
+      conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc
     ) {
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
       tmpContextFreeRawData += addOneLineFunc(
@@ -387,7 +403,7 @@ export function genContext_BPStruct(
       );
     } else if (
       conv_cppfrombp.convFuncType ===
-      ConversionWayType.CppFromBP_NewFreeArrayData
+      ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc
     ) {
       // Ex. UABT::Free_RawDataArray<agora::rtc::DownlinkNetworkInfo::PeerDownlinkInfo, FUABT_PeerDownlinkInfo>(AgoraData.peer_downlink_info, AgoraData.total_received_video_count);
       tmpContextFreeRawData += addOneLineFunc(
@@ -395,7 +411,7 @@ export function genContext_BPStruct(
       );
     } else if (
       conv_cppfrombp.convFuncType ===
-      ConversionWayType.CppFromBP_NeedCallConvFunc
+      ConversionWayType.CppFromBP_NeedCallCustomConvFunc
     ) {
       // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
       tmpContextFreeRawData += addOneLineFunc(
@@ -509,17 +525,21 @@ function genContext_ConvDeclType(
 
     // [Part - Decl]
     if (
-      convWayType === ConversionWayType.CppFromBP_NeedCallConvFunc ||
+      convWayType === ConversionWayType.CppFromBP_NeedCallCustomConvFunc ||
       convWayType === ConversionWayType.CppFromBP_CreateFreeOptData
     ) {
       result.contextDecl = addOneLineFunc(
         `${decl_type} ${decl_var_name} =${param_name}.${str_conv_func}();`
       );
-    } else if (convWayType === ConversionWayType.CppFromBP_SetData) {
+    } else if (convWayType === ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc) {
       let str_size = extractArraySizeFromType(bpType);
       str_size = Tools.IsNotEmptyStr(str_size) ? ', ' + str_size : '';
       result.contextDecl = addOneLineFunc(
         `${decl_type} ${decl_var_name}; ${str_conv_func}(${param_name},${decl_var_name}${str_size});`
+      );
+    } else if (convWayType === ConversionWayType.DirectlyConv_StaticCast) {
+      result.contextDecl = addOneLineFunc(
+        `${decl_type} ${decl_var_name} = static_cast<${decl_type}>(${param_name});`
       );
     } else {
       result.contextDecl = addOneLineFunc(
@@ -532,11 +552,11 @@ function genContext_ConvDeclType(
 
     // [Part - Free]
     if (str_free_func !== '') {
-      if (convWayType === ConversionWayType.CppFromBP_NewFreeData) {
+      if (convWayType === ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc) {
         result.contextFree = addOneLineFunc(
           `${str_free_func}(${decl_var_name});`
         );
-      } else if (convWayType === ConversionWayType.CppFromBP_NeedCallConvFunc) {
+      } else if (convWayType === ConversionWayType.CppFromBP_NeedCallCustomConvFunc) {
         result.contextFree = addOneLineFunc(
           `${param_name}.${str_free_func}(${decl_var_name});`
         );

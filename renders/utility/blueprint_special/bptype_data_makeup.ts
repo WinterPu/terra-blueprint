@@ -9,6 +9,9 @@ export type ClazzAddtionalContext_ = {
   InitImpl: string;
 };
 
+
+// a static data member with an in-class initializer must have non-volatile const integral type or be specified as 'inline'
+
 export const map_class_initialization: {
   [key: string]: ClazzAddtionalContext_;
 } = {
@@ -35,7 +38,7 @@ export const map_class_initialization: {
   IAudioDeviceManager: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuAudioDeviceManager* InsAudioDeviceManager = nullptr;
+      static UAgoraBPuAudioDeviceManager* InsAudioDeviceManager;
       
       agora::rtc::IAudioDeviceManager* _NativePtr = nullptr;
       `,
@@ -44,6 +47,7 @@ export const map_class_initialization: {
       static UAgoraBPuAudioDeviceManager* GetAgoraAudioDeviceManager();
       `,
     InitImpl: `
+      UAgoraBPuAudioDeviceManager* UAgoraBPuAudioDeviceManager::InsAudioDeviceManager = nullptr;
       UAgoraBPuAudioDeviceManager* UAgoraBPuAudioDeviceManager::GetAgoraAudioDeviceManager(){
         if (InsAudioDeviceManager == nullptr)
         {
@@ -69,7 +73,7 @@ export const map_class_initialization: {
   IVideoDeviceManager: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuVideoDeviceManager* InsVideoDeviceManager = nullptr;
+      static UAgoraBPuVideoDeviceManager* InsVideoDeviceManager;
       
       agora::rtc::IVideoDeviceManager* _NativePtr = nullptr;
       `,
@@ -78,6 +82,7 @@ export const map_class_initialization: {
       static UAgoraBPuVideoDeviceManager* GetAgoraVideoDeviceManager();
       `,
     InitImpl: `
+      UAgoraBPuVideoDeviceManager* UAgoraBPuVideoDeviceManager::InsVideoDeviceManager = nullptr;
       UAgoraBPuVideoDeviceManager* UAgoraBPuVideoDeviceManager::GetAgoraVideoDeviceManager()
       {
         if (InsVideoDeviceManager == nullptr)
@@ -106,7 +111,7 @@ export const map_class_initialization: {
   IMediaPlayer: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMediaPlayer* InsMediaPlayer = nullptr;
+      static UAgoraBPuMediaPlayer* InsMediaPlayer;
       
       agora::rtc::IMediaPlayer* _NativePtr = nullptr;
       `,
@@ -115,6 +120,7 @@ export const map_class_initialization: {
       static UAgoraBPuMediaPlayer* GetAgoraMediaPlayer();
       `,
     InitImpl: `
+      UAgoraBPuMediaPlayer* UAgoraBPuMediaPlayer::InsMediaPlayer = nullptr;
       UAgoraBPuMediaPlayer* UAgoraBPuMediaPlayer::GetAgoraMediaPlayer()
       {
         if (InsMediaPlayer == nullptr)
@@ -130,7 +136,7 @@ export const map_class_initialization: {
   IMediaRecorder: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMediaRecorder* InsMediaRecorder = nullptr;
+      static UAgoraBPuMediaRecorder* InsMediaRecorder;
       
       agora::rtc::IMediaRecorder* _NativePtr = nullptr;
       `,
@@ -139,6 +145,7 @@ export const map_class_initialization: {
       static UAgoraBPuMediaRecorder* GetAgoraMediaRecorder();
       `,
     InitImpl: `
+      UAgoraBPuMediaRecorder* UAgoraBPuMediaRecorder::InsMediaRecorder = nullptr;
       UAgoraBPuMediaRecorder* UAgoraBPuMediaRecorder::GetAgoraMediaRecorder()
       {
         if (InsMediaRecorder == nullptr)
@@ -154,7 +161,7 @@ export const map_class_initialization: {
   IMediaStreamingSource: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMediaStreamingSource* InsMediaStreamingSource = nullptr;
+      static UAgoraBPuMediaStreamingSource* InsMediaStreamingSource;
       
       agora::rtc::IMediaStreamingSource* _NativePtr = nullptr;
       `,
@@ -163,6 +170,7 @@ export const map_class_initialization: {
       static UAgoraBPuMediaStreamingSource* GetAgoraMediaStreamingSource();
       `,
     InitImpl: `
+      UAgoraBPuMediaStreamingSource* UAgoraBPuMediaStreamingSource::InsMediaStreamingSource = nullptr;
       UAgoraBPuMediaStreamingSource* UAgoraBPuMediaStreamingSource::GetAgoraMediaStreamingSource()
       {
         if (InsMediaStreamingSource == nullptr)
@@ -178,7 +186,7 @@ export const map_class_initialization: {
   IMediaEngine: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMediaEngine* InsMediaEngine = nullptr;
+      static UAgoraBPuMediaEngine* InsMediaEngine;
       
       agora::media::IMediaEngine* _NativePtr = nullptr;
       `,
@@ -187,6 +195,7 @@ export const map_class_initialization: {
       static UAgoraBPuMediaEngine* GetAgoraMediaEngine();
       `,
     InitImpl: `
+      UAgoraBPuMediaEngine* UAgoraBPuMediaEngine::InsMediaEngine = nullptr;
       UAgoraBPuMediaEngine* UAgoraBPuMediaEngine::GetAgoraMediaEngine()
       {
         if (InsMediaEngine == nullptr)
@@ -202,7 +211,7 @@ export const map_class_initialization: {
   IMediaPlayerSource: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMediaPlayerSource* InsMediaPlayerSource = nullptr;
+      static UAgoraBPuMediaPlayerSource* InsMediaPlayerSource;
       
       agora::rtc::IMediaPlayerSource* _NativePtr = nullptr;
       `,
@@ -211,6 +220,7 @@ export const map_class_initialization: {
       static UAgoraBPuMediaPlayerSource* GetAgoraMediaPlayerSource();
       `,
     InitImpl: `
+      UAgoraBPuMediaPlayerSource* UAgoraBPuMediaPlayerSource::InsMediaPlayerSource = nullptr;
       UAgoraBPuMediaPlayerSource* UAgoraBPuMediaPlayerSource::GetAgoraMediaPlayerSource()
       {
         if (InsMediaPlayerSource == nullptr)
@@ -226,7 +236,7 @@ export const map_class_initialization: {
   ILocalSpatialAudioEngine: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuLocalSpatialAudioEngine* InsLocalSpatialAudioEngine = nullptr;
+      static UAgoraBPuLocalSpatialAudioEngine* InsLocalSpatialAudioEngine;
       
       agora::rtc::ILocalSpatialAudioEngine* _NativePtr = nullptr;
       `,
@@ -235,6 +245,7 @@ export const map_class_initialization: {
       static UAgoraBPuLocalSpatialAudioEngine* GetAgoraLocalSpatialAudioEngine();
       `,
     InitImpl: `
+      UAgoraBPuLocalSpatialAudioEngine* UAgoraBPuLocalSpatialAudioEngine::InsLocalSpatialAudioEngine = nullptr;
       UAgoraBPuLocalSpatialAudioEngine* UAgoraBPuLocalSpatialAudioEngine::GetAgoraLocalSpatialAudioEngine()
       {
         if (InsLocalSpatialAudioEngine == nullptr)
@@ -250,7 +261,7 @@ export const map_class_initialization: {
   MusicChartCollection: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMusicChartCollection* InsMusicChartCollection = nullptr;
+      static UAgoraBPuMusicChartCollection* InsMusicChartCollection;
       
       agora::rtc::IMusicChartCollection* _NativePtr = nullptr;
       `,
@@ -259,6 +270,7 @@ export const map_class_initialization: {
       static UAgoraBPuMusicChartCollection* GetAgoraMusicChartCollection();
       `,
     InitImpl: `
+      UAgoraBPuMusicChartCollection* UAgoraBPuMusicChartCollection::InsMusicChartCollection = nullptr;
       UAgoraBPuMusicChartCollection* UAgoraBPuMusicChartCollection::GetAgoraMusicChartCollection()
       {
         if (InsMusicChartCollection == nullptr)
@@ -274,7 +286,7 @@ export const map_class_initialization: {
   IH265Transcoder: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuH265Transcoder* InsH265Transcoder = nullptr;
+      static UAgoraBPuH265Transcoder* InsH265Transcoder;
       
       agora::rtc::IH265Transcoder* _NativePtr = nullptr;
       `,
@@ -283,6 +295,7 @@ export const map_class_initialization: {
       static UAgoraBPuH265Transcoder* GetAgoraH265Transcoder();
       `,
     InitImpl: `
+      UAgoraBPuH265Transcoder* UAgoraBPuH265Transcoder::InsH265Transcoder = nullptr;
       UAgoraBPuH265Transcoder* UAgoraBPuH265Transcoder::GetAgoraH265Transcoder()
       {
         if (InsH265Transcoder == nullptr)
@@ -298,7 +311,7 @@ export const map_class_initialization: {
   IMediaRecorderObserver: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMediaRecorderObserver* InsMediaRecorderObserver = nullptr;
+      static UAgoraBPuMediaRecorderObserver* InsMediaRecorderObserver;
       
       agora::media::IMediaRecorderObserver* _NativePtr = nullptr;
       `,
@@ -307,6 +320,7 @@ export const map_class_initialization: {
       static UAgoraBPuMediaRecorderObserver* GetAgoraMediaRecorderObserver();
       `,
     InitImpl: `
+      UAgoraBPuMediaRecorderObserver* UAgoraBPuMediaRecorderObserver::InsMediaRecorderObserver = nullptr;
       UAgoraBPuMediaRecorderObserver* UAgoraBPuMediaRecorderObserver::GetAgoraMediaRecorderObserver()
       {
         if (InsMediaRecorderObserver == nullptr)
@@ -322,7 +336,7 @@ export const map_class_initialization: {
   IMediaPlayerSourceObserver: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMediaPlayerSourceObserver* InsMediaPlayerSourceObserver = nullptr;
+      static UAgoraBPuMediaPlayerSourceObserver* InsMediaPlayerSourceObserver;
       
       agora::rtc::IMediaPlayerSourceObserver* _NativePtr = nullptr;
       `,
@@ -331,6 +345,7 @@ export const map_class_initialization: {
       static UAgoraBPuMediaPlayerSourceObserver* GetAgoraMediaPlayerSourceObserver();
       `,
     InitImpl: `
+      UAgoraBPuMediaPlayerSourceObserver* UAgoraBPuMediaPlayerSourceObserver::InsMediaPlayerSourceObserver = nullptr;
       UAgoraBPuMediaPlayerSourceObserver* UAgoraBPuMediaPlayerSourceObserver::GetAgoraMediaPlayerSourceObserver()
       {
         if (InsMediaPlayerSourceObserver == nullptr)
@@ -346,7 +361,7 @@ export const map_class_initialization: {
   IH265TranscoderObserver: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuH265TranscoderObserver* InsH265TranscoderObserver = nullptr;
+      static UAgoraBPuH265TranscoderObserver* InsH265TranscoderObserver;
       
       agora::rtc::IH265TranscoderObserver* _NativePtr = nullptr;
       `,
@@ -355,6 +370,7 @@ export const map_class_initialization: {
       static UAgoraBPuH265TranscoderObserver* GetAgoraH265TranscoderObserver();
       `,
     InitImpl: `
+      UAgoraBPuH265TranscoderObserver* UAgoraBPuH265TranscoderObserver::InsH265TranscoderObserver = nullptr;
       UAgoraBPuH265TranscoderObserver* UAgoraBPuH265TranscoderObserver::GetAgoraH265TranscoderObserver()
       {
         if (InsH265TranscoderObserver == nullptr)
@@ -370,7 +386,7 @@ export const map_class_initialization: {
   IVideoFrameMetaInfo: {
     NativePtr: `VideoFrameMetaInfoInstance`,
     Inst: `
-      static UAgoraBPuVideoFrameMetaInfo* InsVideoFrameMetaInfo = nullptr;
+      static UAgoraBPuVideoFrameMetaInfo* InsVideoFrameMetaInfo;
       
       agora::media::base::IVideoFrameMetaInfo* _NativePtr = nullptr;
       `,
@@ -379,6 +395,7 @@ export const map_class_initialization: {
       static UAgoraBPuVideoFrameMetaInfo* GetAgoraVideoFrameMetaInfo();
       `,
     InitImpl: `
+      UAgoraBPuVideoFrameMetaInfo* UAgoraBPuVideoFrameMetaInfo::InsVideoFrameMetaInfo = nullptr;
       UAgoraBPuVideoFrameMetaInfo* UAgoraBPuVideoFrameMetaInfo::GetAgoraVideoFrameMetaInfo()
       {
         if (InsVideoFrameMetaInfo == nullptr)
@@ -394,7 +411,7 @@ export const map_class_initialization: {
   IMediaPlayerCacheManager: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMediaPlayerCacheManager* InsMediaPlayerCacheManager = nullptr;
+      static UAgoraBPuMediaPlayerCacheManager* InsMediaPlayerCacheManager;
       
       agora::rtc::IMediaPlayerCacheManager* _NativePtr = nullptr;
       `,
@@ -403,6 +420,7 @@ export const map_class_initialization: {
       static UAgoraBPuMediaPlayerCacheManager* GetAgoraMediaPlayerCacheManager();
       `,
     InitImpl: `
+      UAgoraBPuMediaPlayerCacheManager* UAgoraBPuMediaPlayerCacheManager::InsMediaPlayerCacheManager = nullptr;
       UAgoraBPuMediaPlayerCacheManager* UAgoraBPuMediaPlayerCacheManager::GetAgoraMediaPlayerCacheManager()
       {
         if (InsMediaPlayerCacheManager == nullptr)
@@ -418,7 +436,7 @@ export const map_class_initialization: {
   MusicCollection: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMusicCollection* InsMusicCollection = nullptr;
+      static UAgoraBPuMusicCollection* InsMusicCollection;
       
       agora::rtc::MusicCollection* _NativePtr = nullptr;
       `,
@@ -427,6 +445,7 @@ export const map_class_initialization: {
       static UAgoraBPuMusicCollection* GetAgoraMusicCollection();
       `,
     InitImpl: `
+      UAgoraBPuMusicCollection* UAgoraBPuMusicCollection::InsMusicCollection = nullptr;
       UAgoraBPuMusicCollection* UAgoraBPuMusicCollection::GetAgoraMusicCollection()
       {
         if (InsMusicCollection == nullptr)
@@ -442,7 +461,7 @@ export const map_class_initialization: {
   IMusicContentCenter: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuMusicContentCenter* InsMusicContentCenter = nullptr;
+      static UAgoraBPuMusicContentCenter* InsMusicContentCenter;
       
       agora::rtc::IMusicContentCenter* _NativePtr = nullptr;
       `,
@@ -451,6 +470,7 @@ export const map_class_initialization: {
       static UAgoraBPuMusicContentCenter* GetAgoraMusicContentCenter();
       `,
     InitImpl: `
+      UAgoraBPuMusicContentCenter* UAgoraBPuMusicContentCenter::InsMusicContentCenter = nullptr;
       UAgoraBPuMusicContentCenter* UAgoraBPuMusicContentCenter::GetAgoraMusicContentCenter()
       {
         if (InsMusicContentCenter == nullptr)
@@ -467,7 +487,7 @@ export const map_class_initialization: {
   IMusicPlayer: {
     NativePtr: `_NativePtr`, // In Called Function
     Inst: `
-      static UAgoraBPuMusicPlayer* InsMusicPlayer = nullptr;
+      static UAgoraBPuMusicPlayer* InsMusicPlayer;
       
       agora::rtc::IMusicPlayer* _NativePtr = nullptr;
       `,
@@ -476,6 +496,7 @@ export const map_class_initialization: {
       static UAgoraBPuMusicPlayer* GetAgoraMusicPlayer();
       `,
     InitImpl: `
+      UAgoraBPuMusicPlayer* UAgoraBPuMusicPlayer::InsMusicPlayer = nullptr;
       UAgoraBPuMusicPlayer* UAgoraBPuMusicPlayer::GetAgoraMusicPlayer()
       {
         if (InsMusicPlayer == nullptr)
@@ -491,7 +512,7 @@ export const map_class_initialization: {
   IScreenCaptureSourceList: {
     NativePtr: `_NativePtr`,
     Inst: `
-      static UAgoraBPuScreenCaptureSourceList* InsScreenCaptureSourceList = nullptr;
+      static UAgoraBPuScreenCaptureSourceList* InsScreenCaptureSourceList;
       
       agora::rtc::IScreenCaptureSourceList* _NativePtr = nullptr;
       `,
@@ -500,6 +521,7 @@ export const map_class_initialization: {
       static UAgoraBPuScreenCaptureSourceList* GetAgoraScreenCaptureSourceList();
       `,
     InitImpl: `
+      UAgoraBPuScreenCaptureSourceList* UAgoraBPuScreenCaptureSourceList::InsScreenCaptureSourceList = nullptr;
       UAgoraBPuScreenCaptureSourceList* UAgoraBPuScreenCaptureSourceList::GetAgoraScreenCaptureSourceList()
       {
         if (InsScreenCaptureSourceList == nullptr)

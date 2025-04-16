@@ -87,12 +87,14 @@ export enum ConversionWayType {
 
   // need call basic conversion method
   // Ex. A = ConvFunc(B);
-  Basic,
+  BasicConvFunc,
+
+  DirectlyConv_StaticCast,
 
   // [Part1]. BP = FuncFrom(Cpp);
   // need memory allocation
   // Ex. UABT::SetBPArrayData<CppType, BPType>(BPVar,CppArrayVar, CppArraySize);
-  BPFromCpp_NewFreeArrayData,
+  BPFromCpp_SetBPDataArray,
 
   // BPVar = UTF8_TO_TCHAR(CppVar);
   BPFromCpp_FString,
@@ -101,24 +103,30 @@ export enum ConversionWayType {
   // * need memory allocation
   // Ex. CppVar = UABT::New_ConvFunc(BPVar);
   // Ex. UABT::Free_ConvFunc(CppVar);
-  CppFromBP_NewFreeData,
+  CppFromBP_NewFreeData_CustomConvFunc,
   // need memory allocation
   // UABT::New_RawDataArray<CppType,BPType>(CppArrayVar,CppSize,BPVar);
   // UABT::Free_RawDataArray<CppType,BPType>(CppArrayVar,CppSize);
-  CppFromBP_NewFreeArrayData,
+  CppFromBP_NewFreeArrayData_CustomConvFunc,
   // Directly Set Data
   // Ex. Convfunc_SetData(CppVar, BPVar, CppVarSize);
-  CppFromBP_SetData,
+  CppFromBP_SetArrayData_CustomConvFunc,
   // need call conversion function
   // Example: CreateRawData()
   // Ex. CppVar = BPVar.CreateRawData();
   // Ex. BPVar.FreeRawData(CppVar);
-  CppFromBP_NeedCallConvFunc,
+  CppFromBP_NeedCallCustomConvFunc,
   // ==== Custom Defined BP Var Only ====
   // * need memory allocation
   // Ex. CppVar = BPVar.CreateRawOptData();
   // Ex. BPVar.FreeRawOptData(CppVar);
   CppFromBP_CreateFreeOptData,
+
+
+
+  CppFromBP_NewFree_RawDataPtr1D,
+  CppFromBP_NewFree_CustomRawDataPtr1D,
+  CppFromBP_NewFree_CustomRawDataArray,
 }
 
 export enum DeclTypeSPRule {
@@ -213,7 +221,7 @@ export const map_one_category_basicconv_bpfromcpp = new Map<
   [
     'Enum',
     {
-      convFuncType: ConversionWayType.Basic,
+      convFuncType: ConversionWayType.BasicConvFunc,
       convFunc: AGORA_MUSTACHE_DATA.UABTEnum_WrapWithUE,
       convFuncAdditional01: '',
     },
@@ -221,7 +229,7 @@ export const map_one_category_basicconv_bpfromcpp = new Map<
   [
     'TArray',
     {
-      convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+      convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
       convFunc: AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA,
       convFuncAdditional01: '',
     },
@@ -235,7 +243,7 @@ export const map_one_category_basicconv_cppfrombp = new Map<
   [
     'Enum',
     {
-      convFuncType: ConversionWayType.Basic,
+      convFuncType: ConversionWayType.BasicConvFunc,
       convFunc: AGORA_MUSTACHE_DATA.UABTEnum_ToRawValue,
       convFuncAdditional01: '',
     },
@@ -253,7 +261,7 @@ export const map_one_category_basicconv_cppfrombp = new Map<
   [
     'UCLASS_USTRUCT',
     {
-      convFuncType: ConversionWayType.CppFromBP_NeedCallConvFunc,
+      convFuncType: ConversionWayType.CppFromBP_NeedCallCustomConvFunc,
       convFunc: AGORA_MUSTACHE_DATA.CREATE_RAW_DATA,
       convFuncAdditional01: AGORA_MUSTACHE_DATA.FREE_RAW_DATA,
     },
@@ -262,7 +270,7 @@ export const map_one_category_basicconv_cppfrombp = new Map<
   [
     'TArray',
     {
-      convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
+      convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
       convFunc: AGORA_MUSTACHE_DATA.NEW_RAW_ARRAY_DATA,
       convFuncAdditional01: AGORA_MUSTACHE_DATA.FREE_RAW_ARRAY_DATA,
     },
@@ -305,9 +313,9 @@ const defaultTmpl_FString_NonConst: UEBPTypeConvData = {
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.CppFromBP_NewFreeData,
-    convFunc: 'UABT::New_CharPtr',
-    convFuncAdditional01: 'UABT::Free_CharPtr',
+    convFuncType: ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc,
+    convFunc: 'UABT::New_CharPtr1D',
+    convFuncAdditional01: 'UABT::Free_CharPtr1D',
   },
   declTypeSPRule: DeclTypeSPRule.SP_String,
   parseArrayIsInBlackList: true,
@@ -322,9 +330,9 @@ const defaultTmpl_FString_NonConst_UnsignedChar: UEBPTypeConvData = {
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.CppFromBP_NewFreeData,
-    convFunc: 'UABT::New_UnsignedCharPtr',
-    convFuncAdditional01: 'UABT::Free_UnsignedCharPtr',
+    convFuncType: ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc,
+    convFunc: 'UABT::New_UnsignedCharPtr1D',
+    convFuncAdditional01: 'UABT::Free_UnsignedCharPtr1D',
   },
   parseArrayIsInBlackList: true,
 };
@@ -338,9 +346,9 @@ const defaultTmpl_FString_Const: UEBPTypeConvData = {
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.CppFromBP_NewFreeData,
-    convFunc: 'UABT::New_ConstCharPtr',
-    convFuncAdditional01: 'UABT::Free_ConstCharPtr',
+    convFuncType: ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc,
+    convFunc: 'UABT::New_CharPtr1D',
+    convFuncAdditional01: 'UABT::Free_CharPtr1D',
   },
   declTypeSPRule: DeclTypeSPRule.SP_String,
   parseArrayIsInBlackList: true,
@@ -355,7 +363,7 @@ const defaultTmpl_FString_SetArray: UEBPTypeConvData = {
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.CppFromBP_SetData,
+    convFuncType: ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc,
     convFunc: 'UABT::SetCharArrayPtr',
     convFuncAdditional01: '',
   },
@@ -367,12 +375,12 @@ const defaultTmpl_Int64_Pointer: UEBPTypeConvData = {
   ...defaultTmpl_BasicType_NoConv,
   bpTypeName: 'int64',
   convFromCpp: {
-    convFuncType: ConversionWayType.Basic,
-    convFunc: 'UABT::FromInt64',
+    convFuncType: ConversionWayType.DirectlyConv_StaticCast,
+    convFunc: '',
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.Basic,
+    convFuncType: ConversionWayType.BasicConvFunc,
     convFunc: 'UABT::ToInt64',
     convFuncAdditional01: '',
   },
@@ -397,12 +405,12 @@ const defaultTmpl_TrackID: UEBPTypeConvData = {
   ...defaultTmpl_BasicType_NoConv,
   bpTypeName: 'int64',
   convFromCpp: {
-    convFuncType: ConversionWayType.Basic,
+    convFuncType: ConversionWayType.BasicConvFunc,
     convFunc: 'UABT::FromTrackID',
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.Basic,
+    convFuncType: ConversionWayType.BasicConvFunc,
     convFunc: 'UABT::ToTrackID',
     convFuncAdditional01: '',
   },
@@ -456,13 +464,13 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpTypeName: 'FString',
       defaultValue: '0.0',
       convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::FromDouble',
         convFuncAdditional01: '',
       },
 
       convToCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::ToDouble',
         convFuncAdditional01: '',
       },
@@ -513,7 +521,7 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::ToUInt32',
         convFuncAdditional01: '',
       },
@@ -557,9 +565,9 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
     'unsigned char const*': {
       ...defaultTmpl_FString_Const,
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeData,
-        convFunc: 'UABT::New_UnsignedCharPtr',
-        convFuncAdditional01: 'UABT::Free_UnsignedCharPtr',
+        convFuncType: ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc,
+        convFunc: 'UABT::New_UnsignedCharPtr1D',
+        convFuncAdditional01: 'UABT::Free_UnsignedCharPtr1D',
       },
     },
     'unsigned char*': {
@@ -567,24 +575,14 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_FString_NonConst,
       bpTypeName: 'FString',
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeData,
-        convFunc: 'UABT::New_UnsignedCharPtr',
-        convFuncAdditional01: 'UABT::Free_UnsignedCharPtr',
+        convFuncType: ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc,
+        convFunc: 'UABT::New_UnsignedCharPtr1D',
+        convFuncAdditional01: 'UABT::Free_UnsignedCharPtr1D',
       },
     },
     'char*': {
       ...defaultTmpl_FString_NonConst,
       bpTypeName: 'FString',
-      convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_FString,
-        convFunc: 'UTF8_TO_TCHAR',
-        convFuncAdditional01: '',
-      },
-      convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_SetData,
-        convFunc: 'UABT::SetCharArrayPtr',
-        convFuncAdditional01: '',
-      },
     },
 
     'char const**': {
@@ -594,14 +592,14 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpDesignedDeclType: 'TArray<FString>',
       parsePointerForceEnable: true,
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
-        convFunc: '',
+        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
+        convFunc: AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA,
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeData,
-        convFunc: 'UABT::New_CharArrayPtr',
-        convFuncAdditional01: 'UABT::Free_CharArrayPtr',
+        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
+        convFunc: 'UABT::New_CharPtr2D',
+        convFuncAdditional01: 'UABT::Free_CharPtr2D',
       },
       cppDesignedDeclType: 'char**',
     },
@@ -613,14 +611,14 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpDesignedDeclType: 'TArray<FString>',
       parsePointerForceEnable: true,
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
         convFunc: '',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeData,
-        convFunc: 'UABT::New_CharArrayPtr',
-        convFuncAdditional01: 'UABT::Free_CharArrayPtr',
+        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
+        convFunc: 'UABT::New_CharPtr2D',
+        convFuncAdditional01: 'UABT::Free_CharPtr2D',
       },
       cppDesignedDeclType: 'char**',
     },
@@ -631,12 +629,12 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'TArray<float>',
       convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::FromFloatArray',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
+        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
         convFunc: 'UABT::New_FloatArrayPtr',
         convFuncAdditional01: 'UABT::Free_FloatArrayPtr',
       },
@@ -648,14 +646,14 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpDesignedDeclType: 'TArray<int>',
       bpDesignedTypeSource: 'const TArray<int> &',
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
         convFunc: '',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
-        convFunc: 'New_RawDataArray',
-        convFuncAdditional01: 'Free_RawData',
+        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
+        convFunc: AGORA_MUSTACHE_DATA.NEW_RAW_ARRAY_DATA,
+        convFuncAdditional01: AGORA_MUSTACHE_DATA.FREE_RAW_ARRAY_DATA,
       },
       cppDesignedDeclType: 'int*',
     },
@@ -665,12 +663,12 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpTypeName: 'int64',
       bpDesignedTypeSource: 'TArray<int64>',
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_NewFreeArrayData,
+        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
         convFunc: '',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData,
+        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
         convFunc: 'UABT::New_UIDArrayPtr',
         convFuncAdditional01: 'UABT::Free_UIDArrayPtr',
       },
@@ -713,30 +711,22 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'int64',
       convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::FromUID',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::ToUID',
         convFuncAdditional01: '',
       },
     },
     'agora::user_id_t': {
-      ...defaultTmpl_BasicType_NoConv,
-      bpTypeName: 'FString',
-
-      convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
-        convFunc: 'UABT::FromUserID',
-        convFuncAdditional01: '',
-      },
-
+      ...defaultTmpl_FString_Const,
       convToCpp: {
-        convFuncType: ConversionWayType.Basic,
-        convFunc: 'UABT::ToUserID',
-        convFuncAdditional01: '',
+        convFuncType: ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc,
+        convFunc: 'UABT::New_CharPtr1D',
+        convFuncAdditional01: 'UABT::Free_CharPtr1D',
       },
     },
     'agora::view_t': {
@@ -745,12 +735,12 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_Int64_Pointer,
       bpTypeName: 'int64',
       convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
-        convFunc: 'UABT::FromViewToInt',
+        convFuncType: ConversionWayType.BasicConvFunc,
+        convFunc: 'UABT::FromView',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::ToView',
         convFuncAdditional01: '',
       },
@@ -759,12 +749,12 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'int64',
       convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
-        convFunc: 'UABT::FromViewToInt',
+        convFuncType: ConversionWayType.BasicConvFunc,
+        convFunc: 'UABT::FromView',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::ToView',
         convFuncAdditional01: '',
       },
@@ -781,12 +771,12 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_TrackID,
       bpTypeName: 'int64',
       convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::FromVTID',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::ToVTID',
         convFuncAdditional01: '',
       },
@@ -796,12 +786,12 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpTypeName: 'int64',
       // TBD(WinterPu) combine it to tmpl
       convFromCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::FromVTID',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.Basic,
+        convFuncType: ConversionWayType.BasicConvFunc,
         convFunc: 'UABT::ToVTID',
         convFuncAdditional01: '',
       },
