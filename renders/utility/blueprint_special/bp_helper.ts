@@ -301,17 +301,11 @@ export function genContext_BPStruct(
     contextConstructor += addOneLineFunc(str_constructor_context);
    
     // **** CreateRawData Context ****
-
-    let conv_way_type_createrawdata = conv_cppfrombp.convFuncType;
-    if(conv_way_type_createrawdata === ConversionWayType.NoNeedConversion && mapCpp2BPStruct.has(type.name)){
-      // Is UStruct
-      conv_way_type_createrawdata = ConversionWayType.CppFromBP_NeedCallCreateFreeRawData;
-    }
     const str_create_raw_data_context = genContextBasedOnConversionWayType(
       EBPContextGenType.Struct_CreateRawData,
       member_variable,
       bpType,
-      conv_way_type_createrawdata,
+      conv_cppfrombp.convFuncType,
       undefined,
       var_SizeCount,
     );
@@ -323,7 +317,7 @@ export function genContext_BPStruct(
       EBPContextGenType.Struct_FreeRawData,
       member_variable,
       bpType,
-      conv_way_type_createrawdata,
+      conv_cppfrombp.convFuncType,
       undefined,
       var_SizeCount,
     );
@@ -622,7 +616,7 @@ export function genContextBasedOnConversionWayType(
     ? AGORA_MUSTACHE_DATA.RAW_
     : AGORA_MUSTACHE_DATA.UEBP_;
   const decl_var_name = prefix_var_name + variable.name;
-  const data_decl_conv = isCppFromBP ? conv_bpfromcpp : conv_cppfrombp;
+  const data_decl_conv = isCppFromBP ? conv_cppfrombp : conv_bpfromcpp;
   let decl_array_size = extractArraySizeFromType(bpType);
 
   const STR_INVALID_CONV = 'Invalid Conversion';
