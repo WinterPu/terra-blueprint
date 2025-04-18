@@ -240,7 +240,7 @@ namespace agora {
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void New_CustomRawDataArray(RAW_TYPE* DstArray, int SizeCount , const TArray<UABT_TYPE>& SrcArray) {
+				static inline void New_CustomRawDataArray(RAW_TYPE* DstArray , const TArray<UABT_TYPE>& SrcArray, int SizeCount) {
 					for (int i = 0; i < SizeCount; i++) {
 						// Create a temporary variable to hold the raw data
 						RAW_TYPE RawData = SrcArray[i].CreateRawData();
@@ -301,15 +301,18 @@ namespace agora {
 					Free_Ptr1D<agora::rtc::uid_t>(Ptr);
 				}
 
+				template<typename RAW_TYPE>
 				static inline void Free_RawDataPtr1D(RAW_TYPE*& Ptr) {
 					Free_Ptr1D<RAW_TYPE>(Ptr);
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void Free_CustomRawDataPtr1D(RAW_TYPE * & Ptr) {
-					if (Ptr){
-						UABT_TYPE ReleaseOperator;
-						ReleaseOperator.FreeRawData(*Ptr);
+				static inline void Free_CustomRawDataPtr1D(RAW_TYPE * & Ptr,int Count) {
+				if(Ptr){
+						for (int i = 0; i < Count; i++) {
+							UABT_TYPE ReleaseOperator;
+							ReleaseOperator.FreeRawData(Ptr[i]);
+						}
 						delete[] Ptr;
 						Ptr = nullptr;
 					}
@@ -333,7 +336,9 @@ namespace agora {
 
 #pragma region Set
 
-				static inline void SetFloatArray (const FVector & vec, float* & farray)
+				
+
+				static inline void SetFloatArray (float* & farray, const FVector & vec)
 				{
 					farray[0] = vec.X;
 					farray[1] = vec.Y;
@@ -365,7 +370,7 @@ namespace agora {
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void SetRawDataArray(RAW_TYPE* Dst, int Size , TArray<UABT_TYPE>& Src){
+				static inline void SetRawDataArray(RAW_TYPE* Dst, TArray<UABT_TYPE>& Src,int Size){
 					for (int i = 0; i < Size; i++) {
 						Dst[i] = static_cast<RAW_TYPE>(Src[i]);
 					}

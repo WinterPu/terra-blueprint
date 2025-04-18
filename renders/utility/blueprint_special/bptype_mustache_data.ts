@@ -36,9 +36,9 @@ export const AGORA_MUSTACHE_DATA = {
   ConvFunc_New_CustomRawDataPtr1D: 'UABT::New_CustomRawDataPtr1D',
   ConvFunc_Free_CustomRawDataPtr1D: 'UABT::Free_CustomRawDataPtr1D',
 
-  ConvFunc_New_CustomRawDataArray: 'UABT::New_CustomRawDataArray',
-  ConvFunc_Free_CustomRawDataArray: 'UABT::Free_CustomRawDataArray',
-
   ConvFunc_Set_BPDataArray: 'UABT::SetBPDataArray',
   ConvFunc_Set_RawDataArray: 'UABT::SetRawDataArray',
+
+  ConvFunc_New_CustomRawDataArray: 'UABT::New_CustomRawDataArray',
+  ConvFunc_Free_CustomRawDataArray: 'UABT::Free_CustomRawDataArray',
 };

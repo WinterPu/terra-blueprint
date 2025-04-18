@@ -289,151 +289,44 @@ export function genContext_BPStruct(
     }
 
     // **** Constructor Context ****
-    if (conv_bpfromcpp.convFuncType !== ConversionWayType.NoNeedConversion) {
-      if (
-        conv_bpfromcpp.convFuncType ===
-        ConversionWayType.BPFromCpp_SetBPDataArray
-      ) {
-        // Ex. UABT::SetBPArrayData<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
-        contextConstructor += addOneLineFunc(
-          `${conv_bpfromcpp.convFunc}<${cpp_decl_type}, ${bpType.name}>(this->${member_variable.name}, ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
-        );
-      } else {
 
-        if(conv_bpfromcpp.convFuncType === ConversionWayType.DirectlyConv_StaticCast){
-          // static cast
-          contextConstructor += addOneLineFunc(
-            `this->${member_variable.name} =static_cast<${cpp_decl_type}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-          );
-        }else{
-          // Basic Conversion
-          contextConstructor += addOneLineFunc(
-            `this->${member_variable.name} = ${conv_bpfromcpp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-          );
-        }
-      }
-    } else {
-      // No Need Conversion
-      contextConstructor += addOneLineFunc(
-        `this->${member_variable.name} = ${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name};`
-      );
-    }
-
+    const str_constructor_context = genContextBasedOnConversionWayType(
+      EBPContextGenType.Struct_Constructor,
+      member_variable,
+      bpType,
+      conv_bpfromcpp.convFuncType,
+      undefined,
+      var_SizeCount,
+    );
+    contextConstructor += addOneLineFunc(str_constructor_context);
+   
     // **** CreateRawData Context ****
-    if (conv_cppfrombp.convFuncType !== ConversionWayType.NoNeedConversion) {
-      if (
-        conv_cppfrombp.convFuncType === ConversionWayType.BasicConvFunc ||
-        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc
-      ) {
-        // Ex. AgoraData.{{name}} = {{user_data.bpNameConvFuncFrom}}({{name}});
-        contextCreateRawData += addOneLineFunc(
-          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${conv_cppfrombp.convFunc}(${member_variable.name});`
-        );
-      } else if (
-        conv_cppfrombp.convFuncType ===
-        ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc
-      ) {
-        // Ex. 	agora::rtc::FocalLengthInfo* focalLengthInfo = UABT::New_RawDataArray<agora::rtc::FocalLengthInfo, FUABT_FocalLengthInfo>(focalLengthInfos);
 
-        //TBD(WinterPu) use inline function to replace macro functions
-        contextCreateRawData += addOneLineFunc(
-          `${conv_cppfrombp.convFunc}<${cpp_decl_type}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount},${member_variable.name});`
-        );
-      } else if (
-        conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc
-      ) {
-        // Ex. {{user_data.bpNameConvFuncFrom}}(AgoraData.{{name}}, this->{{name}}, XXXFUABT_UserInfo_UserAccountLength);
-        // TBD(WinterPu): need to check the length of the variable
-        contextCreateRawData += addOneLineFunc(
-          `${conv_cppfrombp.convFunc}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name}, this->${member_variable.name}, ${var_SizeCount});`
-        );
-      } else if (
-        conv_cppfrombp.convFuncType ===
-        ConversionWayType.CppFromBP_NeedCallCustomConvFunc
-      ) {
-        // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
-        contextCreateRawData += addOneLineFunc(
-          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${conv_cppfrombp.convFunc}();`
-        );
-      } else if (
-        conv_cppfrombp.convFuncType ===
-        ConversionWayType.CppFromBP_CreateFreeOptData
-      ) {
-        // Ex. AgoraData.{{name}} = {{name}}.CreateRawOptData();
-        contextCreateRawData += addOneLineFunc(
-          `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA}();`
-        );
-      } else if (
-        conv_cppfrombp.convFuncType ===
-        ConversionWayType.DirectlyConv_StaticCast
-      ) {
-        // static cast
-        contextCreateRawData += addOneLineFunc(
-          `this->${member_variable.name} =static_cast<${cpp_decl_type}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-        );
-      } else {
-        if (mapCpp2BPStruct.has(type.name)) {
-          // Is UStruct
-          // Ex. AgoraData.{{name}} = {{name}}.CreateRawData();
-          contextCreateRawData += addOneLineFunc(
-            `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name}.${AGORA_MUSTACHE_DATA.CREATE_RAW_DATA}();`
-          );
-        } else {
-          // AgoraData.{{name}} = {{name}};
-          contextCreateRawData += addOneLineFunc(
-            `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
-          );
-        }
-      }
-    } else {
-      // No Need Conversion
-      contextCreateRawData += addOneLineFunc(
-        `${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name} = ${member_variable.name};`
-      );
+    let conv_way_type_createrawdata = conv_cppfrombp.convFuncType;
+    if(conv_way_type_createrawdata === ConversionWayType.NoNeedConversion && mapCpp2BPStruct.has(type.name)){
+      // Is UStruct
+      conv_way_type_createrawdata = ConversionWayType.CppFromBP_NeedCallCreateFreeRawData;
     }
+    const str_create_raw_data_context = genContextBasedOnConversionWayType(
+      EBPContextGenType.Struct_CreateRawData,
+      member_variable,
+      bpType,
+      conv_way_type_createrawdata,
+      undefined,
+      var_SizeCount,
+    );
+    contextCreateRawData += addOneLineFunc(str_create_raw_data_context);
+
 
     // **** FreeRawData Context ****
-    let tmpContextFreeRawData = '';
-    if (
-      conv_cppfrombp.convFuncType === ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc
-    ) {
-      // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
-      tmpContextFreeRawData += addOneLineFunc(
-        `${conv_cppfrombp.convFuncAdditional01}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-      );
-    } else if (
-      conv_cppfrombp.convFuncType ===
-      ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc
-    ) {
-      // Ex. UABT::Free_RawDataArray<agora::rtc::DownlinkNetworkInfo::PeerDownlinkInfo, FUABT_PeerDownlinkInfo>(AgoraData.peer_downlink_info, AgoraData.total_received_video_count);
-      tmpContextFreeRawData += addOneLineFunc(
-        `${conv_cppfrombp.convFuncAdditional01}<${cpp_decl_type}, ${bpType.name}>(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name},${var_SizeCount});`
-      );
-    } else if (
-      conv_cppfrombp.convFuncType ===
-      ConversionWayType.CppFromBP_NeedCallCustomConvFunc
-    ) {
-      // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
-      tmpContextFreeRawData += addOneLineFunc(
-        `${member_variable.name}.${conv_cppfrombp.convFuncAdditional01}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-      );
-    } else if (
-      conv_cppfrombp.convFuncType ===
-      ConversionWayType.CppFromBP_CreateFreeOptData
-    ) {
-      // Ex. FUABT_Opt_bool::FreeRawOptData(AgoraData.{{name}});
-      tmpContextFreeRawData += addOneLineFunc(
-        `${bpType.name}::${AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-      );
-    }
-
-    if (mapCpp2BPStruct.has(type.name)) {
-      // Ex. {{name}}.FreeRawData(AgoraData.{{name}});
-      tmpContextFreeRawData += addOneLineFunc(
-        `${member_variable.name}.${AGORA_MUSTACHE_DATA.FREE_RAW_DATA}(${AGORA_MUSTACHE_DATA.AGORA_DATA}.${member_variable.name});`
-      );
-    } else {
-    }
+    const tmpContextFreeRawData  = genContextBasedOnConversionWayType(
+      EBPContextGenType.Struct_FreeRawData,
+      member_variable,
+      bpType,
+      conv_way_type_createrawdata,
+      undefined,
+      var_SizeCount,
+    );
 
     if (
       Tools.IsNotEmptyStr(macro_scope_start) &&
@@ -446,7 +339,7 @@ export function genContext_BPStruct(
       }
     }
     if (tmpContextFreeRawData && tmpContextFreeRawData !== '') {
-      contextFreeRawData += tmpContextFreeRawData;
+      contextFreeRawData += addOneLineFunc(tmpContextFreeRawData);
 
       if (
         Tools.IsNotEmptyStr(macro_scope_start) &&
@@ -515,59 +408,44 @@ function genContext_ConvDeclType(
     }
   } else if (data_conv.convFuncType !== ConversionWayType.NoNeedConversion) {
     // [Step 02]: Use Default Basic Conversion
-    const str_conv_func = Tools.IsNotEmptyStr(data_conv.convFunc)
-      ? data_conv.convFunc
-      : '';
-    const str_free_func = Tools.IsNotEmptyStr(data_conv.convFuncAdditional01)
-      ? data_conv.convFuncAdditional01
-      : '';
     const convWayType = data_conv.convFuncType;
 
     // [Part - Decl]
-    if (
-      convWayType === ConversionWayType.CppFromBP_NeedCallCustomConvFunc ||
-      convWayType === ConversionWayType.CppFromBP_CreateFreeOptData
-    ) {
-      result.contextDecl = addOneLineFunc(
-        `${decl_type} ${decl_var_name} =${param_name}.${str_conv_func}();`
-      );
-    } else if (convWayType === ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc) {
-      let str_size = extractArraySizeFromType(bpType);
-      str_size = Tools.IsNotEmptyStr(str_size) ? ', ' + str_size : '';
-      result.contextDecl = addOneLineFunc(
-        `${decl_type} ${decl_var_name}; ${str_conv_func}(${param_name},${decl_var_name}${str_size});`
-      );
-    } else if (convWayType === ConversionWayType.DirectlyConv_StaticCast) {
-      result.contextDecl = addOneLineFunc(
-        `${decl_type} ${decl_var_name} = static_cast<${decl_type}>(${param_name});`
-      );
-    } else {
-      result.contextDecl = addOneLineFunc(
-        `${decl_type} ${decl_var_name} = ${str_conv_func}(${param_name});`
-      );
-    }
+    const str_decl = genContextBasedOnConversionWayType(
+      EBPContextGenType.DeclType_Decl,
+      param,
+      bpType,
+      convWayType,
+      bIsCppFromBP,
+      '',
+    );
+    result.contextDecl = addOneLineFunc(str_decl);
 
     // [Part - Usage]
-    result.contextUsage = addOneLineFunc(`${decl_var_name}`);
+    const str_usage = genContextBasedOnConversionWayType(
+      EBPContextGenType.DeclType_Usage,
+      param,
+      bpType,
+      convWayType,
+      bIsCppFromBP,
+      '',
+    );
+    result.contextUsage = addOneLineFunc(str_usage);
 
     // [Part - Free]
+    const str_free_func = Tools.IsNotEmptyStr(data_conv.convFuncAdditional01)
+    ? data_conv.convFuncAdditional01
+    : '';
     if (str_free_func !== '') {
-      if (convWayType === ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc) {
-        result.contextFree = addOneLineFunc(
-          `${str_free_func}(${decl_var_name});`
-        );
-      } else if (convWayType === ConversionWayType.CppFromBP_NeedCallCustomConvFunc) {
-        result.contextFree = addOneLineFunc(
-          `${param_name}.${str_free_func}(${decl_var_name});`
-        );
-      } else if (
-        convWayType === ConversionWayType.CppFromBP_CreateFreeOptData
-      ) {
-        const bpTypeName = bpType.name;
-        result.contextFree = addOneLineFunc(
-          `${bpTypeName}::${str_free_func}(${decl_var_name});`
-        );
-      }
+      const str_free = genContextBasedOnConversionWayType(
+        EBPContextGenType.DeclType_Free,
+        param,
+      bpType,
+      convWayType,
+      bIsCppFromBP,
+      ''
+      );
+      result.contextFree = addOneLineFunc(str_free);
     }
   }
 
@@ -659,6 +537,7 @@ export function getBPSizeCount(
   node_struct: Struct,
   target_member_var: MemberVariable
 ): string {
+
   const tar_var_name = target_member_var.name;
 
   if (target_member_var.fullName in map_struct_member_variable_size_count) {
@@ -689,4 +568,331 @@ export function getBPSizeCount(
   // TBD(WinterPu):
   // FUABT_ChannelMediaRelayConfiguration.srcInfo should be pointer rather than array
   return '1';
+}
+
+
+
+export enum EBPContextGenType{
+  Struct_Constructor, // BP = Cpp
+  Struct_CreateRawData, // Cpp = BP
+  Struct_FreeRawData, // Cpp = BP
+  DeclType_Decl, // BP = Cpp & Cpp = BP
+  DeclType_Usage, // BP = Cpp & Cpp = BP
+  DeclType_Free, // BP = Cpp & Cpp = BP
+}
+
+
+export function genContextBasedOnConversionWayType(
+  context_type: EBPContextGenType,
+  variable: Variable | MemberVariable,
+
+
+  // data 
+  bpType: UEBPType,
+  conv_way_type: ConversionWayType,
+
+  extra_data_bIsCppFromBP: boolean | undefined,
+  extra_data_size_count: string,
+  extra_data?: any
+): string {
+
+  function extractArraySizeFromType(bpType: UEBPType) {
+    return Tools.extractBracketNumber(bpType.source);
+  }
+
+  // common data
+  const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
+  const conv_cppfrombp = bpType.bpConv_CppFromBP;
+  const var_name = variable.name;
+
+  // for struct 
+  const AGORA_DATA = AGORA_MUSTACHE_DATA.AGORA_DATA;
+  const s_cpp_decl_type = bpType.cppDeclType;
+  const s_bp_decl_type = bpType.declType;
+  const s_bp_type_name = bpType.name;
+  const s_array_size = extra_data_size_count;
+
+  // decl type
+  if(extra_data_bIsCppFromBP === undefined && (context_type === EBPContextGenType.DeclType_Decl || context_type === EBPContextGenType.DeclType_Usage || context_type === EBPContextGenType.DeclType_Free)){
+    Logger.PrintError(`bIsCppFromBP is undefined for ${variable.fullName}`);
+  }
+
+  const isCppFromBP = extra_data_bIsCppFromBP;
+  const decl_type =  isCppFromBP ? bpType.cppDeclType : bpType.declType;
+  const convert_to_decl_type = isCppFromBP ? bpType.declType : bpType.cppDeclType;
+  const prefix_var_name = isCppFromBP
+    ? AGORA_MUSTACHE_DATA.RAW_
+    : AGORA_MUSTACHE_DATA.UEBP_;
+  const decl_var_name = prefix_var_name + variable.name;
+  const data_decl_conv = isCppFromBP ? conv_bpfromcpp : conv_cppfrombp;
+  let decl_array_size = extractArraySizeFromType(bpType);
+
+  const STR_INVALID_CONV = 'Invalid Conversion';
+
+  const defaultTmpl_NoConv : Record<EBPContextGenType, string> = {
+    [EBPContextGenType.Struct_Constructor]: `this->${var_name} = ${AGORA_DATA}.${var_name};`,
+    [EBPContextGenType.Struct_CreateRawData]: `${AGORA_DATA}.${var_name} = this->${var_name};`,
+    [EBPContextGenType.Struct_FreeRawData]: '',
+    [EBPContextGenType.DeclType_Decl]: `${decl_type} ${decl_var_name} = ${var_name};`,
+    [EBPContextGenType.DeclType_Usage]: `${decl_var_name}`,
+    [EBPContextGenType.DeclType_Free]: '',
+  };
+
+  const defaultTmpl_BasicConv : Record<EBPContextGenType, string> = {
+    [EBPContextGenType.Struct_Constructor]: `this->${var_name} = ${conv_bpfromcpp.convFunc}(${AGORA_DATA}.${var_name});`,
+    [EBPContextGenType.Struct_CreateRawData]: `${AGORA_DATA}.${var_name} = ${conv_cppfrombp.convFunc}(this->${var_name});`,
+    [EBPContextGenType.Struct_FreeRawData]: '',
+    [EBPContextGenType.DeclType_Decl]: `${decl_type} ${decl_var_name} = ${data_decl_conv.convFunc}(${var_name});`,
+    [EBPContextGenType.DeclType_Usage]: `${decl_var_name}`,
+    [EBPContextGenType.DeclType_Free]: '',
+  };
+
+
+  const defaultTmpl_NewFreeConv: Record<EBPContextGenType, string> = {
+    [EBPContextGenType.Struct_Constructor]:
+    STR_INVALID_CONV,
+    [EBPContextGenType.Struct_CreateRawData]:
+    `${AGORA_DATA}.${var_name} = ${conv_cppfrombp.convFunc}(this->${var_name});`,
+    [EBPContextGenType.Struct_FreeRawData]:
+    `${conv_cppfrombp.convFuncAdditional01}(${AGORA_DATA}.${var_name});`,
+    [EBPContextGenType.DeclType_Decl]:
+    `${decl_type} ${decl_var_name} = ${data_decl_conv.convFunc}(${var_name});`,
+    [EBPContextGenType.DeclType_Usage]:
+    `${decl_var_name}`,
+    [EBPContextGenType.DeclType_Free]:
+    `${data_decl_conv.convFuncAdditional01}(${decl_var_name});`,
+  };
+
+  let result_map: Record<EBPContextGenType, string> = defaultTmpl_NoConv;
+
+  switch (conv_way_type) {
+    case ConversionWayType.NoNeedConversion:
+      result_map = defaultTmpl_NoConv;
+      break;
+    case ConversionWayType.BasicConvFunc:
+      result_map = defaultTmpl_BasicConv;
+      break;
+    
+    case ConversionWayType.DirectlyConv_StaticCast:{
+      result_map = {
+        ...defaultTmpl_NoConv,
+        [EBPContextGenType.Struct_Constructor]:
+        `this->${var_name} = static_cast<${s_bp_decl_type}>(${AGORA_DATA}.${var_name});`,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${AGORA_DATA}.${var_name} = static_cast<${s_cpp_decl_type}>(${var_name});`,
+        [EBPContextGenType.DeclType_Decl]:
+        `${decl_type} ${decl_var_name} = static_cast<${decl_type}>(${var_name});`,
+      };
+      break;
+    }
+    case ConversionWayType.BPFromCpp_SetBPDataArray:{
+      const conv_func = AGORA_MUSTACHE_DATA.ConvFunc_Set_BPDataArray;
+      const declIsValid = function(res: string): string {
+        return isCppFromBP ? STR_INVALID_CONV : res;
+      }
+    
+      result_map = {
+        ...defaultTmpl_NoConv,
+        [EBPContextGenType.Struct_Constructor]:
+        `${conv_func}<${s_cpp_decl_type}, ${s_bp_type_name}>(this->${var_name}, ${AGORA_DATA}.${var_name},${s_array_size});`,
+        [EBPContextGenType.Struct_CreateRawData]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_FreeRawData]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.DeclType_Decl]:
+          declIsValid(`${decl_type} ${decl_var_name}; ${conv_func}<${s_cpp_decl_type}, ${s_bp_type_name}>(${decl_var_name}, ${var_name},${decl_array_size});`),
+        [EBPContextGenType.DeclType_Usage]:
+          declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+        [EBPContextGenType.DeclType_Free]:
+          declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Free]),
+      }
+      break;
+    }
+    case ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc:{
+      result_map = defaultTmpl_NewFreeConv;
+      break;
+    }
+    case ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc:{
+      result_map = defaultTmpl_NewFreeConv;
+      break;
+    }
+    case ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc:{
+      const conv_func_new = conv_cppfrombp.convFunc;
+      const conv_func_free = conv_cppfrombp.convFuncAdditional01;
+      const str_size = Tools.IsNotEmptyStr(decl_array_size) ? ', ' + decl_array_size : '';
+
+      result_map = {
+        ...defaultTmpl_NoConv,
+        [EBPContextGenType.Struct_Constructor]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},this->${var_name},${s_array_size});`,
+        [EBPContextGenType.DeclType_Decl]:
+        `${decl_type} ${decl_var_name}; ${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(${decl_var_name}, ${var_name}${str_size});`,
+      }
+      break;
+    }
+    case ConversionWayType.CppFromBP_NeedCallCreateFreeRawData:{
+      const conv_func_create = AGORA_MUSTACHE_DATA.CREATE_RAW_DATA;
+      const conv_func_free = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
+      const decl_func_create = AGORA_MUSTACHE_DATA.CREATE_RAW_DATA;
+      const decl_func_free = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
+      const declIsValid = function(res: string): string {
+        return isCppFromBP ? res : STR_INVALID_CONV;
+      }
+      result_map = {
+        ...defaultTmpl_NewFreeConv,
+        [EBPContextGenType.Struct_Constructor]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${AGORA_DATA}.${var_name} = ${var_name}.${conv_func_create}();`,
+        [EBPContextGenType.Struct_FreeRawData]:
+        `${var_name}.${conv_func_free}(${AGORA_DATA}.${var_name});`,
+        [EBPContextGenType.DeclType_Decl]:
+        declIsValid(`${decl_type} ${decl_var_name} = ${var_name}.${decl_func_create}();`),
+        [EBPContextGenType.DeclType_Usage]:
+        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+        [EBPContextGenType.DeclType_Free]:
+        declIsValid(`${var_name}.${decl_func_free}(${decl_var_name});`),
+      };
+      break;
+    }
+    case ConversionWayType.CppFromBP_NeedCallCustomConvFunc:{
+      const conv_func_create = conv_cppfrombp.convFunc;
+      const conv_func_free = conv_cppfrombp.convFuncAdditional01;
+      const decl_func_create = data_decl_conv.convFunc;
+      const decl_func_free = data_decl_conv.convFuncAdditional01;
+      const declIsValid = function(res: string): string {
+        return isCppFromBP ? res : STR_INVALID_CONV;
+      }
+      result_map = {
+        ...defaultTmpl_NewFreeConv,
+        [EBPContextGenType.Struct_Constructor]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${AGORA_DATA}.${var_name} = ${var_name}.${conv_func_create}();`,
+        [EBPContextGenType.Struct_FreeRawData]:
+        `${var_name}.${conv_func_free}(${AGORA_DATA}.${var_name});`,
+        [EBPContextGenType.DeclType_Decl]:
+        declIsValid(`${decl_type} ${decl_var_name} = ${var_name}.${decl_func_create}();`),
+        [EBPContextGenType.DeclType_Usage]:
+        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+        [EBPContextGenType.DeclType_Free]:
+        declIsValid(`${var_name}.${decl_func_free}(${decl_var_name});`),
+      };
+      break;
+    }
+    case ConversionWayType.CppFromBP_CreateFreeOptData:{
+      const conv_func_create = AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA;
+      const conv_func_free = AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA;
+      const decl_func_create =  AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA;
+      const decl_func_free = AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA;
+      const declIsValid = function(res: string): string {
+        return isCppFromBP ? res : STR_INVALID_CONV;
+      }
+      result_map = {
+        ...defaultTmpl_NewFreeConv,
+        [EBPContextGenType.Struct_Constructor]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${AGORA_DATA}.${var_name} = ${var_name}.${conv_func_create}();`,
+        [EBPContextGenType.Struct_FreeRawData]:
+        `${var_name}.${conv_func_free}(${AGORA_DATA}.${var_name});`,
+        [EBPContextGenType.DeclType_Decl]:
+        declIsValid(`${decl_type} ${decl_var_name} = ${var_name}.${decl_func_create}();`),
+        [EBPContextGenType.DeclType_Usage]:
+        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+        [EBPContextGenType.DeclType_Free]:
+        declIsValid(`${var_name}.${decl_func_free}(${decl_var_name});`),
+      };
+      break;
+    }
+      
+    case ConversionWayType.CppFromBP_NewFree_RawDataPtr1D:{
+      const conv_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_RawDataPtr1D;
+      const conv_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_RawDataPtr1D;
+      const decl_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_RawDataPtr1D;
+      const decl_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_RawDataPtr1D;
+      const declIsValid = function(res: string): string {
+        return isCppFromBP ? res : STR_INVALID_CONV;
+      }
+
+      result_map = {
+        ...defaultTmpl_NewFreeConv,
+        [EBPContextGenType.Struct_Constructor]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${AGORA_DATA}.${var_name} = ${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(${var_name},${s_array_size});`,
+        [EBPContextGenType.Struct_FreeRawData]:
+        `${conv_func_free}<${s_cpp_decl_type}>(${AGORA_DATA}.${var_name});`,
+        [EBPContextGenType.DeclType_Decl]:
+        declIsValid(`${decl_type} ${decl_var_name} = ${conv_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${decl_array_size});`),
+        [EBPContextGenType.DeclType_Usage]:
+        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+        [EBPContextGenType.DeclType_Free]:
+        declIsValid(`${conv_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
+      }
+      break;
+    }
+
+
+    case ConversionWayType.CppFromBP_NewFree_CustomRawDataPtr1D:
+    {
+      const conv_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataPtr1D;
+      const conv_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataPtr1D;
+      const decl_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataPtr1D;
+      const decl_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataPtr1D;
+      const declIsValid = function(res: string): string {
+        return isCppFromBP ? res : STR_INVALID_CONV;
+      }
+      result_map = {
+        ...defaultTmpl_NewFreeConv,
+        [EBPContextGenType.Struct_Constructor]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${AGORA_DATA}.${var_name} = ${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(this->${var_name},${s_array_size});`,
+        [EBPContextGenType.Struct_FreeRawData]:
+        `${conv_func_free}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},${s_array_size});`,
+        [EBPContextGenType.DeclType_Decl]:
+        declIsValid(`${decl_type} ${decl_var_name} = ${conv_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${s_array_size});`),
+        [EBPContextGenType.DeclType_Usage]:
+        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+        [EBPContextGenType.DeclType_Free]:
+        declIsValid(`${conv_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
+      }
+      break;
+    }
+
+    case ConversionWayType.CppFromBP_NewFree_CustomRawDataArray:
+    {
+      const conv_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataArray;
+      const conv_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataArray;
+      const decl_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataArray;
+      const decl_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataArray;
+      const declIsValid = function(res: string): string {
+        return isCppFromBP ? res : STR_INVALID_CONV;
+      }
+      const str_size = Tools.IsNotEmptyStr(decl_array_size) ? ', ' + decl_array_size : '';
+
+      result_map = {
+        ...defaultTmpl_NewFreeConv,
+        [EBPContextGenType.Struct_Constructor]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},this->${var_name},${s_array_size});`,
+        [EBPContextGenType.Struct_FreeRawData]:
+        `${conv_func_free}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},${s_array_size});`,
+        [EBPContextGenType.DeclType_Decl]:
+        declIsValid(`${decl_type} ${decl_var_name} = ${conv_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${s_array_size});`),
+        [EBPContextGenType.DeclType_Usage]:
+        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+        [EBPContextGenType.DeclType_Free]:
+        declIsValid(`${conv_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
+      }
+      break;
+    }
+  }
+
+  const result = result_map[context_type] ?? "";
+  return result;
 }

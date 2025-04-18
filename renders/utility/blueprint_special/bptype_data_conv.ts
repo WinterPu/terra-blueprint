@@ -115,6 +115,11 @@ export enum ConversionWayType {
   // Example: CreateRawData()
   // Ex. CppVar = BPVar.CreateRawData();
   // Ex. BPVar.FreeRawData(CppVar);
+  CppFromBP_NeedCallCreateFreeRawData,
+  // need call conversion function
+  // Example: CreateRawData()
+  // Ex. CppVar = BPVar.CreateRawData();
+  // Ex. BPVar.FreeRawData(CppVar);
   CppFromBP_NeedCallCustomConvFunc,
   // ==== Custom Defined BP Var Only ====
   // * need memory allocation
