@@ -91,6 +91,8 @@ export enum ConversionWayType {
 
   DirectlyConv_StaticCast,
 
+  DirectlyConv_ReinterpretCast,
+
   // [Part1]. BP = FuncFrom(Cpp);
   // need memory allocation
   // Ex. UABT::SetBPArrayData<CppType, BPType>(BPVar,CppArrayVar, CppArraySize);
@@ -170,9 +172,9 @@ export const map_decltype_special_rule = new Map<
       // free: none
       CppFromBP: {
         funcDecl: (decl_var, param) =>
-          `std::string ${decl_var} = UTF8_TO_TCHAR(*${param});`,
+          `std::string ${decl_var} = TCHAR_TO_UTF8(*${param});`,
 
-        funcUsage: (decl_var) => `${decl_var}.c_str();`,
+        funcUsage: (decl_var) => `${decl_var}.c_str()`,
 
         funcFree: () => '',
       },
@@ -183,7 +185,7 @@ export const map_decltype_special_rule = new Map<
         funcDecl: (decl_var, param) =>
           `FString ${decl_var} = UTF8_TO_TCHAR(${param});`,
 
-        funcUsage: (decl_var) => `${decl_var};`,
+        funcUsage: (decl_var) => `${decl_var}`,
 
         funcFree: () => '',
       },
@@ -200,7 +202,7 @@ export const map_decltype_special_rule = new Map<
         funcDecl: (decl_var, param) =>
           `float[3] ${decl_var}; UABT::SetFloatArray(${param}, ${decl_var});`,
 
-        funcUsage: (decl_var) => `${decl_var};`,
+        funcUsage: (decl_var) => `${decl_var}`,
 
         funcFree: () => '',
       },
@@ -211,7 +213,7 @@ export const map_decltype_special_rule = new Map<
         funcDecl: (decl_var, param) =>
           `FVector ${decl_var} = UABT::FromFloatArray(${param});`,
 
-        funcUsage: (decl_var) => `${decl_var};`,
+        funcUsage: (decl_var) => `${decl_var}`,
 
         funcFree: () => '',
       },
@@ -235,7 +237,7 @@ export const map_one_category_basicconv_bpfromcpp = new Map<
     'TArray',
     {
       convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
-      convFunc: AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA,
+      convFunc:'',
       convFuncAdditional01: '',
     },
   ],
@@ -275,9 +277,9 @@ export const map_one_category_basicconv_cppfrombp = new Map<
   [
     'TArray',
     {
-      convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
-      convFunc: AGORA_MUSTACHE_DATA.NEW_RAW_ARRAY_DATA,
-      convFuncAdditional01: AGORA_MUSTACHE_DATA.FREE_RAW_ARRAY_DATA,
+      convFuncType: ConversionWayType.CppFromBP_NewFree_CustomRawDataArray,
+      convFunc:'',
+      convFuncAdditional01: '',
     },
   ],
 ]);
@@ -369,7 +371,7 @@ const defaultTmpl_FString_SetArray: UEBPTypeConvData = {
   },
   convToCpp: {
     convFuncType: ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc,
-    convFunc: 'UABT::SetCharArrayPtr',
+    convFunc: 'UABT::SetCharArray',
     convFuncAdditional01: '',
   },
   declTypeSPRule: DeclTypeSPRule.SP_String,
@@ -380,13 +382,13 @@ const defaultTmpl_Int64_Pointer: UEBPTypeConvData = {
   ...defaultTmpl_BasicType_NoConv,
   bpTypeName: 'int64',
   convFromCpp: {
-    convFuncType: ConversionWayType.DirectlyConv_StaticCast,
+    convFuncType: ConversionWayType.DirectlyConv_ReinterpretCast,
     convFunc: '',
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.BasicConvFunc,
-    convFunc: 'UABT::ToInt64',
+    convFuncType: ConversionWayType.DirectlyConv_ReinterpretCast,
+    convFunc: '',
     convFuncAdditional01: '',
   },
 };
@@ -535,6 +537,9 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'FString',
       defaultValue: '0',
+
+      // TBD(WinterPu)
+      // need conv func
     },
     'int16_t': {
       ...defaultTmpl_BasicType_NoConv,
@@ -698,17 +703,30 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
     },
 
     // Pointer Related
+    // because it could not be parsed as TArray<void>
     'void*': {
       // TBD(WinterPu) check it
       ...defaultTmpl_Int64_Pointer,
       bpTypeName: 'int64',
       defaultValue: '0',
+      cppDesignedDeclType:'void*',
     },
     'agora::view_t*': {
       // TBD(WinterPu) check it
       ...defaultTmpl_Int64_Pointer,
       bpTypeName: 'int64',
       defaultValue: '0',
+      convFromCpp: {
+        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
+        convFunc: '',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.CppFromBP_NewFree_CustomRawDataPtr1D,
+        convFunc: '',
+        convFuncAdditional01: '',
+      },
+
     },
 
     // Agora Related
@@ -890,6 +908,11 @@ export const map_struct_member_variable_default_value: {
 
   'agora::rtc::ScreenCaptureParameters.contentHint':
     'EUABT_VIDEO_CONTENT_HINT::CONTENT_HINT_MOTION',
+
+  // [because of macro_scope] contentHint is in not available on Windows
+  // therefore it shows: EUABT_VIDEO_CONTENT_HINT contentHint = UABTEnum::WrapWithUE(undefined);
+  'agora::rtc::ScreenVideoParameters.contentHint':
+    'EUABT_VIDEO_CONTENT_HINT::CONTENT_HINT_NONE',
 };
 
 // In Struct, the corresponding size count variable to the target member variable

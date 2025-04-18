@@ -6,7 +6,7 @@ void {{{user_data.bpNodeName}}}::AddBlueprintCallbackExecutor({{{user_data.bpNod
 		return;
 	}
     {{#methods}}
-    {{user_data.bpCallbackDelegateVarName}}.AddDynamic(Executor, &UAgoraBPu{{parent.name}}CBExecutor::{{user_data.bpNodeName}});
+    {{user_data.bpCallbackDelegateVarName}}.AddDynamic(Executor, &{{parent.user_data.bpNodeName}}CBExecutor::{{user_data.bpNodeName}});
     {{/methods}}
 
 }
@@ -27,7 +27,7 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
 
 {{{user_data.bpContextParamsDecl_BPFromCpp}}}
 
-        TWeakObjectPtr<{{{parent.user_data.bpNodeName}}}CBExecutor *> SelfWeakPtr(this);
+        TWeakObjectPtr<{{{parent.user_data.bpNodeName}}}*> SelfWeakPtr(this);
         if(!SelfWeakPtr.IsValid())
             return;
             
@@ -53,7 +53,7 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
 
 
 {{#methods}}
-  {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
+  {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}CBExecutor::{{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
 
     UE_LOG(LogAgora, Warning, TEXT("%s"), *FString(AG_FUNCTION_MACRO));

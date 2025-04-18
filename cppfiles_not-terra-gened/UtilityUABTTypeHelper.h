@@ -146,7 +146,7 @@ namespace agora {
 
 				static inline agora::view_t ToView(int64 view) {
 					// For now, Windows doesn't support 32 bit
-					return (view_t)(view);
+					return reinterpret_cast<view_t>(view);
 				}
 
 
@@ -167,7 +167,7 @@ namespace agora {
 				}
 
 				static inline int64 FromView(agora::view_t view) {
-					return (int64)view;
+					return reinterpret_cast<int64>(view);
 				}
 
 				// Convert: From double to FString (The precision is 6 decimal places.)
@@ -240,7 +240,7 @@ namespace agora {
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void New_CustomRawDataArray(RAW_TYPE* DstArray , const TArray<UABT_TYPE>& SrcArray, int SizeCount) {
+				static inline void New_CustomRawDataArray(const RAW_TYPE* DstArray , const TArray<UABT_TYPE>& SrcArray, int SizeCount) {
 					for (int i = 0; i < SizeCount; i++) {
 						// Create a temporary variable to hold the raw data
 						RAW_TYPE RawData = SrcArray[i].CreateRawData();
@@ -282,8 +282,8 @@ namespace agora {
 					Free_Ptr1D<const char>(Ptr);
 				}
 
-				static inline void Free_UnsignedCharPtr1D(unsigned char*& Ptr) {
-					Free_Ptr1D<unsigned char>(Ptr);
+				static inline void Free_UnsignedCharPtr1D(const unsigned char* Ptr) {
+					Free_Ptr1D<const unsigned char>(Ptr);
 				}
 
 				static inline void Free_CharPtr2D(const char** & ptr,int size){
@@ -319,7 +319,7 @@ namespace agora {
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void Free_CustomRawDataArray(RAW_TYPE* & Ptr,int Count) {
+				static inline void Free_CustomRawDataArray(const RAW_TYPE* Ptr,int Count) {
 					if(Ptr){
 						for (int i = 0; i < Count; i++) {
 							UABT_TYPE ReleaseOperator;
@@ -362,7 +362,7 @@ namespace agora {
 
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void SetBPDataArray(TArray<UABT_TYPE>& Dst, RAW_TYPE* Src, int Size){
+				static inline void SetBPDataArray(TArray<UABT_TYPE>& Dst, const RAW_TYPE* Src, int Size){
 					Dst.Empty();
 					for (int i = 0; i < Size; i++) {
 						Dst[i].Add(Src[i]);
@@ -370,7 +370,7 @@ namespace agora {
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
-				static inline void SetRawDataArray(RAW_TYPE* Dst, TArray<UABT_TYPE>& Src,int Size){
+				static inline void SetRawDataArray(const RAW_TYPE* Dst, TArray<UABT_TYPE>& Src,int Size){
 					for (int i = 0; i < Size; i++) {
 						Dst[i] = static_cast<RAW_TYPE>(Src[i]);
 					}
@@ -694,7 +694,7 @@ public:
 	}
 	agora::Optional<const char*> CreateRawOptData() const {
 		if (SetValue == true) {
-			return agora::rtc::ue::UABT::New_CharPtr(Value);
+			return agora::rtc::ue::UABT::New_CharPtr1D(Value);
 		}
 		return agora::Optional<const char*>();
 	}
@@ -702,7 +702,7 @@ public:
 	static void FreeRawOptData(agora::Optional<const char*> & AgoraData) {
 		if (AgoraData.has_value() == true) {
 			const char* Ptr = AgoraData.value();
-			agora::rtc::ue::UABT::Free_CharPtr(Ptr);
+			agora::rtc::ue::UABT::Free_CharPtr1D(Ptr);
 			AgoraData = nullptr;
 		}
 	}

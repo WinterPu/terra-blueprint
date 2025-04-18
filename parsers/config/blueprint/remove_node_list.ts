@@ -170,4 +170,10 @@ module.exports = [
   'agora::rtc::IPacketObserver',
   'agora::media::IAudioPcmFrameSink',
   'agora::rtc::IMediaPlayerVideoFrameObserver',
+
+  // TBD(WinterPu)
+  // no default constructor: so currently FUABT_ generation failed
+  'agora::rtc::MixedAudioFrame',
+  'agora::rtc::IRtcEngine.setMixedAudioFrameParameters',
+  
 ];

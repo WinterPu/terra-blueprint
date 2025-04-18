@@ -269,7 +269,7 @@ export function genContext_BPStruct(
   contextCreateRawData += addOneLineFunc(
     `${node_struct.fullName} ${AGORA_MUSTACHE_DATA.AGORA_DATA};`
   );
-
+  
   node_struct.member_variables.map((member_variable, index) => {
     let type = member_variable.type;
     let struct_full_name = member_variable?.parent?.fullName ?? '';
@@ -278,8 +278,8 @@ export function genContext_BPStruct(
     const var_SizeCount = getBPSizeCount(node_struct, member_variable);
     const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
     const conv_cppfrombp = bpType.bpConv_CppFromBP;
-    const macro_scope_start = member_variable.user_data?.macro_scope_start;
-    const macro_scope_end = member_variable.user_data?.macro_scope_end;
+    const macro_scope_start = CppHelper.createCompilationDirectivesContent(member_variable);
+    const macro_scope_end = CppHelper.createCompilationDirectivesContent(member_variable, false);
     if (
       Tools.IsNotEmptyStr(macro_scope_start) &&
       Tools.IsNotEmptyStr(macro_scope_end)
@@ -377,11 +377,7 @@ function genContext_ConvDeclType(
   const addOneLineFunc = function (line: string): string {
     return Tools.addOneLine_Format(line, '');
   };
-
-  function extractArraySizeFromType(bpType: UEBPType) {
-    return Tools.extractBracketNumber(bpType.source);
-  }
-
+  
   const data_conv = bIsCppFromBP
     ? bpType.bpConv_CppFromBP
     : bpType.bpConv_BPFromCpp;
@@ -567,6 +563,8 @@ export function getBPSizeCount(
 
   // TBD(WinterPu):
   // FUABT_ChannelMediaRelayConfiguration.srcInfo should be pointer rather than array
+  // Ex. 
+  // ScreenCaptureParameters.excludeWindowList should be excludeWindowCount
   return '1';
 }
 
@@ -629,6 +627,15 @@ export function genContextBasedOnConversionWayType(
 
   const STR_INVALID_CONV = 'Invalid Conversion';
 
+  const defaultTmpl_AllInValidConv: Record<EBPContextGenType, string> = {
+    [EBPContextGenType.Struct_Constructor]: STR_INVALID_CONV,
+    [EBPContextGenType.Struct_CreateRawData]: STR_INVALID_CONV,
+    [EBPContextGenType.Struct_FreeRawData]: STR_INVALID_CONV,
+    [EBPContextGenType.DeclType_Decl]: STR_INVALID_CONV,
+    [EBPContextGenType.DeclType_Usage]: STR_INVALID_CONV,
+    [EBPContextGenType.DeclType_Free]: STR_INVALID_CONV,
+  }
+
   const defaultTmpl_NoConv : Record<EBPContextGenType, string> = {
     [EBPContextGenType.Struct_Constructor]: `this->${var_name} = ${AGORA_DATA}.${var_name};`,
     [EBPContextGenType.Struct_CreateRawData]: `${AGORA_DATA}.${var_name} = this->${var_name};`,
@@ -685,6 +692,32 @@ export function genContextBasedOnConversionWayType(
       };
       break;
     }
+    case ConversionWayType.DirectlyConv_ReinterpretCast:{
+      result_map = {
+        ...defaultTmpl_NoConv,
+        [EBPContextGenType.Struct_Constructor]:
+        `this->${var_name} = reinterpret_cast<${s_bp_decl_type}>(${AGORA_DATA}.${var_name});`,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${AGORA_DATA}.${var_name} = reinterpret_cast<${s_cpp_decl_type}>(${var_name});`,
+        [EBPContextGenType.DeclType_Decl]:
+        `${decl_type} ${decl_var_name} = reinterpret_cast<${decl_type}>(${var_name});`,
+      }
+      break;
+    }
+
+    case ConversionWayType.BPFromCpp_FString:{
+      const conv_func = conv_bpfromcpp.convFunc;
+      const decl_func = data_decl_conv.convFunc;
+      result_map = {
+        ...defaultTmpl_AllInValidConv,
+        [EBPContextGenType.Struct_Constructor]:
+        `this->${var_name} = ${conv_func}(${AGORA_DATA}.${var_name});`,
+        // decl type 
+        // is has special rules:
+      }
+      break;
+    }
+  
     case ConversionWayType.BPFromCpp_SetBPDataArray:{
       const conv_func = AGORA_MUSTACHE_DATA.ConvFunc_Set_BPDataArray;
       const declIsValid = function(res: string): string {
@@ -713,7 +746,31 @@ export function genContextBasedOnConversionWayType(
       break;
     }
     case ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc:{
-      result_map = defaultTmpl_NewFreeConv;
+
+      const conv_func_new = conv_cppfrombp.convFunc;
+      const conv_func_free = conv_cppfrombp.convFuncAdditional01;
+      const decl_func_new = data_decl_conv.convFunc;
+      const decl_func_free = data_decl_conv.convFuncAdditional01;
+      const declIsValid = function(res: string): string {
+        return isCppFromBP ? res : STR_INVALID_CONV;
+      }
+      const str_size = Tools.IsNotEmptyStr(decl_array_size) ? ', ' + decl_array_size : '';
+
+      result_map = {
+        ...defaultTmpl_NewFreeConv,
+        [EBPContextGenType.Struct_Constructor]:
+        STR_INVALID_CONV,
+        [EBPContextGenType.Struct_CreateRawData]:
+        `${conv_func_new}(${AGORA_DATA}.${var_name},this->${var_name},${s_array_size});`,
+        [EBPContextGenType.Struct_FreeRawData]:
+        `${conv_func_free}(${AGORA_DATA}.${var_name},${s_array_size});`,
+        [EBPContextGenType.DeclType_Decl]:
+        declIsValid(`${decl_type} ${decl_var_name} = ${decl_func_new}(${var_name},${decl_array_size});`),
+        [EBPContextGenType.DeclType_Usage]:
+        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+        [EBPContextGenType.DeclType_Free]:
+        declIsValid(`${decl_func_free}(${decl_var_name},${decl_array_size});`),
+      }
       break;
     }
     case ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc:{
@@ -726,9 +783,9 @@ export function genContextBasedOnConversionWayType(
         [EBPContextGenType.Struct_Constructor]:
         STR_INVALID_CONV,
         [EBPContextGenType.Struct_CreateRawData]:
-        `${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},this->${var_name},${s_array_size});`,
+        `${conv_func_new}(${AGORA_DATA}.${var_name},this->${var_name},${s_array_size});`,
         [EBPContextGenType.DeclType_Decl]:
-        `${decl_type} ${decl_var_name}; ${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(${decl_var_name}, ${var_name}${str_size});`,
+        `${decl_type} ${decl_var_name}; ${conv_func_new}(${decl_var_name}, ${var_name}${str_size});`,
       }
       break;
     }
@@ -826,11 +883,11 @@ export function genContextBasedOnConversionWayType(
         [EBPContextGenType.Struct_FreeRawData]:
         `${conv_func_free}<${s_cpp_decl_type}>(${AGORA_DATA}.${var_name});`,
         [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${conv_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${decl_array_size});`),
+        declIsValid(`${decl_type} ${decl_var_name} = ${decl_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${decl_array_size});`),
         [EBPContextGenType.DeclType_Usage]:
         declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
         [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${conv_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
+        declIsValid(`${decl_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
       }
       break;
     }
@@ -854,11 +911,11 @@ export function genContextBasedOnConversionWayType(
         [EBPContextGenType.Struct_FreeRawData]:
         `${conv_func_free}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},${s_array_size});`,
         [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${conv_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${s_array_size});`),
+        declIsValid(`${decl_type} ${decl_var_name} = ${decl_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${s_array_size});`),
         [EBPContextGenType.DeclType_Usage]:
         declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
         [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${conv_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
+        declIsValid(`${decl_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
       }
       break;
     }
@@ -883,11 +940,11 @@ export function genContextBasedOnConversionWayType(
         [EBPContextGenType.Struct_FreeRawData]:
         `${conv_func_free}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},${s_array_size});`,
         [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${conv_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${s_array_size});`),
+        declIsValid(`${decl_type} ${decl_var_name} = ${decl_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${decl_array_size});`),
         [EBPContextGenType.DeclType_Usage]:
         declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
         [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${conv_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
+        declIsValid(`${decl_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
       }
       break;
     }

@@ -55,3 +55,58 @@ export function extractBracketNumber(input: string): string {
   const match = input.match(/\[(\d+)\]/);
   return match ? match[1] : '';
 }
+
+/**
+ * Removes C++ type attributes like 'const', 'volatile', 'restrict', etc.,
+ * but preserves the core type name and pointer/reference symbols.
+ *
+ * @example
+ * // Returns "char*"
+ * removeAttributes("const char* const");
+ *
+ * @example
+ * // Returns "MyClass*"
+ * removeAttributes("const MyClass* volatile");
+ *
+ * @param typeStr The C++ type string to clean
+ * @returns The cleaned type string with only the core type and pointer/reference symbols
+ */
+export function removeAttributes(typeStr: string): string {
+  if (!typeStr) return typeStr;
+
+  // // Step 1: Remove namespace if any
+  // let result = removeNamespace(typeStr);
+
+  let result = typeStr;
+
+  // Step 2: Remove common C++ type attributes
+  const attributesToRemove = [
+    /\bconst\b/g,
+    /\bvolatile\b/g,
+    /\brestrict\b/g,
+    /\bmutable\b/g,
+    /\bstatic\b/g,
+    /\bextern\b/g,
+    /\bregister\b/g,
+    /\bauto\b/g,
+    /\binline\b/g,
+    /\bexplicit\b/g,
+    /\b__restrict\b/g,
+  ];
+
+  attributesToRemove.forEach((attr) => {
+    result = result.replace(attr, '');
+  });
+
+  // Step 3: Clean up multiple spaces and normalize spacing
+  result = result.replace(/\s+/g, ' ').trim();
+
+  // Step 4: Fix spacing around pointers/references
+  // Remove spaces between type and pointer/reference
+  result = result.replace(/\s+([*&])/g, '$1');
+
+  // Step 5: Remove spaces between consecutive pointers/references
+  result = result.replace(/([*&])\s+([*&])/g, '$1$2');
+
+  return result;
+}

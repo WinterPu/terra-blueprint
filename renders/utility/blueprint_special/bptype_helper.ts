@@ -566,8 +566,9 @@ export function convertToBPType(
     } else {
       // isOutput 是 false
 
-      // delegate type: if it is not an output type: it would always be with const and &
-      tmpDelegateType = 'const ' + tmpTypeSource + ' &';
+      // TBD(WinterPu)
+      // [X]delegate type: if it is not an output type: it would always be with const and &
+      // tmpDelegateType = 'const ' + tmpTypeSource + ' &';
 
       // const
       if (type.is_const) {
@@ -593,9 +594,20 @@ export function convertToBPType(
   // **** Fifth Step: Get Conversion Decl Type ****
   // some types are different during decl type
   // default DeclType: is result.name
+
+  let cppDeclTypeVal = type.name;
+
+  // TBD(WinterPu)
+  // it means: do we need [SetArray<RawType*> (RAW_TYPE)] or [SetArray<RawType>(RAW_TYPE*)]
+  // some rules for decl type:
+  // Ex. void -> void*
+  // if(result.isTArray){
+  //   cppDeclTypeVal = Tools.removeAttributes(type.source);
+  // }
+
   result.bpConvDeclTypeSPRule =
     data_bptype_conv?.declTypeSPRule ?? DeclTypeSPRule.DefaultNoSP;
-  result.cppDeclType = data_bptype_conv?.cppDesignedDeclType ?? type.name;
+  result.cppDeclType = data_bptype_conv?.cppDesignedDeclType ?? cppDeclTypeVal;
 
   return result;
 }
