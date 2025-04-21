@@ -31,6 +31,7 @@ import {
   ConversionWayType,
   DeclTypeSPRule,
   map_bptype_conv_data,
+  map_class_struct_without_default_constructor,
   map_decltype_special_rule,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
@@ -266,9 +267,15 @@ export function genContext_BPStruct(
 
   // [Step 01] Begin
   // Ex. {{{fullName}}} AgoraData;
-  contextCreateRawData += addOneLineFunc(
-    `${node_struct.fullName} ${AGORA_MUSTACHE_DATA.AGORA_DATA};`
-  );
+  if(map_class_struct_without_default_constructor[node_struct.fullName]){
+    contextCreateRawData += addOneLineFunc(
+      `${map_class_struct_without_default_constructor[node_struct.fullName]}`
+    );
+  } else {
+    contextCreateRawData += addOneLineFunc(
+      `${node_struct.fullName} ${AGORA_MUSTACHE_DATA.AGORA_DATA};`
+    );
+  }
   
   node_struct.member_variables.map((member_variable, index) => {
     let type = member_variable.type;

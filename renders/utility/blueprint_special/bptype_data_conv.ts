@@ -963,3 +963,9 @@ export const map_struct_member_variable_size_count: { [key: string]: string } =
 //   */
 //   'agora::rtc::AudioPcmFrame': 'AudioPcmFrame_OPTIONAL_ENUM_SIZE_T',
 // };
+
+
+export const map_class_struct_without_default_constructor: { [key: string]: string } =
+  {
+    'agora::rtc::MixedAudioStream': 'agora::rtc::MixedAudioStream AgoraData(EUABT_AUDIO_SOURCE_TYPE::AUDIO_SOURCE_UNKNOWN);',
+  };
