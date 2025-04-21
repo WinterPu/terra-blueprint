@@ -23,3 +23,9 @@ split_output/*
 ## config
 config/blueprint_config.yaml
 config/cpp_config.yaml
+
+
+## rte
+rtesrcfiles/*
+config/rte_test_config.yaml
+testbuild.sh
