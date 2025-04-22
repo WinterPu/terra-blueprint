@@ -1012,9 +1012,7 @@ export function genContextBasedOnConversionWayType(
       const conv_func_free = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
       const decl_func_create = AGORA_MUSTACHE_DATA.CREATE_RAW_DATA;
       const decl_func_free = AGORA_MUSTACHE_DATA.FREE_RAW_DATA;
-      const declIsValid = function (res: string): string {
-        return isCppFromBP ? res : STR_INVALID_CONV;
-      };
+
       result_map = genfunc_DefaultTmpl_CallConvFunc(
         conv_func_create,
         conv_func_free,
@@ -1028,9 +1026,7 @@ export function genContextBasedOnConversionWayType(
       const conv_func_free = conv_cppfrombp.convFuncAdditional01;
       const decl_func_create = data_decl_conv.convFunc;
       const decl_func_free = data_decl_conv.convFuncAdditional01;
-      const declIsValid = function (res: string): string {
-        return isCppFromBP ? res : STR_INVALID_CONV;
-      };
+
       result_map = genfunc_DefaultTmpl_CallConvFunc(
         conv_func_create,
         conv_func_free,
@@ -1044,9 +1040,7 @@ export function genContextBasedOnConversionWayType(
       const conv_func_free = AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA;
       const decl_func_create = AGORA_MUSTACHE_DATA.CREATE_RAW_OPT_DATA;
       const decl_func_free = AGORA_MUSTACHE_DATA.FREE_RAW_OPT_DATA;
-      const declIsValid = function (res: string): string {
-        return isCppFromBP ? res : STR_INVALID_CONV;
-      };
+
       result_map = genfunc_DefaultTmpl_CallConvFunc(
         conv_func_create,
         conv_func_free,
@@ -1061,9 +1055,6 @@ export function genContextBasedOnConversionWayType(
       const conv_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_RawDataPtr1D;
       const decl_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_RawDataPtr1D;
       const decl_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_RawDataPtr1D;
-      const declIsValid = function (res: string): string {
-        return isCppFromBP ? res : STR_INVALID_CONV;
-      };
 
       result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeData(
         { bUseSize: true, bUseTmplType: true },
