@@ -26,8 +26,10 @@ export class BPParamContext {
 export class BPMethodContext {
   contextParam_CppFromBP = new BPParamContext();
   contextParam_BPFromCpp = new BPParamContext();
+  contextReturnVal = '';
   constructor() {
     this.contextParam_CppFromBP = new BPParamContext();
     this.contextParam_BPFromCpp = new BPParamContext();
+    this.contextReturnVal = '';
   }
 }

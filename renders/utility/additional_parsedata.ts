@@ -62,7 +62,9 @@ export class ClazzMethodUserData extends UECommonUserData {
   bpCallbackIsNoParam: boolean = false;
 
   bpCallbackIsNoVoidReturnVal: boolean = false;
-  bpContextNoVoidReturnImpl: string = '';
+  bpContextCallbackNoVoidReturnImpl: string = '';
+
+  bpContextReturnVal: string = '';
 
   bpContextParamsDecl_CppFromBP: string = '';
   bpContextParamsUsage_CppFromBP: string = '';

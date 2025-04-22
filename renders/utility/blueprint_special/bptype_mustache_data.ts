@@ -24,6 +24,8 @@ export const AGORA_MUSTACHE_DATA = {
 
   UEBP_: 'UEBP_', // param conv ue prefix
   RAW_: 'Raw_', // param conv raw prefix
+  RETURN_VAL: 'ret',
+  RETURN_VAL_DECL: 'ReturnVal', // return type conv prefix
 
   UABTEnum_WrapWithUE: 'UABTEnum::WrapWithUE',
   UABTEnum_ToRawValue: 'UABTEnum::ToRawValue',

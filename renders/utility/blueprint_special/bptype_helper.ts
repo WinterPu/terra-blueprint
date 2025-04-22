@@ -183,7 +183,7 @@ function genBPConvertFromRawType(
   if (type_conv_data) {
     conversion = type_conv_data.convFromCpp;
   }
-  
+
   return conversion;
 }
 
@@ -469,7 +469,6 @@ export function convertToBPType(
   isReturnType?: boolean,
   options?: AnalysisOptions
 ): UEBPType {
-
   let result = new UEBPType();
   result.cppTypeName = type.name;
   result.cppTypeSource = type.source;
