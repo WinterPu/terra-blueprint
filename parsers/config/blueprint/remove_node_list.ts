@@ -129,7 +129,6 @@ module.exports = [
   'agora::rtc::IRtcEngine.getMediaEngine',
   'agora::rtc::IRtcEngine.getLocalSpatialAudioEngine',
   'agora::rtc::IRtcEngine.getH265Transcoder',
-  
 
   // TBD(WinterPu)
   // special type
@@ -161,7 +160,6 @@ module.exports = [
   // EventHandler Has Return Value
   'agora::media::IVideoFrameObserver',
 
-
   // TBD(WinterPu)
   // Observer
   // 'agora::rtc::IMediaPlayerSourceObserver',
@@ -175,5 +173,4 @@ module.exports = [
   // no default constructor: so currently FUABT_ generation failed
   'agora::rtc::MixedAudioFrame',
   'agora::rtc::IRtcEngine.setMixedAudioFrameParameters',
-  
 ];
