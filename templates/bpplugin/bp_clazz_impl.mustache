@@ -8,7 +8,12 @@
       auto ret = {{{user_data.bpNativePtr}}}->{{name}}({{{user_data.bpContextParamsUsage_CppFromBP}}});
 
 {{{user_data.bpContextParamsFree_CppFromBP}}}
+
+      {{#user_data.hasReturnVal}}
+      // TBD(WinterPu)
+      // need to convert from cpp to BP
       return ret;
+      {{/user_data.hasReturnVal}}
   }
   
 {{/methods}}

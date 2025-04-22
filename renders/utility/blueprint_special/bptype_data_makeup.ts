@@ -262,7 +262,7 @@ export const map_class_initialization: {
     Inst: `
       static UAgoraBPuMusicChartCollection* InsMusicChartCollection;
       
-      agora::rtc::IMusicChartCollection* _NativePtr = nullptr;
+      agora::rtc::MusicChartCollection* _NativePtr = nullptr;
       `,
     InitDecl: `
       UFUNCTION(BlueprintCallable,Category = "Agora|IMusicChartCollection")
@@ -383,7 +383,7 @@ export const map_class_initialization: {
       `,
   },
   IVideoFrameMetaInfo: {
-    NativePtr: `VideoFrameMetaInfoInstance`,
+    NativePtr: `_NativePtr`,
     Inst: `
       static UAgoraBPuVideoFrameMetaInfo* InsVideoFrameMetaInfo;
       
