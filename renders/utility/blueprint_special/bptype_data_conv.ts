@@ -96,7 +96,10 @@ export enum ConversionWayType {
   // [Part1]. BP = FuncFrom(Cpp);
   // need memory allocation
   // Ex. UABT::SetBPArrayData<CppType, BPType>(BPVar,CppArrayVar, CppArraySize);
-  BPFromCpp_SetBPDataArray,
+  SetArrayData,
+  SetArrayData_Size,
+  SetArrayData_Size_TmplType,
+  BPFromCpp_Func_SetBPDataArray,
 
   // BPVar = UTF8_TO_TCHAR(CppVar);
   BPFromCpp_FString,
@@ -106,13 +109,15 @@ export enum ConversionWayType {
   // Ex. CppVar = UABT::New_ConvFunc(BPVar);
   // Ex. UABT::Free_ConvFunc(CppVar);
   CppFromBP_NewFreeData_CustomConvFunc,
+
+  CppFromBP_NewFreeDataWithSize_CustomConvFunc,
+
   // need memory allocation
   // UABT::New_RawDataArray<CppType,BPType>(CppArrayVar,CppSize,BPVar);
   // UABT::Free_RawDataArray<CppType,BPType>(CppArrayVar,CppSize);
   CppFromBP_NewFreeArrayData_CustomConvFunc,
   // Directly Set Data
   // Ex. Convfunc_SetData(CppVar, BPVar, CppVarSize);
-  CppFromBP_SetArrayData_CustomConvFunc,
   // need call conversion function
   // Example: CreateRawData()
   // Ex. CppVar = BPVar.CreateRawData();
@@ -128,8 +133,6 @@ export enum ConversionWayType {
   // Ex. CppVar = BPVar.CreateRawOptData();
   // Ex. BPVar.FreeRawOptData(CppVar);
   CppFromBP_CreateFreeOptData,
-
-
 
   CppFromBP_NewFree_RawDataPtr1D,
   CppFromBP_NewFree_CustomRawDataPtr1D,
@@ -236,8 +239,8 @@ export const map_one_category_basicconv_bpfromcpp = new Map<
   [
     'TArray',
     {
-      convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
-      convFunc:'',
+      convFuncType: ConversionWayType.BPFromCpp_Func_SetBPDataArray,
+      convFunc: '',
       convFuncAdditional01: '',
     },
   ],
@@ -278,7 +281,7 @@ export const map_one_category_basicconv_cppfrombp = new Map<
     'TArray',
     {
       convFuncType: ConversionWayType.CppFromBP_NewFree_CustomRawDataArray,
-      convFunc:'',
+      convFunc: '',
       convFuncAdditional01: '',
     },
   ],
@@ -370,7 +373,7 @@ const defaultTmpl_FString_SetArray: UEBPTypeConvData = {
     convFuncAdditional01: '',
   },
   convToCpp: {
-    convFuncType: ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc,
+    convFuncType: ConversionWayType.SetArrayData_Size,
     convFunc: 'UABT::SetCharArray',
     convFuncAdditional01: '',
   },
@@ -537,9 +540,16 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'FString',
       defaultValue: '0',
-
-      // TBD(WinterPu)
-      // need conv func
+      convFromCpp: {
+        convFuncType: ConversionWayType.BasicConvFunc,
+        convFunc: 'UABT::FromUInt64ToFString',
+        convFuncAdditional01: '',
+      },
+      convToCpp: {
+        convFuncType: ConversionWayType.BasicConvFunc,
+        convFunc: 'UABT::ToUInt64FromFString',
+        convFuncAdditional01: '',
+      },
     },
     'int16_t': {
       ...defaultTmpl_BasicType_NoConv,
@@ -602,14 +612,15 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpDesignedDeclType: 'TArray<FString>',
       parsePointerForceEnable: true,
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
-        convFunc: AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA,
+        convFuncType: ConversionWayType.SetArrayData_Size,
+        convFunc: AGORA_MUSTACHE_DATA.SET_BP_FSTRING_TARRAY,
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
-        convFunc: 'UABT::New_CharPtr2D',
-        convFuncAdditional01: 'UABT::Free_CharPtr2D',
+        convFuncType:
+          ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
+        convFunc: 'UABT::New_CharArray2D',
+        convFuncAdditional01: 'UABT::Free_CharArray2D',
       },
       cppDesignedDeclType: 'char**',
     },
@@ -621,14 +632,15 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpDesignedDeclType: 'TArray<FString>',
       parsePointerForceEnable: true,
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
-        convFunc: '',
+        convFuncType: ConversionWayType.SetArrayData_Size,
+        convFunc: AGORA_MUSTACHE_DATA.SET_BP_FSTRING_TARRAY,
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
-        convFunc: 'UABT::New_CharPtr2D',
-        convFuncAdditional01: 'UABT::Free_CharPtr2D',
+        convFuncType:
+          ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
+        convFunc: 'UABT::New_CharArray2D',
+        convFuncAdditional01: 'UABT::Free_CharArray2D',
       },
       cppDesignedDeclType: 'char**',
     },
@@ -644,7 +656,8 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
+        convFuncType:
+          ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
         convFunc: 'UABT::New_FloatArrayPtr',
         convFuncAdditional01: 'UABT::Free_FloatArrayPtr',
       },
@@ -656,12 +669,13 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpDesignedDeclType: 'TArray<int>',
       bpDesignedTypeSource: 'const TArray<int> &',
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
+        convFuncType: ConversionWayType.BPFromCpp_Func_SetBPDataArray,
         convFunc: '',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
+        convFuncType:
+          ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
         convFunc: AGORA_MUSTACHE_DATA.NEW_RAW_ARRAY_DATA,
         convFuncAdditional01: AGORA_MUSTACHE_DATA.FREE_RAW_ARRAY_DATA,
       },
@@ -673,12 +687,13 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpTypeName: 'int64',
       bpDesignedTypeSource: 'TArray<int64>',
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
+        convFuncType: ConversionWayType.BPFromCpp_Func_SetBPDataArray,
         convFunc: '',
         convFuncAdditional01: '',
       },
       convToCpp: {
-        convFuncType: ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
+        convFuncType:
+          ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc,
         convFunc: 'UABT::New_UIDArrayPtr',
         convFuncAdditional01: 'UABT::Free_UIDArrayPtr',
       },
@@ -709,7 +724,7 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       ...defaultTmpl_Int64_Pointer,
       bpTypeName: 'int64',
       defaultValue: '0',
-      cppDesignedDeclType:'void*',
+      cppDesignedDeclType: 'void*',
     },
     'agora::view_t*': {
       // TBD(WinterPu) check it
@@ -717,7 +732,7 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       bpTypeName: 'int64',
       defaultValue: '0',
       convFromCpp: {
-        convFuncType: ConversionWayType.BPFromCpp_SetBPDataArray,
+        convFuncType: ConversionWayType.BPFromCpp_Func_SetBPDataArray,
         convFunc: '',
         convFuncAdditional01: '',
       },
@@ -726,7 +741,6 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
         convFunc: '',
         convFuncAdditional01: '',
       },
-
     },
 
     // Agora Related
@@ -964,8 +978,11 @@ export const map_struct_member_variable_size_count: { [key: string]: string } =
 //   'agora::rtc::AudioPcmFrame': 'AudioPcmFrame_OPTIONAL_ENUM_SIZE_T',
 // };
 
+export const map_class_struct_without_default_constructor: {
+  [key: string]: string;
+} = {
+  'agora::rtc::MixedAudioStream':
+    'agora::rtc::MixedAudioStream AgoraData(agora::rtc::AUDIO_SOURCE_TYPE::AUDIO_SOURCE_UNKNOWN);',
+};
 
-export const map_class_struct_without_default_constructor: { [key: string]: string } =
-  {
-    'agora::rtc::MixedAudioStream': 'agora::rtc::MixedAudioStream AgoraData(EUABT_AUDIO_SOURCE_TYPE::AUDIO_SOURCE_UNKNOWN);',
-  };
+export const map_callback_no_void_return_val: { [key: string]: string } = {};

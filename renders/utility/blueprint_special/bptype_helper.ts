@@ -469,6 +469,7 @@ export function convertToBPType(
   isReturnType?: boolean,
   options?: AnalysisOptions
 ): UEBPType {
+
   let result = new UEBPType();
   result.cppTypeName = type.name;
   result.cppTypeSource = type.source;

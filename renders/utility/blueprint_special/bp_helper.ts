@@ -599,6 +599,10 @@ export function genContextBasedOnConversionWayType(
     return Tools.extractBracketNumber(bpType.source);
   }
 
+  function genSizeVarStr(str_array_size: string,prefix: string): string {
+    return Tools.isNumeric(str_array_size) ?  str_array_size : prefix + str_array_size;
+  }
+
   // common data
   const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
   const conv_cppfrombp = bpType.bpConv_CppFromBP;
@@ -609,7 +613,7 @@ export function genContextBasedOnConversionWayType(
   const s_cpp_decl_type = bpType.cppDeclType;
   const s_bp_decl_type = bpType.declType;
   const s_bp_type_name = bpType.name;
-  const s_array_size = extra_data_size_count;
+  const conv_array_size = extra_data_size_count;
 
   // decl type
   if(extra_data_bIsCppFromBP === undefined && (context_type === EBPContextGenType.DeclType_Decl || context_type === EBPContextGenType.DeclType_Usage || context_type === EBPContextGenType.DeclType_Free)){
@@ -627,6 +631,10 @@ export function genContextBasedOnConversionWayType(
   let decl_array_size = extractArraySizeFromType(bpType);
 
   const STR_INVALID_CONV = 'Invalid Conversion';
+  const declIsCppFromBP = function(res: string): string {
+    return isCppFromBP ? res : STR_INVALID_CONV;
+  }
+  
 
   const defaultTmpl_AllInValidConv: Record<EBPContextGenType, string> = {
     [EBPContextGenType.Struct_Constructor]: STR_INVALID_CONV,
@@ -646,30 +654,132 @@ export function genContextBasedOnConversionWayType(
     [EBPContextGenType.DeclType_Free]: '',
   };
 
-  const defaultTmpl_BasicConv : Record<EBPContextGenType, string> = {
-    [EBPContextGenType.Struct_Constructor]: `this->${var_name} = ${conv_bpfromcpp.convFunc}(${AGORA_DATA}.${var_name});`,
-    [EBPContextGenType.Struct_CreateRawData]: `${AGORA_DATA}.${var_name} = ${conv_cppfrombp.convFunc}(this->${var_name});`,
-    [EBPContextGenType.Struct_FreeRawData]: '',
-    [EBPContextGenType.DeclType_Decl]: `${decl_type} ${decl_var_name} = ${data_decl_conv.convFunc}(${var_name});`,
-    [EBPContextGenType.DeclType_Usage]: `${decl_var_name}`,
-    [EBPContextGenType.DeclType_Free]: '',
-  };
 
 
-  const defaultTmpl_NewFreeConv: Record<EBPContextGenType, string> = {
-    [EBPContextGenType.Struct_Constructor]:
-    STR_INVALID_CONV,
-    [EBPContextGenType.Struct_CreateRawData]:
-    `${AGORA_DATA}.${var_name} = ${conv_cppfrombp.convFunc}(this->${var_name});`,
-    [EBPContextGenType.Struct_FreeRawData]:
-    `${conv_cppfrombp.convFuncAdditional01}(${AGORA_DATA}.${var_name});`,
-    [EBPContextGenType.DeclType_Decl]:
-    `${decl_type} ${decl_var_name} = ${data_decl_conv.convFunc}(${var_name});`,
-    [EBPContextGenType.DeclType_Usage]:
-    `${decl_var_name}`,
-    [EBPContextGenType.DeclType_Free]:
-    `${data_decl_conv.convFuncAdditional01}(${decl_var_name});`,
-  };
+  const genfunc_DefaultTmpl_BasicConv = function(bpfromcpp_conv_func: string, cppfrombp_conv_func: string, dec_conv_func: string): Record<EBPContextGenType, string>  {
+    const result : Record<EBPContextGenType, string> = {
+      [EBPContextGenType.Struct_Constructor]: `this->${var_name} = ${bpfromcpp_conv_func}(${AGORA_DATA}.${var_name});`,
+      [EBPContextGenType.Struct_CreateRawData]: `${AGORA_DATA}.${var_name} = ${cppfrombp_conv_func}(this->${var_name});`,
+      [EBPContextGenType.Struct_FreeRawData]: '',
+      [EBPContextGenType.DeclType_Decl]: `${decl_type} ${decl_var_name} = ${dec_conv_func}(${var_name});`,
+      [EBPContextGenType.DeclType_Usage]: `${decl_var_name}`,
+      [EBPContextGenType.DeclType_Free]: '',
+    };
+    return result;
+  }
+
+  type TmplOptions = {
+    bUseSize: boolean;
+    bUseTmplType: boolean;
+  }
+
+  const genfunc_DefaultTmpl_SetArrayData = function(options: TmplOptions, conv_func_setdata_bpfromcpp: string,conv_func_setdata_cppfrombp: string,decl_func_setdata: string): Record<EBPContextGenType, string> {
+    const str_conv_array_size_bpfromcpp = options.bUseSize ? ", " + genSizeVarStr(conv_array_size, `${AGORA_DATA}.`) : '';
+
+    const str_conv_array_size_cppfrombp = options.bUseSize ? ", " + genSizeVarStr(conv_array_size, `this->`) : '';
+
+    const str_decl_array_size = options.bUseSize ? ", " + decl_array_size : '';
+
+    const str_conv_tmpl_type = options.bUseTmplType ? `<${s_cpp_decl_type}, ${s_bp_type_name}>` : '';
+    const str_decl_tmpl_type = options.bUseTmplType ? `<${decl_type}, ${convert_to_decl_type}>` : '';
+
+    const result  = {
+      ...defaultTmpl_NoConv,
+      [EBPContextGenType.Struct_Constructor]:
+      `${conv_func_setdata_bpfromcpp}${str_conv_tmpl_type}(this->${var_name}, ${AGORA_DATA}.${var_name}${str_conv_array_size_bpfromcpp});`,
+      [EBPContextGenType.Struct_CreateRawData]:
+      `${conv_func_setdata_cppfrombp}(${AGORA_DATA}.${var_name},this->${var_name}${str_conv_array_size_cppfrombp});`,
+      [EBPContextGenType.Struct_FreeRawData]:
+      '',
+      [EBPContextGenType.DeclType_Decl]:
+      declIsCppFromBP(`${decl_type} ${decl_var_name}; ${decl_func_setdata}${str_decl_tmpl_type}(${decl_var_name}, ${var_name}${str_decl_array_size});`),
+      [EBPContextGenType.DeclType_Usage]:
+      declIsCppFromBP(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+      [EBPContextGenType.DeclType_Free]:
+      declIsCppFromBP(defaultTmpl_NoConv[EBPContextGenType.DeclType_Free]),
+    }
+
+    return result;
+  }
+
+  const genfunc_DefaultTmpl_CppFromBP_NewFreeData = function(options : TmplOptions, conv_func_new?: string, conv_func_free?: string, decl_func_new?: string, decl_func_free?: string): Record<EBPContextGenType, string> {
+    const str_conv_func_new = conv_func_new ?? conv_cppfrombp.convFunc;
+    const str_conv_func_free = conv_func_free ?? conv_cppfrombp.convFuncAdditional01;
+    const str_decl_func_new = decl_func_new ?? data_decl_conv.convFunc;
+    const str_decl_func_free = decl_func_free ?? data_decl_conv.convFuncAdditional01;
+    
+    const str_conv_array_size = options.bUseSize ? ", " + genSizeVarStr(conv_array_size, 'this->') : '';
+    const str_decl_array_size = options.bUseSize ? ", " + decl_array_size : '';
+
+    const str_conv_tmpl_type = options.bUseTmplType ? `<${s_cpp_decl_type}, ${s_bp_type_name}>` : '';
+    const str_decl_tmpl_type = options.bUseTmplType ? `<${decl_type}, ${convert_to_decl_type}>` : '';
+
+    const result : Record<EBPContextGenType, string> = {
+      [EBPContextGenType.Struct_Constructor]:
+      STR_INVALID_CONV,
+      [EBPContextGenType.Struct_CreateRawData]:
+      `${AGORA_DATA}.${var_name} = ${str_conv_func_new}${str_conv_tmpl_type}(this->${var_name}${str_conv_array_size});`,
+      [EBPContextGenType.Struct_FreeRawData]:
+      `${str_conv_func_free}${str_conv_tmpl_type}(${AGORA_DATA}.${var_name}${str_conv_array_size});`,
+      [EBPContextGenType.DeclType_Decl]:
+      declIsCppFromBP(`${decl_type} ${decl_var_name} = ${str_decl_func_new}${str_decl_tmpl_type}(${var_name}${str_decl_array_size});`),
+      [EBPContextGenType.DeclType_Usage]:
+      declIsCppFromBP(`${decl_var_name}`),
+      [EBPContextGenType.DeclType_Free]:
+      declIsCppFromBP(`${str_decl_func_free}${str_decl_tmpl_type}(${decl_var_name}${str_decl_array_size});`),
+    };
+
+    return result;
+  }
+
+  const genfunc_DefaultTmpl_CppFromBP_NewFreeArrayData = function(options : TmplOptions, conv_func_new?: string, conv_func_free?: string, decl_func_new?: string, decl_func_free?: string): Record<EBPContextGenType, string> {
+    const defaultTmpl_NewFreeConv = genfunc_DefaultTmpl_CppFromBP_NewFreeData(options, conv_func_new, conv_func_free, decl_func_new, decl_func_free);
+
+    const str_conv_func_new = conv_func_new ?? conv_cppfrombp.convFunc;
+    const str_conv_func_free = conv_func_free ?? conv_cppfrombp.convFuncAdditional01;
+    const str_decl_func_new = decl_func_new ?? data_decl_conv.convFunc;
+    const str_decl_func_free = decl_func_free ?? data_decl_conv.convFuncAdditional01;
+
+    const str_conv_array_size = options.bUseSize ? ", " + genSizeVarStr(conv_array_size, 'this->') : '';
+    const str_decl_array_size = options.bUseSize ? ", " + decl_array_size : '';
+
+    const str_conv_tmpl_type = options.bUseTmplType ? `<${s_cpp_decl_type}, ${s_bp_type_name}>` : '';
+    const str_decl_tmpl_type = options.bUseTmplType ? `<${decl_type}, ${convert_to_decl_type}>` : '';
+
+    const result : Record<EBPContextGenType, string> = {
+      ...defaultTmpl_NewFreeConv,
+      [EBPContextGenType.Struct_CreateRawData]:
+      `${str_conv_func_new}${str_conv_tmpl_type}(${AGORA_DATA}.${var_name},this->${var_name}${str_conv_array_size});`,
+      [EBPContextGenType.Struct_FreeRawData]:
+      `${str_conv_func_free}${str_conv_tmpl_type}(${AGORA_DATA}.${var_name}${str_conv_array_size});`,
+      [EBPContextGenType.DeclType_Decl]:
+      declIsCppFromBP(`${decl_type} ${decl_var_name} = ${str_decl_func_new}${str_decl_tmpl_type}(${var_name}${str_decl_array_size});`),
+      [EBPContextGenType.DeclType_Free]:
+      declIsCppFromBP(`${str_decl_func_free}${str_decl_tmpl_type}(${decl_var_name}${str_decl_array_size});`),
+    };
+    return result;
+  }
+
+
+  const genfunc_DefaultTmpl_CallConvFunc = function(conv_func_create: string, conv_func_free: string, decl_func_create: string, decl_func_free: string): Record<EBPContextGenType, string> {
+    const result = {
+      ...defaultTmpl_NoConv,
+      [EBPContextGenType.Struct_Constructor]:
+      STR_INVALID_CONV,
+      [EBPContextGenType.Struct_CreateRawData]:
+      `${AGORA_DATA}.${var_name} = ${var_name}.${conv_func_create}();`,
+      [EBPContextGenType.Struct_FreeRawData]:
+      `${var_name}.${conv_func_free}(${AGORA_DATA}.${var_name});`,
+      [EBPContextGenType.DeclType_Decl]:
+      declIsCppFromBP(`${decl_type} ${decl_var_name} = ${var_name}.${decl_func_create}();`),
+      [EBPContextGenType.DeclType_Usage]:
+      declIsCppFromBP(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
+      [EBPContextGenType.DeclType_Free]:
+      declIsCppFromBP(`${var_name}.${decl_func_free}(${decl_var_name});`),
+    };
+
+    return result;
+  }
 
   let result_map: Record<EBPContextGenType, string> = defaultTmpl_NoConv;
 
@@ -677,32 +787,26 @@ export function genContextBasedOnConversionWayType(
     case ConversionWayType.NoNeedConversion:
       result_map = defaultTmpl_NoConv;
       break;
-    case ConversionWayType.BasicConvFunc:
-      result_map = defaultTmpl_BasicConv;
+    case ConversionWayType.BasicConvFunc:{
+      const conv_func_bpfromcpp = conv_bpfromcpp.convFunc;
+      const conv_func_cppfrombp = conv_cppfrombp.convFunc;
+      const conv_func_decl = data_decl_conv.convFunc;
+      result_map = genfunc_DefaultTmpl_BasicConv(conv_func_bpfromcpp, conv_func_cppfrombp, conv_func_decl);
       break;
+    }
     
     case ConversionWayType.DirectlyConv_StaticCast:{
-      result_map = {
-        ...defaultTmpl_NoConv,
-        [EBPContextGenType.Struct_Constructor]:
-        `this->${var_name} = static_cast<${s_bp_decl_type}>(${AGORA_DATA}.${var_name});`,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${AGORA_DATA}.${var_name} = static_cast<${s_cpp_decl_type}>(${var_name});`,
-        [EBPContextGenType.DeclType_Decl]:
-        `${decl_type} ${decl_var_name} = static_cast<${decl_type}>(${var_name});`,
-      };
+      const conv_func_bpfromcpp = `static_cast<${s_bp_decl_type}>`;
+      const conv_func_cppfrombp = `static_cast<${s_cpp_decl_type}>`;
+      const conv_func_decl = `static_cast<${decl_type}>`;
+      result_map = genfunc_DefaultTmpl_BasicConv(conv_func_bpfromcpp, conv_func_cppfrombp, conv_func_decl);
       break;
     }
     case ConversionWayType.DirectlyConv_ReinterpretCast:{
-      result_map = {
-        ...defaultTmpl_NoConv,
-        [EBPContextGenType.Struct_Constructor]:
-        `this->${var_name} = reinterpret_cast<${s_bp_decl_type}>(${AGORA_DATA}.${var_name});`,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${AGORA_DATA}.${var_name} = reinterpret_cast<${s_cpp_decl_type}>(${var_name});`,
-        [EBPContextGenType.DeclType_Decl]:
-        `${decl_type} ${decl_var_name} = reinterpret_cast<${decl_type}>(${var_name});`,
-      }
+      const conv_func_bpfromcpp = `reinterpret_cast<${s_bp_decl_type}>`;
+      const conv_func_cppfrombp = `reinterpret_cast<${s_cpp_decl_type}>`;
+      const conv_func_decl = `reinterpret_cast<${decl_type}>`;
+      result_map = genfunc_DefaultTmpl_BasicConv(conv_func_bpfromcpp, conv_func_cppfrombp, conv_func_decl);
       break;
     }
 
@@ -719,75 +823,49 @@ export function genContextBasedOnConversionWayType(
       break;
     }
   
-    case ConversionWayType.BPFromCpp_SetBPDataArray:{
-      const conv_func = AGORA_MUSTACHE_DATA.ConvFunc_Set_BPDataArray;
-      const declIsValid = function(res: string): string {
-        return isCppFromBP ? STR_INVALID_CONV : res;
-      }
-    
-      result_map = {
-        ...defaultTmpl_NoConv,
-        [EBPContextGenType.Struct_Constructor]:
-        `${conv_func}<${s_cpp_decl_type}, ${s_bp_type_name}>(this->${var_name}, ${AGORA_DATA}.${var_name},${s_array_size});`,
-        [EBPContextGenType.Struct_CreateRawData]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_FreeRawData]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.DeclType_Decl]:
-          declIsValid(`${decl_type} ${decl_var_name}; ${conv_func}<${s_cpp_decl_type}, ${s_bp_type_name}>(${decl_var_name}, ${var_name},${decl_array_size});`),
-        [EBPContextGenType.DeclType_Usage]:
-          declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
-        [EBPContextGenType.DeclType_Free]:
-          declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Free]),
-      }
+    case ConversionWayType.BPFromCpp_Func_SetBPDataArray:{
+      const conv_func_setdata_bpfromcpp = AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA;
+      const conv_func_setdata_cppfrombp = AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA;
+      const decl_func = AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA;
+      result_map = genfunc_DefaultTmpl_SetArrayData({bUseSize: true, bUseTmplType: true},conv_func_setdata_bpfromcpp,conv_func_setdata_cppfrombp,decl_func);
       break;
     }
+
+    case ConversionWayType.SetArrayData:{
+      const conv_func_setdata_bpfromcpp = conv_bpfromcpp.convFunc;
+      const conv_func_setdata_cppfrombp = conv_cppfrombp.convFunc;
+      const decl_func = data_decl_conv.convFunc;
+      result_map = genfunc_DefaultTmpl_SetArrayData({bUseSize: false, bUseTmplType: false},conv_func_setdata_bpfromcpp,conv_func_setdata_cppfrombp,decl_func);
+      break;
+    }
+
+    case ConversionWayType.SetArrayData_Size:{
+      const conv_func_setdata_bpfromcpp = conv_bpfromcpp.convFunc;
+      const conv_func_setdata_cppfrombp = conv_cppfrombp.convFunc;
+      const decl_func = data_decl_conv.convFunc;
+      result_map = genfunc_DefaultTmpl_SetArrayData({bUseSize: true, bUseTmplType: false},conv_func_setdata_bpfromcpp,conv_func_setdata_cppfrombp,decl_func);
+      break;
+    }
+
+    case ConversionWayType.SetArrayData_Size_TmplType:{
+      const conv_func_setdata_bpfromcpp = conv_bpfromcpp.convFunc;
+      const conv_func_setdata_cppfrombp = conv_cppfrombp.convFunc;
+      const decl_func = data_decl_conv.convFunc;
+      result_map = genfunc_DefaultTmpl_SetArrayData({bUseSize: true, bUseTmplType: true},conv_func_setdata_bpfromcpp,conv_func_setdata_cppfrombp,decl_func);
+      break;
+    }
+
     case ConversionWayType.CppFromBP_NewFreeData_CustomConvFunc:{
-      result_map = defaultTmpl_NewFreeConv;
+      result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeData({bUseSize: false, bUseTmplType: false});
+      break;
+    }
+    
+    case ConversionWayType.CppFromBP_NewFreeDataWithSize_CustomConvFunc:{
+      result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeData({bUseSize: true, bUseTmplType: false});
       break;
     }
     case ConversionWayType.CppFromBP_NewFreeArrayData_CustomConvFunc:{
-
-      const conv_func_new = conv_cppfrombp.convFunc;
-      const conv_func_free = conv_cppfrombp.convFuncAdditional01;
-      const decl_func_new = data_decl_conv.convFunc;
-      const decl_func_free = data_decl_conv.convFuncAdditional01;
-      const declIsValid = function(res: string): string {
-        return isCppFromBP ? res : STR_INVALID_CONV;
-      }
-      const str_size = Tools.IsNotEmptyStr(decl_array_size) ? ', ' + decl_array_size : '';
-
-      result_map = {
-        ...defaultTmpl_NewFreeConv,
-        [EBPContextGenType.Struct_Constructor]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${conv_func_new}(${AGORA_DATA}.${var_name},this->${var_name},${s_array_size});`,
-        [EBPContextGenType.Struct_FreeRawData]:
-        `${conv_func_free}(${AGORA_DATA}.${var_name},${s_array_size});`,
-        [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${decl_func_new}(${var_name},${decl_array_size});`),
-        [EBPContextGenType.DeclType_Usage]:
-        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
-        [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${decl_func_free}(${decl_var_name},${decl_array_size});`),
-      }
-      break;
-    }
-    case ConversionWayType.CppFromBP_SetArrayData_CustomConvFunc:{
-      const conv_func_new = conv_cppfrombp.convFunc;
-      const conv_func_free = conv_cppfrombp.convFuncAdditional01;
-      const str_size = Tools.IsNotEmptyStr(decl_array_size) ? ', ' + decl_array_size : '';
-
-      result_map = {
-        ...defaultTmpl_NoConv,
-        [EBPContextGenType.Struct_Constructor]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${conv_func_new}(${AGORA_DATA}.${var_name},this->${var_name},${s_array_size});`,
-        [EBPContextGenType.DeclType_Decl]:
-        `${decl_type} ${decl_var_name}; ${conv_func_new}(${decl_var_name}, ${var_name}${str_size});`,
-      }
+      result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeArrayData({bUseSize: true, bUseTmplType: false});
       break;
     }
     case ConversionWayType.CppFromBP_NeedCallCreateFreeRawData:{
@@ -798,21 +876,7 @@ export function genContextBasedOnConversionWayType(
       const declIsValid = function(res: string): string {
         return isCppFromBP ? res : STR_INVALID_CONV;
       }
-      result_map = {
-        ...defaultTmpl_NewFreeConv,
-        [EBPContextGenType.Struct_Constructor]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${AGORA_DATA}.${var_name} = ${var_name}.${conv_func_create}();`,
-        [EBPContextGenType.Struct_FreeRawData]:
-        `${var_name}.${conv_func_free}(${AGORA_DATA}.${var_name});`,
-        [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${var_name}.${decl_func_create}();`),
-        [EBPContextGenType.DeclType_Usage]:
-        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
-        [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${var_name}.${decl_func_free}(${decl_var_name});`),
-      };
+      result_map = genfunc_DefaultTmpl_CallConvFunc(conv_func_create, conv_func_free, decl_func_create, decl_func_free);
       break;
     }
     case ConversionWayType.CppFromBP_NeedCallCustomConvFunc:{
@@ -823,21 +887,7 @@ export function genContextBasedOnConversionWayType(
       const declIsValid = function(res: string): string {
         return isCppFromBP ? res : STR_INVALID_CONV;
       }
-      result_map = {
-        ...defaultTmpl_NewFreeConv,
-        [EBPContextGenType.Struct_Constructor]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${AGORA_DATA}.${var_name} = ${var_name}.${conv_func_create}();`,
-        [EBPContextGenType.Struct_FreeRawData]:
-        `${var_name}.${conv_func_free}(${AGORA_DATA}.${var_name});`,
-        [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${var_name}.${decl_func_create}();`),
-        [EBPContextGenType.DeclType_Usage]:
-        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
-        [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${var_name}.${decl_func_free}(${decl_var_name});`),
-      };
+      result_map = genfunc_DefaultTmpl_CallConvFunc(conv_func_create, conv_func_free, decl_func_create, decl_func_free);
       break;
     }
     case ConversionWayType.CppFromBP_CreateFreeOptData:{
@@ -848,21 +898,7 @@ export function genContextBasedOnConversionWayType(
       const declIsValid = function(res: string): string {
         return isCppFromBP ? res : STR_INVALID_CONV;
       }
-      result_map = {
-        ...defaultTmpl_NewFreeConv,
-        [EBPContextGenType.Struct_Constructor]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${AGORA_DATA}.${var_name} = ${var_name}.${conv_func_create}();`,
-        [EBPContextGenType.Struct_FreeRawData]:
-        `${var_name}.${conv_func_free}(${AGORA_DATA}.${var_name});`,
-        [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${var_name}.${decl_func_create}();`),
-        [EBPContextGenType.DeclType_Usage]:
-        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
-        [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${var_name}.${decl_func_free}(${decl_var_name});`),
-      };
+      result_map = genfunc_DefaultTmpl_CallConvFunc(conv_func_create, conv_func_free, decl_func_create, decl_func_free);
       break;
     }
       
@@ -875,21 +911,7 @@ export function genContextBasedOnConversionWayType(
         return isCppFromBP ? res : STR_INVALID_CONV;
       }
 
-      result_map = {
-        ...defaultTmpl_NewFreeConv,
-        [EBPContextGenType.Struct_Constructor]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${AGORA_DATA}.${var_name} = ${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(${var_name},${s_array_size});`,
-        [EBPContextGenType.Struct_FreeRawData]:
-        `${conv_func_free}<${s_cpp_decl_type}>(${AGORA_DATA}.${var_name});`,
-        [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${decl_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${decl_array_size});`),
-        [EBPContextGenType.DeclType_Usage]:
-        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
-        [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${decl_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
-      }
+      result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeData({bUseSize: true, bUseTmplType: true},conv_func_new,conv_func_free,decl_func_new,decl_func_free);
       break;
     }
 
@@ -900,24 +922,8 @@ export function genContextBasedOnConversionWayType(
       const conv_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataPtr1D;
       const decl_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataPtr1D;
       const decl_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataPtr1D;
-      const declIsValid = function(res: string): string {
-        return isCppFromBP ? res : STR_INVALID_CONV;
-      }
-      result_map = {
-        ...defaultTmpl_NewFreeConv,
-        [EBPContextGenType.Struct_Constructor]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${AGORA_DATA}.${var_name} = ${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(this->${var_name},${s_array_size});`,
-        [EBPContextGenType.Struct_FreeRawData]:
-        `${conv_func_free}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},${s_array_size});`,
-        [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${decl_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${s_array_size});`),
-        [EBPContextGenType.DeclType_Usage]:
-        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
-        [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${decl_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
-      }
+      
+      result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeData({bUseSize: true, bUseTmplType: true},conv_func_new,conv_func_free,decl_func_new,decl_func_free);
       break;
     }
 
@@ -927,26 +933,9 @@ export function genContextBasedOnConversionWayType(
       const conv_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataArray;
       const decl_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataArray;
       const decl_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataArray;
-      const declIsValid = function(res: string): string {
-        return isCppFromBP ? res : STR_INVALID_CONV;
-      }
-      const str_size = Tools.IsNotEmptyStr(decl_array_size) ? ', ' + decl_array_size : '';
 
-      result_map = {
-        ...defaultTmpl_NewFreeConv,
-        [EBPContextGenType.Struct_Constructor]:
-        STR_INVALID_CONV,
-        [EBPContextGenType.Struct_CreateRawData]:
-        `${conv_func_new}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},this->${var_name},${s_array_size});`,
-        [EBPContextGenType.Struct_FreeRawData]:
-        `${conv_func_free}<${s_cpp_decl_type}, ${s_bp_type_name}>(${AGORA_DATA}.${var_name},${s_array_size});`,
-        [EBPContextGenType.DeclType_Decl]:
-        declIsValid(`${decl_type} ${decl_var_name} = ${decl_func_new}<${decl_type}, ${convert_to_decl_type}>(${var_name},${decl_array_size});`),
-        [EBPContextGenType.DeclType_Usage]:
-        declIsValid(defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]),
-        [EBPContextGenType.DeclType_Free]:
-        declIsValid(`${decl_func_free}<${decl_type}, ${convert_to_decl_type}>(${decl_var_name},${decl_array_size});`),
-      }
+      result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeArrayData({bUseSize: true, bUseTmplType: true},conv_func_new,conv_func_free,decl_func_new,decl_func_free);
+
       break;
     }
   }

@@ -150,6 +150,12 @@ namespace agora {
 				}
 
 
+
+				static inline uint64_t ToUInt64FromFString(const FString & Src) {
+					// need to be checked
+					return FCString::Atou64(*Src);
+				}
+
 #pragma endregion To
 
 
@@ -183,6 +189,11 @@ namespace agora {
 					return FVector(farray[0], farray[1], farray[2]);
 				}
 
+				static inline FString FromUInt64ToFString(uint64_t num) {
+					// TBD(WinterPu)
+					// need to be checked
+					return FString::FromInt(num);
+				}
 
 #pragma endregion From
 
@@ -206,14 +217,19 @@ namespace agora {
 				}
 
 
-				static inline char** New_CharPtr2D(const TArray<FString> & StrList){
+				static inline char** New_CharPtr2D(const TArray<FString> & StrList, int Size){
 				
-					char** Result = new char* [StrList.Num()]; 
-					for (unsigned int i = 0; i < static_cast<unsigned int>(StrList.Num()); i++) {
+					char** Result = new char* [Size]; 
+					for (unsigned int i = 0; i < static_cast<unsigned int>(Size); i++) {
 						Result[i] = UABT::New_CharPtr1D(StrList[i]);
 					}
 					return Result;
 
+				}
+
+
+				static inline void New_CharArray2D(const char**  Dst, const TArray<FString>& StrList, int Size){
+					// because cannot assign char** to const  char **
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
@@ -297,6 +313,11 @@ namespace agora {
 
 				}
 
+
+				static inline void Free_CharArray2D(const char** Dst, int Size) {
+				
+				}
+
 				static inline void Free_UIDPtr1D(agora::rtc::uid_t*& Ptr) {
 					Free_Ptr1D<agora::rtc::uid_t>(Ptr);
 				}
@@ -360,12 +381,24 @@ namespace agora {
 					}
 				}
 
+				static inline void SetBPFStringTArray(TArray<FString>& Dst, const char** Src, int Size){
+					Dst.Empty();
+					for (int i = 0; i < Size; i++) {
+						if (Src[i] != nullptr) {
+							Dst.Add(FString(UTF8_TO_TCHAR(Src[i])));
+						}
+						else {
+							Dst.Add(FString()); // Add empty string for null pointers
+						}
+					}
+				}
+
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
 				static inline void SetBPDataArray(TArray<UABT_TYPE>& Dst, const RAW_TYPE* Src, int Size){
 					Dst.Empty();
 					for (int i = 0; i < Size; i++) {
-						Dst[i].Add(Src[i]);
+						Dst.Add(Src[i]);
 					}
 				}
 

@@ -110,3 +110,22 @@ export function removeAttributes(typeStr: string): string {
 
   return result;
 }
+
+export function isNumeric(str: string): boolean {
+  // 如果为空，非字符串或只有空格，则不是数字
+  if (!str || typeof str !== 'string' || str.trim() === '') {
+    return false;
+  }
+
+  // 移除前后空格
+  const trimmedStr = str.trim();
+
+  // 使用isNaN和Number转换检查是否为数字
+  // 注意：isNaN("123") 返回 false，因为 "123" 可以转换为数字
+  // isNaN("abc") 返回 true，因为 "abc" 不能转换为数字
+  const numValue = Number(trimmedStr);
+
+  // !isNaN(numValue) 检查它是一个有效的数字
+  // isFinite(numValue) 确保它不是 Infinity 或 -Infinity
+  return !isNaN(numValue) && isFinite(numValue);
+}

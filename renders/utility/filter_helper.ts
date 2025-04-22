@@ -1,6 +1,6 @@
 import * as Logger from './logger';
 
-const map_failure_return_val: Record<string, string> = {
+export const map_failure_return_val: Record<string, string> = {
   'int': 'AGORA_UE_ERR_CODE(ERROR_NULLPTR)',
   'char const*': 'nullptr',
   'bool': 'false',

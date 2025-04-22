@@ -158,6 +158,10 @@ export function genGeneralTerraData(
             bpCallbackDelegateTypeName: bpMethodNameFullData.delegateTypeName,
             bpCallbackDelegateVarName: bpMethodNameFullData.delegateVarName,
             bpCallbackIsNoParam: bpMethodNameFullData.delegateIsNoParam,
+            bpCallbackIsNoVoidReturnVal:
+              bpMethodNameFullData.delegateNoVoidReturnVal,
+            bpContextNoVoidReturnImpl:
+              bpMethodNameFullData.delegateNoVoidReturnImpl,
 
             bpContextParamsDecl_BPFromCpp:
               contextBPMethod.contextParam_BPFromCpp.contextDecl,

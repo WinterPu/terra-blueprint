@@ -9,7 +9,6 @@ export type ClazzAddtionalContext_ = {
   InitImpl: string;
 };
 
-
 // a static data member with an in-class initializer must have non-volatile const integral type or be specified as 'inline'
 
 export const map_class_initialization: {

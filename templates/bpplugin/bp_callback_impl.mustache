@@ -24,6 +24,12 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
 {{#methods}}
     {{#return_type}}{{{source}}}{{/return_type}} {{parent.user_data.bpNodeName}}::{{name}} ({{#parameters}}{{{type.clang_qualtype}}} {{name}}{{{user_data.defaultValueComment}}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
     {
+{{#user_data.bpCallbackIsNoVoidReturnVal}}
+
+{{{user_data.bpContextNoVoidReturnImpl}}}
+
+{{/user_data.bpCallbackIsNoVoidReturnVal}}
+{{^user_data.bpCallbackIsNoVoidReturnVal}}
 
 {{{user_data.bpContextParamsDecl_BPFromCpp}}}
 
@@ -46,6 +52,9 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
                 {{{user_data.bpContextParamsFree_BPFromCpp}}}
 
             });
+
+{{/user_data.bpCallbackIsNoVoidReturnVal}}
+
     }
 {{/methods}}
 

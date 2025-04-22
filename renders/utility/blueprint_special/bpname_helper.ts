@@ -5,9 +5,11 @@ import {
   MemberFunction,
 } from '@agoraio-extensions/cxx-parser/src/cxx_terra_node';
 
+import { map_failure_return_val } from '../filter_helper';
 import * as Logger from '../logger';
 import * as Tools from '../tools';
 
+import { map_callback_no_void_return_val } from './bptype_data_conv';
 import { AGORA_MUSTACHE_DATA } from './bptype_mustache_data';
 
 export enum BPNodeCategoryType {
@@ -99,6 +101,8 @@ export type BPMethodName = {
   delegateTypeName: string;
   delegateVarName: string;
   delegateIsNoParam: boolean;
+  delegateNoVoidReturnVal: boolean;
+  delegateNoVoidReturnImpl: string;
 };
 
 const bp_multicast_number_prefix: string[] = [
@@ -131,6 +135,8 @@ export function genBPMethodName(
       delegateTypeName: '',
       delegateVarName: '',
       delegateIsNoParam: false,
+      delegateNoVoidReturnVal: false,
+      delegateNoVoidReturnImpl: '',
     };
   }
 
@@ -149,12 +155,36 @@ export function genBPMethodName(
       bp_multicast_number_prefix[len_params - 1]
     }Params`;
   }
+
+  let bIsNoVoid = node_method.return_type.name !== 'void';
+  let bpContextNoVoidImpl = '';
+
+  if (map_callback_no_void_return_val[node_method.return_type.source]) {
+    bIsNoVoid = true;
+    bpContextNoVoidImpl = `${
+      map_callback_no_void_return_val[node_method.return_type.source]
+    }`;
+  } else {
+    if (bIsNoVoid) {
+      // TBD(WinterPu)
+      // tmp use old map [map_failure_return_val]
+      // need to be replaced.
+      const val_return_type =
+        map_failure_return_val[node_method.return_type.name];
+      if (val_return_type) {
+        bpContextNoVoidImpl = `return ${val_return_type};`;
+      }
+    }
+  }
+
   return {
     methodName: method_name,
     delegateMacroName: val_macro_name,
     delegateTypeName: `F${method_name}`,
     delegateVarName: `${method_name}`,
     delegateIsNoParam: len_params === 0,
+    delegateNoVoidReturnVal: bIsNoVoid,
+    delegateNoVoidReturnImpl: bpContextNoVoidImpl,
   };
 }
 
