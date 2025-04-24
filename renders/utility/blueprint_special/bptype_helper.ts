@@ -570,8 +570,13 @@ export function convertToBPType(
       // [X]delegate type: if it is not an output type: it would always be with const and &
       // tmpDelegateType = 'const ' + tmpTypeSource + ' &';
 
+      // TBD(WinterPu)
+      // Delegate Type should be the same as CBExecutor's function type
+      // otherwise,  the DECLARE_DYNAMIC_MULTICAST_DELEGATE_XXXX would be invalid
+
       // const
       if (type.is_const) {
+        tmpDelegateType = 'const ' + tmpTypeSource + ' &';
         tmpTypeSource = 'const ' + tmpTypeSource + ' &';
       }
     }
@@ -579,6 +584,7 @@ export function convertToBPType(
     // const
     if (type.is_const) {
       tmpTypeSource = 'const ' + tmpTypeSource + ' &';
+      tmpDelegateType = 'const ' + tmpTypeSource + ' &';
     }
   }
 

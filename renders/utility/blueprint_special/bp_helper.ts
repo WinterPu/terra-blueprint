@@ -751,15 +751,11 @@ export function genContextBasedOnConversionWayType(
       [EBPContextGenType.Struct_Constructor]: `${conv_func_setdata_bpfromcpp}${str_conv_tmpl_type}(this->${var_name}, ${AGORA_DATA}.${var_name}${str_conv_array_size_bpfromcpp});`,
       [EBPContextGenType.Struct_CreateRawData]: `${conv_func_setdata_cppfrombp}(${AGORA_DATA}.${var_name},this->${var_name}${str_conv_array_size_cppfrombp});`,
       [EBPContextGenType.Struct_FreeRawData]: '',
-      [EBPContextGenType.DeclType_Decl]: declIsCppFromBP(
-        `${decl_type} ${decl_var_name}; ${decl_func_setdata}${str_decl_tmpl_type}(${decl_var_name}, ${var_name}${str_decl_array_size});`
-      ),
-      [EBPContextGenType.DeclType_Usage]: declIsCppFromBP(
-        defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage]
-      ),
-      [EBPContextGenType.DeclType_Free]: declIsCppFromBP(
-        defaultTmpl_NoConv[EBPContextGenType.DeclType_Free]
-      ),
+      [EBPContextGenType.DeclType_Decl]: `${decl_type} ${decl_var_name}; ${decl_func_setdata}${str_decl_tmpl_type}(${decl_var_name}, ${var_name}${str_decl_array_size});`,
+      [EBPContextGenType.DeclType_Usage]:
+        defaultTmpl_NoConv[EBPContextGenType.DeclType_Usage],
+      [EBPContextGenType.DeclType_Free]:
+        defaultTmpl_NoConv[EBPContextGenType.DeclType_Free],
     };
 
     return result;
@@ -927,8 +923,11 @@ export function genContextBasedOnConversionWayType(
       result_map = {
         ...defaultTmpl_AllInValidConv,
         [EBPContextGenType.Struct_Constructor]: `this->${var_name} = ${conv_func}(${AGORA_DATA}.${var_name});`,
-        // decl type
-        // is has special rules:
+        [EBPContextGenType.Struct_CreateRawData]: STR_INVALID_CONV,
+        [EBPContextGenType.Struct_FreeRawData]: STR_INVALID_CONV,
+        [EBPContextGenType.DeclType_Decl]: `${decl_type} ${decl_var_name} = ${conv_func}(${var_name});`,
+        [EBPContextGenType.DeclType_Usage]: `${decl_var_name}`,
+        [EBPContextGenType.DeclType_Free]: '',
       };
       break;
     }
