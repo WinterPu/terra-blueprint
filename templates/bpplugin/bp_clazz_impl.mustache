@@ -8,7 +8,13 @@
 {{{user_data.bpContextParamsDecl_CppFromBP}}}
       // Call Native Method
       
+      {{#user_data.hasReturnVal}}
       auto ret = {{{user_data.bpNativePtr}}}->{{name}}({{{user_data.bpContextParamsUsage_CppFromBP}}});
+      {{/user_data.hasReturnVal}}
+      {{^user_data.hasReturnVal}}
+      // No Return Value
+      {{{user_data.bpNativePtr}}}->{{name}}({{{user_data.bpContextParamsUsage_CppFromBP}}});
+      {{/user_data.hasReturnVal}}
 
 {{{user_data.bpContextParamsFree_CppFromBP}}}
 
