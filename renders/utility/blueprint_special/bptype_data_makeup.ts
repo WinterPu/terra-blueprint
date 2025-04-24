@@ -94,11 +94,11 @@ export const map_class_initialization: {
   
             UAgoraBPuLogger::PrintError("VideoDeviceManager is nullptr." + AGORA_UEBP_ERR_STR[AGORA_UE_ERROR_CODE::ERROR_BP_RTC_ENGINE_NOT_INITIALIZED]);
   
-            InsVideoDeviceManager->VideoDeviceCollection = nullptr;
+            // InsVideoDeviceManager->VideoDeviceCollection = nullptr;
           }
           else{
           
-            InsVideoDeviceManager->VideoDeviceCollection = NewObject<UVideoDeviceCollection>();
+            // InsVideoDeviceManager->VideoDeviceCollection = NewObject<UVideoDeviceCollection>();
           
           }
         }
