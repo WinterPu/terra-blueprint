@@ -1,10 +1,4 @@
 
-{{#methods}}
-{{user_data.bpCallbackDelegateMacroName}}({{user_data.bpCallbackDelegateTypeName}}{{#user_data.bpCallbackIsNoParam}}{{/user_data.bpCallbackIsNoParam}}{{^user_data.bpCallbackIsNoParam}}, {{/user_data.bpCallbackIsNoParam}}{{#parameters}}{{{user_data.bpDelegateType}}}, {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
-{{/methods}}
-
-
-
 // this is a blueprint callback executor which you could add to the target handler
 UCLASS(Blueprintable,Meta = (ShowWorldContextPin))
 class AGORAPLUGIN_API {{user_data.bpNodeName}}CBExecutor : public UObject {
@@ -30,6 +24,12 @@ class AGORAPLUGIN_API {{user_data.bpNodeName}} : public UObject, public {{name}}
   GENERATED_BODY()
 public:
     
+
+{{#methods}}
+{{user_data.bpCallbackDelegateMacroName}}({{user_data.bpCallbackDelegateTypeName}}{{#user_data.bpCallbackIsNoParam}}{{/user_data.bpCallbackIsNoParam}}{{^user_data.bpCallbackIsNoParam}}, {{/user_data.bpCallbackIsNoParam}}{{#parameters}}{{{user_data.bpDelegateType}}}, {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+{{/methods}}
+
+
 public:
   {{#methods}}
 {{{user_data.commentCppStyle}}}

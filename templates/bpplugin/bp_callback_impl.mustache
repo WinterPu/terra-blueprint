@@ -33,7 +33,7 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
 
 {{{user_data.bpContextParamsDecl_BPFromCpp}}}
 
-        TWeakObjectPtr<{{{parent.user_data.bpNodeName}}}*> SelfWeakPtr(this);
+        TWeakObjectPtr<{{{parent.user_data.bpNodeName}}}> SelfWeakPtr(this);
         if(!SelfWeakPtr.IsValid())
             return;
             

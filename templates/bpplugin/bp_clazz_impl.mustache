@@ -1,6 +1,9 @@
 {{#methods}}
   {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
+
+{{{user_data.macro_scope_start}}}
+
       // Convert UEBP to CppType
 {{{user_data.bpContextParamsDecl_CppFromBP}}}
       // Call Native Method
@@ -12,6 +15,8 @@
       {{#user_data.hasReturnVal}}
 {{{user_data.bpContextReturnVal}}}
       {{/user_data.hasReturnVal}}
+
+{{{user_data.macro_scope_end}}}
   }
   
 {{/methods}}
