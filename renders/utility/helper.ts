@@ -177,7 +177,9 @@ export function genGeneralTerraData(
             bpContextParamsFree_CppFromBP:
               contextBPMethod.contextParam_CppFromBP.contextFree,
 
-            bpContextReturnVal: contextBPMethod.contextReturnVal,
+            bpContextReturnValBegin: contextBPMethod.contextReturnValBegin,
+            bpContextReturnValSetVal: contextBPMethod.contextReturnValSetVal,
+            bpContextReturnValEnd: contextBPMethod.contextReturnValEnd,
 
             bpNativePtr: BPHelper.genContext_BPMethod_NativePtr(method),
             ...method.user_data,

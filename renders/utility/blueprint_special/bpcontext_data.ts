@@ -26,10 +26,17 @@ export class BPParamContext {
 export class BPMethodContext {
   contextParam_CppFromBP = new BPParamContext();
   contextParam_BPFromCpp = new BPParamContext();
-  contextReturnVal = '';
+
+  // Because in bp method:
+  // 1. if it has macro scope, it always has method, but have no cpp native method.
+  contextReturnValBegin = '';
+  contextReturnValSetVal = '';
+  contextReturnValEnd = '';
   constructor() {
     this.contextParam_CppFromBP = new BPParamContext();
     this.contextParam_BPFromCpp = new BPParamContext();
-    this.contextReturnVal = '';
+    this.contextReturnValBegin = '';
+    this.contextReturnValSetVal = '';
+    this.contextReturnValEnd = '';
   }
 }

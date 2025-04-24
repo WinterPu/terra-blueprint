@@ -1,6 +1,10 @@
 {{#methods}}
   {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
+      {{#user_data.hasReturnVal}}
+      // Need to be optimized
+      {{{user_data.bpContextReturnValBegin}}}
+      {{/user_data.hasReturnVal}}
 
 {{{user_data.macro_scope_start}}}
 
@@ -19,10 +23,15 @@
 {{{user_data.bpContextParamsFree_CppFromBP}}}
 
       {{#user_data.hasReturnVal}}
-{{{user_data.bpContextReturnVal}}}
+{{{user_data.bpContextReturnValSetVal}}}
       {{/user_data.hasReturnVal}}
 
 {{{user_data.macro_scope_end}}}
+
+      {{#user_data.hasReturnVal}}
+      // Need to be optimized
+      {{{user_data.bpContextReturnValEnd}}}
+      {{/user_data.hasReturnVal}}
   }
   
 {{/methods}}

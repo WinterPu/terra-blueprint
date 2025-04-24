@@ -475,7 +475,9 @@ function genContext_BPMethodReturnVal(
     AGORA_MUSTACHE_DATA.RETURN_VAL_DECL
   );
   let result = addOneLineFunc(str_decl);
-  result += addOneLineFunc(`return ${AGORA_MUSTACHE_DATA.RETURN_VAL_DECL};`);
+  result += addOneLineFunc(
+    `${AGORA_MUSTACHE_DATA.FINAL_RETURN_RESULT} =  ${AGORA_MUSTACHE_DATA.RETURN_VAL_DECL};`
+  );
   return result;
 }
 
@@ -544,10 +546,21 @@ export function genContext_BPMethod(
   // TBD(WinterPu)
   // return type's conversion
 
-  result.contextReturnVal = genContext_BPMethodReturnVal(
+  // TBD(WinterPu):
+  // Need to Remove FilterHelper
+  // Optimize [genBPReturnType]
+  result.contextReturnValBegin = `${genBPReturnType(node_method.return_type)} ${
+    AGORA_MUSTACHE_DATA.FINAL_RETURN_RESULT
+  } = ${FilterHelper.UESDK_GetFailureReturnVal(
+    node_method.return_type.source
+  )} `;
+
+  result.contextReturnValSetVal = genContext_BPMethodReturnVal(
     node_method.return_type,
     prefix_indent
   );
+
+  result.contextReturnValEnd = `return ${AGORA_MUSTACHE_DATA.FINAL_RETURN_RESULT};`;
   return result;
 }
 
