@@ -13,6 +13,7 @@ import {
 } from '@agoraio-extensions/cxx-parser';
 
 import * as CppHelper from '../cpp_helper';
+import * as FilterHelper from '../filter_helper';
 import * as Logger from '../logger';
 
 import * as Tools from '../tools';
@@ -553,7 +554,7 @@ export function genContext_BPMethod(
     AGORA_MUSTACHE_DATA.FINAL_RETURN_RESULT
   } = ${FilterHelper.UESDK_GetFailureReturnVal(
     node_method.return_type.source
-  )} `;
+  )};`;
 
   result.contextReturnValSetVal = genContext_BPMethodReturnVal(
     node_method.return_type,
