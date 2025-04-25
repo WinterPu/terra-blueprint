@@ -153,7 +153,7 @@ namespace agora {
 
 				static inline uint64_t ToUInt64FromFString(const FString & Src) {
 					// need to be checked
-					return FCString::Atou64(*Src);
+					return 0;
 				}
 
 #pragma endregion To
@@ -245,24 +245,46 @@ namespace agora {
 				template<typename RAW_TYPE, typename UABT_TYPE>
 				static inline RAW_TYPE* New_CustomRawDataPtr1D(const TArray<UABT_TYPE>& SrcArray, int SizeCount) {
 					RAW_TYPE* Result = new RAW_TYPE[SizeCount];
-					for (int i = 0; i < SizeCount; i++) {
-						// Create a temporary variable to hold the raw data
-						RAW_TYPE RawData = SrcArray[i].CreateRawData();
-						// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
-						FMemory::Memcpy(&Result[i], &(RawData), sizeof(RAW_TYPE));
-					}
+					//for (int i = 0; i < SizeCount; i++) {
+					//	// Create a temporary variable to hold the raw data
+					//	RAW_TYPE RawData = SrcArray[i].CreateRawData();
+					//	// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
+					//	FMemory::Memcpy(&Result[i], &(RawData), sizeof(RAW_TYPE));
+					//}
 
 					return Result;
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
 				static inline void New_CustomRawDataArray(const RAW_TYPE* DstArray , const TArray<UABT_TYPE>& SrcArray, int SizeCount) {
-					for (int i = 0; i < SizeCount; i++) {
-						// Create a temporary variable to hold the raw data
-						RAW_TYPE RawData = SrcArray[i].CreateRawData();
-						// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
-						FMemory::Memcpy(&DstArray[i], &(RawData), sizeof(RAW_TYPE));
-					}
+					//for (int i = 0; i < SizeCount; i++) {
+					//	// Create a temporary variable to hold the raw data
+					//	RAW_TYPE RawData = SrcArray[i].CreateRawData();
+					//	// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
+					//	FMemory::Memcpy(&DstArray[i], &(RawData), sizeof(RAW_TYPE));
+					//}
+				}
+
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void New_RawDataArray(const RAW_TYPE* DstArray, const TArray<UABT_TYPE>& SrcArray, int SizeCount) {
+					//for (int i = 0; i < SizeCount; i++) {
+					//	// Create a temporary variable to hold the raw data
+					//	RAW_TYPE RawData = SrcArray[i].CreateRawData();
+					//	// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
+					//	FMemory::Memcpy(&DstArray[i], &(RawData), sizeof(RAW_TYPE));
+					//}
+				}
+
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void New_CustomRawDataArrayForUCLASS(const RAW_TYPE* DstArray, const TArray<UABT_TYPE*>& SrcArray, int SizeCount) {
+					//for (int i = 0; i < SizeCount; i++) {
+					//	// Create a temporary variable to hold the raw data
+					//	RAW_TYPE RawData = SrcArray[i].CreateRawData();
+					//	// Because some copy constructors may allocate a new memory block, we need to use FMemory::Memcpy to copy directly to ensure that all memory is allocated by us.
+					//	FMemory::Memcpy(&DstArray[i], &(RawData), sizeof(RAW_TYPE));
+					//}
 				}
 
 
@@ -329,26 +351,51 @@ namespace agora {
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
 				static inline void Free_CustomRawDataPtr1D(RAW_TYPE * & Ptr,int Count) {
-				if(Ptr){
+	/*			if(Ptr){
 						for (int i = 0; i < Count; i++) {
 							UABT_TYPE ReleaseOperator;
 							ReleaseOperator.FreeRawData(Ptr[i]);
 						}
 						delete[] Ptr;
 						Ptr = nullptr;
-					}
+					}*/
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
 				static inline void Free_CustomRawDataArray(const RAW_TYPE* Ptr,int Count) {
-					if(Ptr){
-						for (int i = 0; i < Count; i++) {
-							UABT_TYPE ReleaseOperator;
-							ReleaseOperator.FreeRawData(Ptr[i]);
-						}
-						//delete[] Ptr;
-						//Ptr = nullptr;
-					}
+					//if(Ptr){
+					//	for (int i = 0; i < Count; i++) {
+					//		UABT_TYPE ReleaseOperator;
+					//		ReleaseOperator.FreeRawData(Ptr[i]);
+					//	}
+					//	//delete[] Ptr;
+					//	//Ptr = nullptr;
+					//}
+				}
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void Free_RawDataArray(const RAW_TYPE* Ptr, int Count) {
+					//if(Ptr){
+					//	for (int i = 0; i < Count; i++) {
+					//		UABT_TYPE ReleaseOperator;
+					//		ReleaseOperator.FreeRawData(Ptr[i]);
+					//	}
+					//	//delete[] Ptr;
+					//	//Ptr = nullptr;
+					//}
+				}
+
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void Free_CustomRawDataArrayForUCLASS(const RAW_TYPE* Ptr, int Count) {
+					//if(Ptr){
+					//	for (int i = 0; i < Count; i++) {
+					//		UABT_TYPE ReleaseOperator;
+					//		ReleaseOperator.FreeRawData(Ptr[i]);
+					//	}
+					//	//delete[] Ptr;
+					//	//Ptr = nullptr;
+					//}
 				}
 
 #pragma endregion Free
@@ -396,10 +443,19 @@ namespace agora {
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
 				static inline void SetBPDataArray(TArray<UABT_TYPE>& Dst, const RAW_TYPE* Src, int Size){
-					Dst.Empty();
-					for (int i = 0; i < Size; i++) {
-						Dst.Add(Src[i]);
-					}
+					//Dst.Empty();
+					//for (int i = 0; i < Size; i++) {
+					//	Dst.Add(Src[i]);
+					//}
+				}
+
+
+				template<typename RAW_TYPE, typename UABT_TYPE>
+				static inline void SetBPDataArrayForUCLASS(TArray<UABT_TYPE*>& Dst, const RAW_TYPE* Src, int Size) {
+					//Dst.Empty();
+					//for (int i = 0; i < Size; i++) {
+					//	Dst.Add(Src[i]);
+					//}
 				}
 
 				template<typename RAW_TYPE, typename UABT_TYPE>
