@@ -176,12 +176,24 @@ function genBPConvertFromRawType(
   }
 
   if (isTArray) {
-    conversion = map_one_category_basicconv_bpfromcpp.get('TArray')!;
     //TBD(WinterPu)
     // need to distinguish:
     // for: raw type
     // USTRUCT
     // UCLASS
+    let key_label = 'TArray';
+    if (typeCategory === CXXTYPE.Clazz) {
+      // for UCLASS
+      key_label = 'TArray_UCLASS';
+    } else if (typeCategory === CXXTYPE.Struct) {
+      // for USTRUCT
+      key_label = 'TArray_USTRUCT';
+    } else {
+      // for other types including raw type
+      key_label = 'TArray';
+    }
+
+    conversion = map_one_category_basicconv_bpfromcpp.get(key_label)!;
   }
 
   const type_conv_data = getBPTypeConvData(type.source);
@@ -218,12 +230,19 @@ function genBPConvertToRawType(
   }
 
   if (isTArray) {
-    conversion = map_one_category_basicconv_cppfrombp.get('TArray')!;
-    //TBD(WinterPu)
-    // need to distinguish:
-    // for: raw type
-    // USTRUCT
-    // UCLASS
+    let key_label = 'TArray';
+    if (typeCategory === CXXTYPE.Clazz) {
+      // for UCLASS
+      key_label = 'TArray_UCLASS';
+    } else if (typeCategory === CXXTYPE.Struct) {
+      // for USTRUCT
+      key_label = 'TArray_USTRUCT';
+    } else {
+      // for other types including raw type
+      key_label = 'TArray';
+    }
+
+    conversion = map_one_category_basicconv_cppfrombp.get(key_label)!;
   }
 
   const type_conv_data = getBPTypeConvData(type.source);
@@ -617,9 +636,9 @@ export function convertToBPType(
   // it means: do we need [SetArray<RawType*> (RAW_TYPE)] or [SetArray<RawType>(RAW_TYPE*)]
   // some rules for decl type:
   // Ex. void -> void*
-  // if(result.isTArray){
-  //   cppDeclTypeVal = Tools.removeAttributes(type.source);
-  // }
+  if (result.isTArray) {
+    cppDeclTypeVal = Tools.removeAttributes(type.source);
+  }
 
   result.bpConvDeclTypeSPRule =
     data_bptype_conv?.declTypeSPRule ?? DeclTypeSPRule.DefaultNoSP;

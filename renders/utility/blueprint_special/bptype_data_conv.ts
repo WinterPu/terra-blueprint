@@ -100,7 +100,8 @@ export enum ConversionWayType {
   SetArrayData_Size,
   SetArrayData_Size_TmplType,
   BPFromCpp_Func_SetBPDataArray,
-
+  BPFromCpp_Func_SetBPDataArray_UCLASS,
+  // BPFromCpp_Func_SetBPDataArray_USTRUCT,
   // BPVar = UTF8_TO_TCHAR(CppVar);
   BPFromCpp_FString,
 
@@ -136,6 +137,9 @@ export enum ConversionWayType {
 
   CppFromBP_NewFree_RawDataPtr1D,
   CppFromBP_NewFree_CustomRawDataPtr1D,
+
+  CppFromBP_NewFree_CustomRawDataArray_UCLASS,
+  CppFromBP_NewFree_RawDataArray,
   CppFromBP_NewFree_CustomRawDataArray,
 }
 
@@ -244,6 +248,24 @@ export const map_one_category_basicconv_bpfromcpp = new Map<
       convFuncAdditional01: '',
     },
   ],
+
+  [
+    'TArray_UCLASS',
+    {
+      convFuncType: ConversionWayType.BPFromCpp_Func_SetBPDataArray_UCLASS,
+      convFunc: '',
+      convFuncAdditional01: '',
+    },
+  ],
+
+  [
+    'TArray_USTRUCT',
+    {
+      convFuncType: ConversionWayType.BPFromCpp_Func_SetBPDataArray,
+      convFunc: '',
+      convFuncAdditional01: '',
+    },
+  ],
 ]);
 
 export const map_one_category_basicconv_cppfrombp = new Map<
@@ -279,6 +301,26 @@ export const map_one_category_basicconv_cppfrombp = new Map<
 
   [
     'TArray',
+    {
+      convFuncType: ConversionWayType.CppFromBP_NewFree_RawDataArray,
+      convFunc: '',
+      convFuncAdditional01: '',
+    },
+  ],
+
+  [
+    'TArray_UCLASS',
+    {
+      convFuncType:
+        ConversionWayType.CppFromBP_NewFree_CustomRawDataArray_UCLASS,
+      convFunc: AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataArrayUCLASS,
+      convFuncAdditional01:
+        AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataArrayUCLASS,
+    },
+  ],
+
+  [
+    'TArray_USTRUCT',
     {
       convFuncType: ConversionWayType.CppFromBP_NewFree_CustomRawDataArray,
       convFunc: '',
@@ -937,6 +979,9 @@ export const map_struct_member_variable_size_count: { [key: string]: string } =
 
     'agora::rtc::ChannelMediaRelayConfiguration.destInfos': 'destCount',
   };
+
+// In Method, the corresponding size count variable to the target member variable
+export const map_method_param_size_count: { [key: string]: string } = {};
 
 // // Ex.
 // export const map_empty_name_enum: { [key: string]: string } = {

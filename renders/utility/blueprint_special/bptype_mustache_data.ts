@@ -9,6 +9,9 @@ export const AGORA_MUSTACHE_DATA = {
   FREE_RAW_ARRAY_DATA: 'UABT::Free_CustomRawDataArray',
   SET_BP_ARRAY_DATA: 'UABT::SetBPDataArray',
   SET_BP_FSTRING_TARRAY: 'UABT::SetBPFStringTArray',
+  SET_BP_ARRAY_DATA_FOR_RAW_TYPE: 'UABT::SetBPDataArrayForRawType',
+  SET_BP_ARRAY_DATA_FOR_USTRUCT: 'UABT::SetBPDataArrayForUSTRUCT',
+  SET_BP_ARRAY_DATA_FOR_UCLASS: 'UABT::SetBPDataArrayForUCLASS',
 
   // NEW_RAW_ARRAY_DATA: 'UABT_NEW_RAW_DATA_ARRAY',
   // FREE_RAW_ARRAY_DATA: 'UABT_FREE_RAW_DATA_ARRAY',
@@ -45,4 +48,12 @@ export const AGORA_MUSTACHE_DATA = {
 
   ConvFunc_New_CustomRawDataArray: 'UABT::New_CustomRawDataArray',
   ConvFunc_Free_CustomRawDataArray: 'UABT::Free_CustomRawDataArray',
+
+  ConvFunc_New_CustomRawDataArrayUCLASS:
+    'UABT::New_CustomRawDataArrayForUCLASS',
+  ConvFunc_Free_CustomRawDataArrayUCLASS:
+    'UABT::Free_CustomRawDataArrayForUCLASS',
+
+  ConvFunc_New_RawDataArray: 'UABT::New_RawDataArray',
+  ConvFunc_Free_RawDataArray: 'UABT::Free_RawDataArray',
 };

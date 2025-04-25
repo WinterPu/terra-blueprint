@@ -141,7 +141,7 @@ export function genGeneralTerraData(
             failureReturnVal: FilterHelper.UESDK_GetFailureReturnVal(
               method.return_type.source
             ),
-            hasReturnVal: method.return_type.source.toLowerCase() != 'void',
+            hasReturnVal: method.return_type.source.toLowerCase() !== 'void',
 
             suffix_attribute: CppHelper.genSuffixAttribute(method.attributes),
             isFirst: index === 0,

@@ -34,6 +34,7 @@ import {
   map_bptype_conv_data,
   map_class_struct_without_default_constructor,
   map_decltype_special_rule,
+  map_method_param_size_count,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
 import { UEBPType } from './bptype_helper';
@@ -308,7 +309,8 @@ export function genContext_BPStruct(
       bpType,
       conv_bpfromcpp.convFuncType,
       undefined,
-      var_SizeCount
+      var_SizeCount,
+      ''
     );
     contextConstructor += addOneLineFunc(str_constructor_context);
 
@@ -319,7 +321,8 @@ export function genContext_BPStruct(
       bpType,
       conv_cppfrombp.convFuncType,
       undefined,
-      var_SizeCount
+      var_SizeCount,
+      ''
     );
     contextCreateRawData += addOneLineFunc(str_create_raw_data_context);
 
@@ -330,7 +333,8 @@ export function genContext_BPStruct(
       bpType,
       conv_cppfrombp.convFuncType,
       undefined,
-      var_SizeCount
+      var_SizeCount,
+      ''
     );
 
     if (
@@ -371,8 +375,10 @@ export function genContext_BPStruct(
 function genContext_ConvDeclType(
   param: Variable,
   bpType: UEBPType,
-  bIsCppFromBP: boolean
+  bIsCppFromBP: boolean,
+  extra_SizeCount?: string
 ): BPParamContext {
+  extra_SizeCount = extra_SizeCount ?? '';
   const prefix_var_name = bIsCppFromBP
     ? AGORA_MUSTACHE_DATA.RAW_
     : AGORA_MUSTACHE_DATA.UEBP_;
@@ -418,7 +424,8 @@ function genContext_ConvDeclType(
       bpType,
       convWayType,
       bIsCppFromBP,
-      ''
+      '',
+      extra_SizeCount
     );
     result.contextDecl = addOneLineFunc(str_decl);
 
@@ -429,27 +436,51 @@ function genContext_ConvDeclType(
       bpType,
       convWayType,
       bIsCppFromBP,
-      ''
+      '',
+      extra_SizeCount
     );
     result.contextUsage = str_usage;
 
     // [Part - Free]
-    const str_free_func = Tools.IsNotEmptyStr(data_conv.convFuncAdditional01)
-      ? data_conv.convFuncAdditional01
-      : '';
-    if (str_free_func !== '') {
-      const str_free = genContextBasedOnConversionWayType(
-        EBPContextGenType.DeclType_Free,
-        param,
-        bpType,
-        convWayType,
-        bIsCppFromBP,
-        ''
-      );
+    const str_free = genContextBasedOnConversionWayType(
+      EBPContextGenType.DeclType_Free,
+      param,
+      bpType,
+      convWayType,
+      bIsCppFromBP,
+      '',
+      extra_SizeCount
+    );
+    if (Tools.IsNotEmptyStr(str_free)) {
       result.contextFree = addOneLineFunc(str_free);
     }
   }
 
+  return result;
+}
+
+function genContext_BPMethodReturnValBegin(
+  return_type: SimpleType,
+  prefix_indent: string = ''
+): string {
+  const addOneLineFunc = function (line: string): string {
+    return Tools.addOneLine_Format(line, prefix_indent);
+  };
+
+  let decl_type = genBPReturnType(return_type);
+
+  // should be default value not a failed value.
+  let defaultVal = FilterHelper.UESDK_GetFailureReturnVal(return_type.source);
+
+  if (Tools.IsNotEmptyStr(defaultVal)) {
+    defaultVal = `= ${defaultVal}`;
+  } else {
+    defaultVal = '';
+  }
+
+  let result = addOneLineFunc(
+    `${decl_type} ${AGORA_MUSTACHE_DATA.FINAL_RETURN_RESULT} ${defaultVal};`
+  );
   return result;
 }
 
@@ -471,6 +502,7 @@ function genContext_BPMethodReturnVal(
     bpType,
     convWayType,
     false,
+    '',
     '',
     AGORA_MUSTACHE_DATA.RETURN_VAL,
     AGORA_MUSTACHE_DATA.RETURN_VAL_DECL
@@ -507,9 +539,21 @@ export function genContext_BPMethod(
   node_method.parameters.map((param, index) => {
     const bptype = BPTypeHelper.convertToBPType(param.type);
 
-    contextParam_BPFromCpp = genContext_ConvDeclType(param, bptype, false);
+    const extra_SizeCount = getBPSizeCount(node_method, param);
 
-    contextParam_CppFromBP = genContext_ConvDeclType(param, bptype, true);
+    contextParam_BPFromCpp = genContext_ConvDeclType(
+      param,
+      bptype,
+      false,
+      extra_SizeCount
+    );
+
+    contextParam_CppFromBP = genContext_ConvDeclType(
+      param,
+      bptype,
+      true,
+      extra_SizeCount
+    );
 
     // Usage
     const param_delimiter =
@@ -550,18 +594,21 @@ export function genContext_BPMethod(
   // TBD(WinterPu):
   // Need to Remove FilterHelper
   // Optimize [genBPReturnType]
-  result.contextReturnValBegin = `${genBPReturnType(node_method.return_type)} ${
-    AGORA_MUSTACHE_DATA.FINAL_RETURN_RESULT
-  } = ${FilterHelper.UESDK_GetFailureReturnVal(
-    node_method.return_type.source
-  )};`;
+  result.contextReturnValBegin = genContext_BPMethodReturnValBegin(
+    node_method.return_type,
+    prefix_indent
+  );
 
+  // it may has multiple lines:
+  // so put addOneLineFunc inside the function
   result.contextReturnValSetVal = genContext_BPMethodReturnVal(
     node_method.return_type,
     prefix_indent
   );
 
-  result.contextReturnValEnd = `return ${AGORA_MUSTACHE_DATA.FINAL_RETURN_RESULT};`;
+  result.contextReturnValEnd = addOneLineFunc(
+    `return ${AGORA_MUSTACHE_DATA.FINAL_RETURN_RESULT};`
+  );
   return result;
 }
 
@@ -582,21 +629,45 @@ export function genContext_BPClass(
 }
 
 export function getBPSizeCount(
-  node_struct: Struct,
-  target_member_var: MemberVariable
+  node: Struct | MemberFunction,
+  target_member_var: MemberVariable | Variable
 ): string {
-  const tar_var_name = target_member_var.name;
+  const type = node.__TYPE;
+  if (type === CXXTYPE.Struct) {
+    const node_struct = node.asStruct();
 
-  if (target_member_var.fullName in map_struct_member_variable_size_count) {
-    return map_struct_member_variable_size_count[target_member_var.fullName];
-  }
+    const tar_var_name = target_member_var.name;
 
-  for (const one_var of node_struct.asStruct().member_variables) {
-    if (
-      one_var.name == tar_var_name + 'Size' ||
-      one_var.name == tar_var_name + 'Count'
-    ) {
-      return one_var.name;
+    if (target_member_var.fullName in map_struct_member_variable_size_count) {
+      return map_struct_member_variable_size_count[target_member_var.fullName];
+    }
+
+    for (const one_var of node_struct.member_variables) {
+      if (
+        one_var.name == tar_var_name + 'Size' ||
+        one_var.name == tar_var_name + 'Count' ||
+        one_var.name == tar_var_name + 'Num'
+      ) {
+        return one_var.name;
+      }
+    }
+  } else if (type === CXXTYPE.MemberFunction) {
+    const node_method = node.asMemberFunction();
+
+    const tar_var_name = target_member_var.name;
+
+    if (target_member_var.fullName in map_method_param_size_count) {
+      return map_method_param_size_count[target_member_var.fullName];
+    }
+
+    for (const one_var of node_method.parameters) {
+      if (
+        one_var.name == tar_var_name + 'Size' ||
+        one_var.name == tar_var_name + 'Count' ||
+        one_var.name == tar_var_name + 'Num'
+      ) {
+        return one_var.name;
+      }
     }
   }
 
@@ -638,6 +709,7 @@ export function genContextBasedOnConversionWayType(
 
   extra_data_bIsCppFromBP: boolean | undefined,
   extra_data_size_count: string,
+  extra_data_decl_size_count: string,
   extra_data_designed_var_name?: string,
   extra_data_designed_decl_var_name?: string,
   extra_data?: any
@@ -655,11 +727,12 @@ export function genContextBasedOnConversionWayType(
   // common data
   const conv_bpfromcpp = bpType.bpConv_BPFromCpp;
   const conv_cppfrombp = bpType.bpConv_CppFromBP;
-  const var_name = variable?.name ?? extra_data_designed_var_name;
+  const var_name = extra_data_designed_var_name ?? variable?.name;
 
   // for struct
   const AGORA_DATA = AGORA_MUSTACHE_DATA.AGORA_DATA;
   const s_cpp_decl_type = bpType.cppDeclType;
+  const s_cpp_type_name = bpType.cppTypeName;
   const s_bp_decl_type = bpType.declType;
   const s_bp_type_name = bpType.name;
   const conv_array_size = extra_data_size_count;
@@ -673,16 +746,20 @@ export function genContextBasedOnConversionWayType(
   ) {
     Logger.PrintError(
       `bIsCppFromBP is undefined for ${
-        variable?.fullName ?? extra_data_designed_var_name ?? 'unknown'
+        extra_data_designed_var_name ?? variable?.fullName ?? 'unknown'
       }`
     );
   }
 
   const isCppFromBP = extra_data_bIsCppFromBP;
+  //TBD(WinterPu)
+  // get rid of:
+  // Ex. UABT::New_RawDataArray<agora::rtc::uid_t, TArray<int64>>();
   const decl_type = isCppFromBP ? bpType.cppDeclType : bpType.declType;
-  const convert_to_decl_type = isCppFromBP
-    ? bpType.declType
-    : bpType.cppDeclType;
+  const tmpl_decl_type_name = isCppFromBP ? bpType.cppTypeName : bpType.name;
+  const tmpl_convtodecl_type_name = isCppFromBP
+    ? bpType.name
+    : bpType.cppTypeName;
   const prefix_var_name = isCppFromBP
     ? AGORA_MUSTACHE_DATA.RAW_
     : AGORA_MUSTACHE_DATA.UEBP_;
@@ -691,7 +768,8 @@ export function genContextBasedOnConversionWayType(
     decl_var_name = extra_data_designed_decl_var_name;
   }
   const data_decl_conv = isCppFromBP ? conv_cppfrombp : conv_bpfromcpp;
-  let decl_array_size = extractArraySizeFromType(bpType);
+  let decl_array_size =
+    extra_data_decl_size_count ?? extractArraySizeFromType(bpType);
 
   const STR_INVALID_CONV = 'Invalid Conversion';
   const declIsCppFromBP = function (res: string): string {
@@ -754,10 +832,10 @@ export function genContextBasedOnConversionWayType(
     const str_decl_array_size = options.bUseSize ? ', ' + decl_array_size : '';
 
     const str_conv_tmpl_type = options.bUseTmplType
-      ? `<${s_cpp_decl_type}, ${s_bp_type_name}>`
+      ? `<${s_cpp_type_name}, ${s_bp_type_name}>`
       : '';
     const str_decl_tmpl_type = options.bUseTmplType
-      ? `<${decl_type}, ${convert_to_decl_type}>`
+      ? `<${tmpl_decl_type_name}, ${tmpl_convtodecl_type_name}>`
       : '';
 
     const result = {
@@ -795,10 +873,10 @@ export function genContextBasedOnConversionWayType(
     const str_decl_array_size = options.bUseSize ? ', ' + decl_array_size : '';
 
     const str_conv_tmpl_type = options.bUseTmplType
-      ? `<${s_cpp_decl_type}, ${s_bp_type_name}>`
+      ? `<${s_cpp_type_name}, ${s_bp_type_name}>`
       : '';
     const str_decl_tmpl_type = options.bUseTmplType
-      ? `<${decl_type}, ${convert_to_decl_type}>`
+      ? `<${tmpl_decl_type_name}, ${tmpl_convtodecl_type_name}>`
       : '';
 
     const result: Record<EBPContextGenType, string> = {
@@ -845,18 +923,23 @@ export function genContextBasedOnConversionWayType(
     const str_decl_array_size = options.bUseSize ? ', ' + decl_array_size : '';
 
     const str_conv_tmpl_type = options.bUseTmplType
-      ? `<${s_cpp_decl_type}, ${s_bp_type_name}>`
+      ? `<${s_cpp_type_name}, ${s_bp_type_name}>`
       : '';
     const str_decl_tmpl_type = options.bUseTmplType
-      ? `<${decl_type}, ${convert_to_decl_type}>`
+      ? `<${tmpl_decl_type_name}, ${tmpl_convtodecl_type_name}>`
       : '';
 
+    // TBD(WinterPu);
+    // it has bug:
+    // Ex. for New_RawDataArray, [DeclType_Decl]
+    // agora::rtc::uid_t* Raw_uidList = nullptr; UABT::New_RawDataArray<agora::rtc::uid_t, TArray<int64>>(Raw_uidList,uidList,1);
+    // the pointer has not been memory allocated.
     const result: Record<EBPContextGenType, string> = {
       ...defaultTmpl_NewFreeConv,
       [EBPContextGenType.Struct_CreateRawData]: `${str_conv_func_new}${str_conv_tmpl_type}(${AGORA_DATA}.${var_name},this->${var_name}${str_conv_array_size});`,
       [EBPContextGenType.Struct_FreeRawData]: `${str_conv_func_free}${str_conv_tmpl_type}(${AGORA_DATA}.${var_name}${str_conv_array_size});`,
       [EBPContextGenType.DeclType_Decl]: declIsCppFromBP(
-        `${decl_type} ${decl_var_name} = ${str_decl_func_new}${str_decl_tmpl_type}(${var_name}${str_decl_array_size});`
+        `${decl_type} ${decl_var_name} = nullptr; ${str_decl_func_new}${str_decl_tmpl_type}(${decl_var_name},${var_name}${str_decl_array_size});`
       ),
       [EBPContextGenType.DeclType_Free]: declIsCppFromBP(
         `${str_decl_func_free}${str_decl_tmpl_type}(${decl_var_name}${str_decl_array_size});`
@@ -1113,6 +1196,54 @@ export function genContextBasedOnConversionWayType(
         decl_func_free
       );
 
+      break;
+    }
+
+    case ConversionWayType.BPFromCpp_Func_SetBPDataArray_UCLASS: {
+      const conv_func = AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA_FOR_UCLASS;
+      const decl_func = AGORA_MUSTACHE_DATA.SET_BP_ARRAY_DATA_FOR_UCLASS;
+      result_map = genfunc_DefaultTmpl_SetArrayData(
+        { bUseSize: true, bUseTmplType: true },
+        conv_func,
+        conv_func,
+        decl_func
+      );
+      break;
+    }
+
+    case ConversionWayType.CppFromBP_NewFree_CustomRawDataArray_UCLASS: {
+      const conv_func_new =
+        AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataArrayUCLASS;
+      const conv_func_free =
+        AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataArrayUCLASS;
+      const decl_func_new =
+        AGORA_MUSTACHE_DATA.ConvFunc_New_CustomRawDataArrayUCLASS;
+      const decl_func_free =
+        AGORA_MUSTACHE_DATA.ConvFunc_Free_CustomRawDataArrayUCLASS;
+
+      result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeArrayData(
+        { bUseSize: true, bUseTmplType: true },
+        conv_func_new,
+        conv_func_free,
+        decl_func_new,
+        decl_func_free
+      );
+      break;
+    }
+
+    case ConversionWayType.CppFromBP_NewFree_RawDataArray: {
+      const conv_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_RawDataArray;
+      const conv_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_RawDataArray;
+      const decl_func_new = AGORA_MUSTACHE_DATA.ConvFunc_New_RawDataArray;
+      const decl_func_free = AGORA_MUSTACHE_DATA.ConvFunc_Free_RawDataArray;
+
+      result_map = genfunc_DefaultTmpl_CppFromBP_NewFreeArrayData(
+        { bUseSize: true, bUseTmplType: true },
+        conv_func_new,
+        conv_func_free,
+        decl_func_new,
+        decl_func_free
+      );
       break;
     }
   }

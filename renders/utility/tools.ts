@@ -39,7 +39,7 @@ export function addOneLine_Format(
   return prefix_indent + line + '\n';
 }
 
-export function IsNotEmptyStr(str: string): boolean {
+export function IsNotEmptyStr(str: string | undefined): boolean {
   return str !== null && str !== undefined && str.trim() !== '';
 }
 
