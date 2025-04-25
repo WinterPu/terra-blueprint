@@ -219,6 +219,11 @@ function genBPConvertToRawType(
 
   if (isTArray) {
     conversion = map_one_category_basicconv_cppfrombp.get('TArray')!;
+    //TBD(WinterPu)
+    // need to distinguish:
+    // for: raw type
+    // USTRUCT
+    // UCLASS
   }
 
   const type_conv_data = getBPTypeConvData(type.source);
