@@ -761,10 +761,8 @@ export function genContextBasedOnConversionWayType(
   // get rid of:
   // Ex. UABT::New_RawDataArray<agora::rtc::uid_t, TArray<int64>>();
   const decl_type = isCppFromBP ? bpType.cppDeclType : bpType.declType;
-  const tmpl_decl_type_name = isCppFromBP ? bpType.cppTypeName : bpType.name;
-  const tmpl_convtodecl_type_name = isCppFromBP
-    ? bpType.name
-    : bpType.cppTypeName;
+  const tmpl_raw_decl_type_name = bpType.cppTypeName;
+  const tmpl_bp_convtodecl_type_name = bpType.name;
   const prefix_var_name = isCppFromBP
     ? AGORA_MUSTACHE_DATA.RAW_
     : AGORA_MUSTACHE_DATA.UEBP_;
@@ -840,7 +838,7 @@ export function genContextBasedOnConversionWayType(
       ? `<${s_cpp_type_name}, ${s_bp_type_name}>`
       : '';
     const str_decl_tmpl_type = options.bUseTmplType
-      ? `<${tmpl_decl_type_name}, ${tmpl_convtodecl_type_name}>`
+      ? `<${tmpl_raw_decl_type_name}, ${tmpl_bp_convtodecl_type_name}>`
       : '';
 
     const result = {
@@ -881,7 +879,7 @@ export function genContextBasedOnConversionWayType(
       ? `<${s_cpp_type_name}, ${s_bp_type_name}>`
       : '';
     const str_decl_tmpl_type = options.bUseTmplType
-      ? `<${tmpl_decl_type_name}, ${tmpl_convtodecl_type_name}>`
+      ? `<${tmpl_raw_decl_type_name}, ${tmpl_bp_convtodecl_type_name}>`
       : '';
 
     const result: Record<EBPContextGenType, string> = {
@@ -931,7 +929,7 @@ export function genContextBasedOnConversionWayType(
       ? `<${s_cpp_type_name}, ${s_bp_type_name}>`
       : '';
     const str_decl_tmpl_type = options.bUseTmplType
-      ? `<${tmpl_decl_type_name}, ${tmpl_convtodecl_type_name}>`
+      ? `<${tmpl_raw_decl_type_name}, ${tmpl_bp_convtodecl_type_name}>`
       : '';
 
     // TBD(WinterPu);
