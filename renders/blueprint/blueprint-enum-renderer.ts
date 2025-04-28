@@ -8,7 +8,6 @@ import {
 } from '@agoraio-extensions/terra-core';
 
 import {
-  IrisApiIdParserUserData,
   MustacheRenderConfiguration,
   renderWithConfiguration,
 } from '@agoraio-extensions/terra_shared_configs';
