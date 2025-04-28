@@ -467,7 +467,9 @@ function genContext_BPMethodReturnValBegin(
     return Tools.addOneLine_Format(line, prefix_indent);
   };
 
-  let decl_type = genBPReturnType(return_type);
+  let return_type_bytype = BPTypeHelper.convertToBPType(return_type);
+
+  let decl_type = return_type_bytype.declType;
 
   // should be default value not a failed value.
   let defaultVal = FilterHelper.UESDK_GetFailureReturnVal(return_type.source);

@@ -102,7 +102,7 @@ export const map_class_initialization: {
           
           }
         }
-        return Instance;
+        return InsVideoDeviceManager;
       }
   `,
   },

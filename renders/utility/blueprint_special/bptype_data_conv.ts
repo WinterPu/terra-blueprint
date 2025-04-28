@@ -33,6 +33,7 @@ export type UEBPTypeConvData = {
   // [Step 2]: Default Value
   // usually used in the USTRUCT member variable
   defaultValue: string | undefined;
+  defaultBPValue: string | undefined;
 
   // [Step 3]: Parse Array
   // Black List: skip the parse process, not parsed as an array.
@@ -346,6 +347,7 @@ const defaultTmpl_BasicType_NoConv: UEBPTypeConvData = {
     convFuncAdditional01: '',
   },
   defaultValue: undefined,
+  defaultBPValue: undefined,
   parseArrayIsInBlackList: false, // black list: no basic parse
   parseArrayDesignedType: undefined, // White list: basic parse
   parsePointerForceEnable: false, // UCLASS needs to be parsed as pointer
