@@ -198,4 +198,5 @@ module.exports = [
   'agora::media::IAudioSpectrumObserver',
   'agora::media::IVideoEncodedFrameObserver',
   'agora::media::IFaceInfoObserver',
+  'agora::rtc::IMetadataObserver',
 ];

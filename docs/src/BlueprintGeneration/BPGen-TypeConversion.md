@@ -28,7 +28,7 @@
 
 
 
-### CBExecutor:
+### CBExecutor: 就是CBExecutor 本身不能有return value 因为DECALRE_DYNAMIC_MULTICAST_DELEGATE 生成的函数就没有return 值
 OnLocalAudioSpectrum.AddDynamic(Executor, &UAgoraBPuAudioSpectrumObserverCBExecutor::OnLocalAudioSpectrum);
 OnLocalAudioSpectrum 本身会有return value 
 AddDynamic 的绑定无法有return value

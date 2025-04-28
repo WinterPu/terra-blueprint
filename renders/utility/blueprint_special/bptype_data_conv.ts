@@ -21,6 +21,7 @@ export type UEBPTypeConvData = {
   // skip the process, directly assigned the type source
   bpDesignedTypeSource: string | undefined;
   // whether the implementation is user provided. (not the native blueprint type)
+  bpDesignedTypeDelegate: string | undefined;
   isCustomBPType: boolean;
 
   // [Step 1]: Basic Conversion: (Directly Type Conversion: Cpp <-> BP)
@@ -335,6 +336,7 @@ const defaultTmpl_BasicType_NoConv: UEBPTypeConvData = {
   bpTypeName: '',
   bpDesignedDeclType: undefined,
   bpDesignedTypeSource: undefined,
+  bpDesignedTypeDelegate: undefined,
   isCustomBPType: false,
   convFromCpp: {
     convFuncType: ConversionWayType.NoNeedConversion,
@@ -607,6 +609,11 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
     'uint64_t': {
       ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'FString',
+      // TBD(WinterPu)
+      // in OnStreamMessage, uint64_t sentTs -> FString sentTs
+      // because DECLARE_DYNAMIC_MULTICAST_DELEGATE_XXX would always gen FString to const FString &
+      bpDesignedTypeDelegate: 'const FString &',
+      bpDesignedTypeSource: 'const FString &',
       defaultValue: '0',
       convFromCpp: {
         convFuncType: ConversionWayType.BasicConvFunc,

@@ -578,7 +578,8 @@ export function convertToBPType(
   }
 
   let tmpDeclType = tmpTypeSource;
-  let tmpDelegateType = tmpTypeSource;
+  let tmpDelegateType =
+    data_bptype_conv?.bpDesignedTypeDelegate ?? tmpTypeSource;
 
   // is_const  /  isOutput
   // TBD(WinterPu)
