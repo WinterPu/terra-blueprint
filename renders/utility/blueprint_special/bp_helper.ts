@@ -37,6 +37,10 @@ import {
   map_method_param_size_count,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
+import {
+  ClazzMethodReplacedContext_,
+  map_clazz_method_replaced_context,
+} from './bptype_data_replaced';
 import { UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
@@ -175,6 +179,20 @@ export function getBPName(node: CXXTerraNode): [CXXTYPE, string] {
     bpTypeName = dataBPMethodName.methodName;
   }
   return [typeCategory, bpTypeName];
+}
+
+export function genContext_BPMethodReplacedDecl(
+  node_method: MemberFunction
+): ClazzMethodReplacedContext_ {
+  const replaced_data = map_clazz_method_replaced_context[node_method.fullName];
+  return (
+    replaced_data ?? {
+      doReplceDecl: false,
+      decl: ``,
+      doReplceImpl: false,
+      impl: ``,
+    }
+  );
 }
 
 export function getBPMethodNameFullData(

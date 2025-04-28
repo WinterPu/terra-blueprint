@@ -1,4 +1,9 @@
 {{#methods}}
+{{#user_data.bpContextReplacedImpl}}
+// replaced method
+{{{user_data.bpContextReplcedMethodImplementation}}}
+{{/user_data.bpContextReplacedImpl}}
+{{^user_data.bpContextReplacedImpl}}
   {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}::{{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
       {{#user_data.hasReturnVal}}
@@ -34,7 +39,7 @@
 {{{user_data.bpContextReturnValEnd}}}
       {{/user_data.hasReturnVal}}
   }
-  
+{{/user_data.bpContextReplacedImpl}}
 {{/methods}}
 
 

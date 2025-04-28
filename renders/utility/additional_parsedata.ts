@@ -55,6 +55,11 @@ export class ClazzMethodUserData extends UECommonUserData {
   suffix_attribute: string = '';
 
   // bp
+  bpContextReplacedDecl: boolean = false;
+  bpContextReplcedMethodDeclaration: string = '';
+  bpContextReplacedImpl: boolean = false;
+  bpContextReplcedMethodImplementation: string = '';
+
   bpReturnType: string = '';
   bpCallbackDelegateMacroName: string = '';
   bpCallbackDelegateTypeName: string = '';

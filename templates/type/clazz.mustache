@@ -7,10 +7,16 @@ public:
 {{{user_data.bpContextInitDecl}}}
 
 {{#methods}}
+{{#user_data.bpContextReplacedDecl}}
+// replaced method
+{{{user_data.bpContextReplcedMethodDeclaration}}}
+{{/user_data.bpContextReplacedDecl}}
+{{^user_data.bpContextReplacedDecl}}
 {{{user_data.commentCppStyle}}}
   UFUNCTION(BlueprintCallable,Category = "Agora|{{parent_name}}")
   {{{user_data.bpReturnType}}} {{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
-  
+
+{{/user_data.bpContextReplacedDecl}}
 {{/methods}}
 
 private:

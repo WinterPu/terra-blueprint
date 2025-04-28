@@ -133,6 +133,8 @@ export function genGeneralTerraData(
             bIsCallbackMethod
           );
           const basedata_clazzmethod = genBaseUECommonUserData(method);
+          const replaced_context =
+            BPHelper.genContext_BPMethodReplacedDecl(method);
           const clazzMethodUserData: CustomUserData.ClazzMethodUserData = {
             ...basedata_clazzmethod,
             isExcluded: func_exclude_api
@@ -152,6 +154,12 @@ export function genGeneralTerraData(
                 : 'RtcEngine',
 
             // bp
+
+            bpContextReplacedDecl: replaced_context.doReplceDecl,
+            bpContextReplcedMethodDeclaration: replaced_context.decl,
+            bpContextReplacedImpl: replaced_context.doReplceImpl,
+            bpContextReplcedMethodImplementation: replaced_context.impl,
+
             bpReturnType: BPHelper.genBPReturnType(method.return_type),
 
             bpCallbackDelegateMacroName: bpMethodNameFullData.delegateMacroName,
