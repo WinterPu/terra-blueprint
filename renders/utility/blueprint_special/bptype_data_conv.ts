@@ -361,6 +361,8 @@ const defaultTmpl_FString_NonConst: UEBPTypeConvData = {
   // char* cppvar = UABT::New(bpvar);
   ...defaultTmpl_BasicType_NoConv,
   bpTypeName: 'FString',
+  defaultValue: 'nullptr',
+  defaultBPValue: 'TEXT("")',
   convFromCpp: {
     convFuncType: ConversionWayType.BPFromCpp_FString,
     convFunc: 'UTF8_TO_TCHAR',
@@ -378,6 +380,8 @@ const defaultTmpl_FString_NonConst: UEBPTypeConvData = {
 const defaultTmpl_FString_NonConst_UnsignedChar: UEBPTypeConvData = {
   ...defaultTmpl_FString_NonConst,
   bpTypeName: 'FString',
+  defaultValue: 'nullptr',
+  defaultBPValue: 'TEXT("")',
   convFromCpp: {
     convFuncType: ConversionWayType.BPFromCpp_FString,
     convFunc: 'UTF8_TO_TCHAR',
@@ -394,6 +398,8 @@ const defaultTmpl_FString_NonConst_UnsignedChar: UEBPTypeConvData = {
 const defaultTmpl_FString_Const: UEBPTypeConvData = {
   ...defaultTmpl_BasicType_NoConv,
   bpTypeName: 'FString',
+  defaultValue: 'nullptr',
+  defaultBPValue: 'TEXT("")',
   convFromCpp: {
     convFuncType: ConversionWayType.BPFromCpp_FString,
     convFunc: 'UTF8_TO_TCHAR',

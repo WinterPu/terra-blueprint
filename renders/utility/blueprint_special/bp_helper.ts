@@ -468,11 +468,14 @@ function genContext_BPMethodReturnValBegin(
   };
 
   let return_type_bytype = BPTypeHelper.convertToBPType(return_type);
+  const bpTypeConvData = BPTypeHelper.getBPTypeConvData(return_type.source);
 
   let decl_type = return_type_bytype.declType;
 
   // should be default value not a failed value.
-  let defaultVal = FilterHelper.UESDK_GetFailureReturnVal(return_type.source);
+  let defaultVal =
+    bpTypeConvData?.defaultBPValue ??
+    FilterHelper.UESDK_GetFailureReturnVal(return_type.source);
 
   if (Tools.IsNotEmptyStr(defaultVal)) {
     defaultVal = `= ${defaultVal}`;
