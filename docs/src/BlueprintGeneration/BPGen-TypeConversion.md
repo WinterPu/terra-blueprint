@@ -15,3 +15,13 @@
 
 
 ## 数组 - TArray 的问题
+
+
+## 怎么解决继承问题 IAudioFrameObserver 继承自 IAudioFrameObserverBase 
+但是node 只有 新增的method
+
+
+## 怎么解决：Custom Header 带来的函数不匹配的问题
+其他的框架是：
+手写的 extends 生成的
+会有手写的method override 生成的method

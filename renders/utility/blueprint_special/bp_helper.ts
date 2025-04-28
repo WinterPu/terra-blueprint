@@ -519,14 +519,18 @@ function genContext_BPMethodReturnVal(
   const convWayType = bpType.bpConv_BPFromCpp.convFuncType;
 
   // [Part - Decl]
+  // TBD(WinterPu)
+  // for some return val: Ex. EnumerateVideoDevices
+  // TArray<FUABT_VideoDeviceInfo> ReturnVal; UABT::SetBPDataArray<agora::rtc::ext::VideoDeviceInfo, FUABT_VideoDeviceInfo>(ReturnVal, ret, );
+  // for now, we set 1 as the default size count
   const str_decl = genContextBasedOnConversionWayType(
     EBPContextGenType.DeclType_Decl,
     undefined,
     bpType,
     convWayType,
     false,
-    '',
-    '',
+    '1',
+    '1',
     AGORA_MUSTACHE_DATA.RETURN_VAL,
     AGORA_MUSTACHE_DATA.RETURN_VAL_DECL
   );

@@ -173,4 +173,11 @@ module.exports = [
   // no default constructor: so currently FUABT_ generation failed
   'agora::rtc::MixedAudioFrame',
   'agora::rtc::IRtcEngine.setMixedAudioFrameParameters',
+
+  // TBD(WinterPu)
+  // for inheritance problem:
+  // cannot inherit from the abstract class
+  // IAudioFrameObserver : public IAudioFrameObserverBase
+  'agora::media::IAudioFrameObserver',
+  'agora::rtc::IMediaPlayerSourceObserver',
 ];

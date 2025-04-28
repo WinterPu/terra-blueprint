@@ -208,7 +208,7 @@ export const map_decltype_special_rule = new Map<
       // free: none
       CppFromBP: {
         funcDecl: (decl_var, param) =>
-          `float[3] ${decl_var}; UABT::SetFloatArray(${param}, ${decl_var});`,
+          `float ${decl_var}[3]; UABT::SetFloatArray(${decl_var}, ${param});`,
 
         funcUsage: (decl_var) => `${decl_var}`,
 
@@ -476,6 +476,24 @@ const defaultTmpl_TrackID: UEBPTypeConvData = {
   },
 };
 
+const defaultTmpl_FVector: UEBPTypeConvData = {
+  ...defaultTmpl_BasicType_NoConv,
+  bpTypeName: 'FVector',
+  defaultValue: 'FVector(0.0, 0.0, 0.0)',
+  parseArrayIsInBlackList: true,
+  convFromCpp: {
+    convFuncType: ConversionWayType.BasicConvFunc,
+    convFunc: 'UABT::FromFloatArray',
+    convFuncAdditional01: '',
+  },
+  convToCpp: {
+    convFuncType: ConversionWayType.SetArrayData,
+    convFunc: 'UABT::SetFloatArray',
+    convFuncAdditional01: '',
+  },
+  declTypeSPRule: DeclTypeSPRule.SP_FVector,
+};
+
 // =============== Type 2 Type Conversion ===============
 // also use type source as key
 // but when the type is not on the map: we would use type.name to see if the base type is on the map
@@ -617,14 +635,6 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       defaultValue: '0',
     },
 
-    // FVector Related
-    'float const[3]': {
-      ...defaultTmpl_BasicType_NoConv,
-      bpTypeName: 'FVector',
-      defaultValue: 'FVector(0.0, 0.0, 0.0)',
-      parseArrayIsInBlackList: true,
-    },
-
     // FString Related
     'const char*': {
       ...defaultTmpl_FString_Const,
@@ -693,6 +703,15 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
         convFuncAdditional01: 'UABT::Free_CharArray2D',
       },
       cppDesignedDeclType: 'char**',
+    },
+
+    // FVector Related
+    'float const[3]': {
+      ...defaultTmpl_FVector,
+    },
+
+    'float[3]': {
+      ...defaultTmpl_FVector,
     },
 
     // Array Related

@@ -182,7 +182,7 @@ namespace agora {
 				}
 
 
-				static inline FVector FromFloatArray(float* farray) {
+				static inline FVector FromFloatArray(const float* farray) {
 					if(farray == nullptr){
 						return FVector::ZeroVector;
 					}
@@ -406,7 +406,7 @@ namespace agora {
 
 				
 
-				static inline void SetFloatArray (float* & farray, const FVector & vec)
+				static inline void SetFloatArray (float farray[3], const FVector & vec)
 				{
 					farray[0] = vec.X;
 					farray[1] = vec.Y;

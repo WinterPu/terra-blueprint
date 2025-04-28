@@ -60,9 +60,9 @@ export const map_class_initialization: {
   
           }
   
-          InsAudioDeviceManager->PlaybackDeviceCollection = NewObject<UAudioDeviceCollection>();
+          //InsAudioDeviceManager->PlaybackDeviceCollection = NewObject<UAudioDeviceCollection>();
   
-          InsAudioDeviceManager->RecordDeviceCollection = NewObject<UAudioDeviceCollection>();
+          //InsAudioDeviceManager->RecordDeviceCollection = NewObject<UAudioDeviceCollection>();
         }
         return InsAudioDeviceManager;
       }
