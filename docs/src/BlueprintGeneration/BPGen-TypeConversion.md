@@ -25,3 +25,10 @@
 其他的框架是：
 手写的 extends 生成的
 会有手写的method override 生成的method
+
+
+
+### CBExecutor:
+OnLocalAudioSpectrum.AddDynamic(Executor, &UAgoraBPuAudioSpectrumObserverCBExecutor::OnLocalAudioSpectrum);
+OnLocalAudioSpectrum 本身会有return value 
+AddDynamic 的绑定无法有return value

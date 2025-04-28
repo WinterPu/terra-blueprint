@@ -181,10 +181,9 @@ module.exports = [
   'agora::media::IAudioFrameObserver',
   'agora::rtc::IMediaPlayerSourceObserver',
 
-
   // TBD(WinterPu)
   // return type has ::ext:: problem
-/*
+  /*
     auto ret = _NativePtr->getPlaybackDefaultDevice();
     // Free Data if neeeded
     TArray<FUABT_AudioDeviceInfo> ReturnVal; UABT::SetBPDataArray<agora::rtc::ext::AudioDeviceInfo, FUABT_AudioDeviceInfo>(ReturnVal, ret, 1);
@@ -192,4 +191,11 @@ module.exports = [
 
   'agora::rtc::IAudioDeviceManager.getPlaybackDefaultDevice',
   'agora::rtc::IAudioDeviceManager.getRecordingDefaultDevice',
+
+  //TBD(WinterPu)
+  // observer -> CBExecutor has return value
+  // DECLARE_DYNAMIC_MULTICAST_DELEGATE_XXX cannot has return value
+  'agora::media::IAudioSpectrumObserver',
+  'agora::media::IVideoEncodedFrameObserver',
+  'agora::media::IFaceInfoObserver',
 ];
