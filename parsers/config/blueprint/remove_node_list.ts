@@ -180,4 +180,16 @@ module.exports = [
   // IAudioFrameObserver : public IAudioFrameObserverBase
   'agora::media::IAudioFrameObserver',
   'agora::rtc::IMediaPlayerSourceObserver',
+
+
+  // TBD(WinterPu)
+  // return type has ::ext:: problem
+/*
+    auto ret = _NativePtr->getPlaybackDefaultDevice();
+    // Free Data if neeeded
+    TArray<FUABT_AudioDeviceInfo> ReturnVal; UABT::SetBPDataArray<agora::rtc::ext::AudioDeviceInfo, FUABT_AudioDeviceInfo>(ReturnVal, ret, 1);
+*/
+
+  'agora::rtc::IAudioDeviceManager.getPlaybackDefaultDevice',
+  'agora::rtc::IAudioDeviceManager.getRecordingDefaultDevice',
 ];

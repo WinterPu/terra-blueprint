@@ -566,7 +566,7 @@ export const map_bptype_conv_data: { [type_source: string]: UEBPTypeConvData } =
       defaultValue: '0',
     },
     'long': {
-      ...defaultTmpl_Int64_Pointer,
+      ...defaultTmpl_BasicType_NoConv,
       bpTypeName: 'int64',
       defaultValue: '0',
     },
@@ -1058,3 +1058,27 @@ export const map_class_struct_without_default_constructor: {
 };
 
 export const map_callback_no_void_return_val: { [key: string]: string } = {};
+
+// [return_type_source] -> [BP default value]
+export const map_return_bptype_default_value: Record<string, string> = {
+  'int': 'AGORA_UE_ERR_CODE(ERROR_NULLPTR)',
+  'char const*': 'nullptr',
+  'bool': 'false',
+  'agora_refptr': 'nullptr',
+  'agora::rtc::video_track_id_t': '0',
+  'float': '0.0f',
+  'agora::rtc::IScreenCaptureSourceList*': 'nullptr',
+  'agora::rtc::CONNECTION_STATE_TYPE':
+    'UABTEnum::WrapWithUE(agora::rtc::CONNECTION_STATE_TYPE::CONNECTION_STATE_FAILED)',
+  'int64_t': '0',
+  'uint64_t': 'TEXT("0")',
+  'agora_refptr<agora::rtc::IMediaPlayer>': 'nullptr',
+  'agora_refptr<agora::rtc::IMediaRecorder>': 'nullptr',
+  'void': '',
+
+  // // TBD(WinterPu) They are in AgoraBPuAgoraMediaBase.cpp
+  // 'int64': '0',
+  // 'EUABT_VIDEO_FRAME_PROCESS_MODE':
+  //   'EUABT_VIDEO_FRAME_PROCESS_MODE::PROCESS_MODE_READ_WRITE',
+  // 'EUABT_VIDEO_PIXEL_FORMAT': 'EUABT_VIDEO_PIXEL_FORMAT::VIDEO_PIXEL_DEFAULT',
+};

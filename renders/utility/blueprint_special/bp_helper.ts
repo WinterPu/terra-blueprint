@@ -35,6 +35,7 @@ import {
   map_class_struct_without_default_constructor,
   map_decltype_special_rule,
   map_method_param_size_count,
+  map_return_bptype_default_value,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
 import {
@@ -493,7 +494,8 @@ function genContext_BPMethodReturnValBegin(
   // should be default value not a failed value.
   let defaultVal =
     bpTypeConvData?.defaultBPValue ??
-    FilterHelper.UESDK_GetFailureReturnVal(return_type.source);
+    map_return_bptype_default_value[return_type.source] ??
+    '';
 
   if (Tools.IsNotEmptyStr(defaultVal)) {
     defaultVal = `= ${defaultVal}`;
