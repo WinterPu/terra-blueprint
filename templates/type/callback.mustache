@@ -7,10 +7,11 @@ class AGORAPLUGIN_API {{user_data.bpNodeName}}CBExecutor : public UObject {
 public:
 
     {{#methods}}
+    {{^user_data.hasReturnVal}}
 {{{user_data.commentCppStyle}}}
     UFUNCTION(BlueprintNativeEvent, Category = "Agora|Event")
     {{user_data.bpReturnType}} {{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
-    
+    {{/user_data.hasReturnVal}}
     {{/methods}}
 };
 
@@ -26,15 +27,19 @@ public:
     
 
 {{#methods}}
+{{^user_data.hasReturnVal}}
 {{user_data.bpCallbackDelegateMacroName}}({{user_data.bpCallbackDelegateTypeName}}{{#user_data.bpCallbackIsNoParam}}{{/user_data.bpCallbackIsNoParam}}{{^user_data.bpCallbackIsNoParam}}, {{/user_data.bpCallbackIsNoParam}}{{#parameters}}{{{user_data.bpDelegateType}}}, {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}});
+{{/user_data.hasReturnVal}}
 {{/methods}}
 
 
 public:
   {{#methods}}
+  {{^user_data.hasReturnVal}}
 {{{user_data.commentCppStyle}}}
 	UPROPERTY(BlueprintAssignable, Category = "Agora|Event")
   {{user_data.bpCallbackDelegateTypeName}} {{user_data.bpCallbackDelegateVarName}};
+  {{/user_data.hasReturnVal}}
   {{/methods}}
 
   {{#methods}}

@@ -6,7 +6,9 @@ void {{{user_data.bpNodeName}}}::AddBlueprintCallbackExecutor({{{user_data.bpNod
 		return;
 	}
     {{#methods}}
+    {{^user_data.hasReturnVal}}
     {{user_data.bpCallbackDelegateVarName}}.AddDynamic(Executor, &{{parent.user_data.bpNodeName}}CBExecutor::{{user_data.bpNodeName}});
+    {{/user_data.hasReturnVal}}
     {{/methods}}
 
 }
@@ -15,7 +17,9 @@ void {{{user_data.bpNodeName}}}::AddBlueprintCallbackExecutor({{{user_data.bpNod
 void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
 
     {{#methods}}
+    {{^user_data.hasReturnVal}}
     {{user_data.bpCallbackDelegateVarName}}.Clear();
+    {{/user_data.hasReturnVal}}
     {{/methods}}
 
 }
@@ -64,15 +68,14 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
 
 
 {{#methods}}
+{{^user_data.hasReturnVal}}
   {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}CBExecutor::{{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
 
     UE_LOG(LogAgora, Warning, TEXT("%s"), *FString(AG_FUNCTION_MACRO));
-
-    {{#user_data.hasReturnVal}}
-    return {{{user_data.failureReturnVal}}};
-    {{/user_data.hasReturnVal}}
+     
   }
   
+{{/user_data.hasReturnVal}}
 {{/methods}}
 
