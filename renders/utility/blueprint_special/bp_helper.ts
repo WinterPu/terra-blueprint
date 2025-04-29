@@ -42,6 +42,7 @@ import {
   ClazzMethodReplacedContext_,
   map_clazz_method_replaced_context,
 } from './bptype_data_replaced';
+import * as BPContextReplacedHelper from './bptype_data_replaced/helper';
 import { UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';
@@ -185,7 +186,8 @@ export function getBPName(node: CXXTerraNode): [CXXTYPE, string] {
 export function genContext_BPMethodReplacedDecl(
   node_method: MemberFunction
 ): ClazzMethodReplacedContext_ {
-  const replaced_data = map_clazz_method_replaced_context[node_method.fullName];
+  const map_data = BPContextReplacedHelper.getMapDataMethodReplacedContext();
+  const replaced_data = map_data[node_method.fullName];
   return (
     replaced_data ?? {
       doReplceDecl: false,
