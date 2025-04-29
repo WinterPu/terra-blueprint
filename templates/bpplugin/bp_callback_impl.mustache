@@ -69,7 +69,7 @@ void {{{user_data.bpNodeName}}}::RemoveAllBlueprintCallbackExecutors(){
 
 {{#methods}}
 {{^user_data.hasReturnVal}}
-  {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}CBExecutor::{{user_data.bpNodeName}}({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
+  {{{user_data.bpReturnType}}} {{parent.user_data.bpNodeName}}CBExecutor::{{user_data.bpNodeName}}_Implementation({{#parameters}}{{{user_data.bpParameterType}}} {{name}}{{^user_data.isLast}}, {{/user_data.isLast}}{{/parameters}})
   {
 
     UE_LOG(LogAgora, Warning, TEXT("%s"), *FString(AG_FUNCTION_MACRO));

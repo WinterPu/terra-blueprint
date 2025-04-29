@@ -1128,5 +1128,4 @@ export const map_return_bptype_default_value: Record<string, string> = {
   // 'EUABT_VIDEO_PIXEL_FORMAT': 'EUABT_VIDEO_PIXEL_FORMAT::VIDEO_PIXEL_DEFAULT',
 };
 
-
 export const map_return_bptype_fix: { [key: string]: string } = {};
