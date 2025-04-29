@@ -222,11 +222,10 @@ export function genBPReturnType(return_type: SimpleType): string {
   return bp_type.source;
 }
 
-export function genBPParameterType(
-  return_type: SimpleType,
-  is_output?: boolean
-): UEBPType {
-  return BPTypeHelper.convertToBPType(return_type, is_output);
+export function genBPParameterType(param: Variable): UEBPType {
+  // char* => FString
+  // in method it would be an output param
+  return BPTypeHelper.convertToBPType(param.type, param.is_output);
 }
 
 // [Step 04]: About BP default Value
@@ -429,7 +428,11 @@ function genContext_ConvDeclType(
     if (data_rule) {
       result.contextDecl = `${data_rule.funcDecl(decl_var_name, param_name)}`;
       result.contextUsage = `${data_rule.funcUsage(decl_var_name)}`;
-      result.contextFree = `${data_rule.funcFree()}`;
+      result.contextFree = `${data_rule.funcFree(
+        bpType.name,
+        decl_var_name,
+        param_name
+      )}`;
     }
   } else if (data_conv.convFuncType !== ConversionWayType.NoNeedConversion) {
     // [Step 02]: Use Default Basic Conversion
@@ -565,8 +568,7 @@ export function genContext_BPMethod(
   let result = new BPMethodContext();
 
   node_method.parameters.map((param, index) => {
-    const bptype = BPTypeHelper.convertToBPType(param.type);
-
+    const bptype = genBPParameterType(param);
     const extra_SizeCount = getBPSizeCount(node_method, param);
 
     contextParam_BPFromCpp = genContext_ConvDeclType(

@@ -152,6 +152,19 @@ export enum DeclTypeSPRule {
   // BPFromCPP: Ex. FString <= const char* (decltype: FString)
   SP_String,
 
+  // For String
+  // CPPFromBP: Ex.
+  // GetDevice(FString & deviceId);
+  // char Raw_DeviceId[512] = {0};
+  // NativePtr->getDevice(Raw_DeviceId);
+  // deviceId = UTF8_TO_TCHAR(Raw_DeviceId);
+  // BPFromCPP: Ex.
+  // getDevice(const char* deviceId);
+  // FString BPDeviceId;
+  // NativePtr->GetDevice(BPDeviceId);
+  // UABT::SetCharArray(BPDeviceId, Raw_DeviceId,512);
+  SP_String_Output_512,
+
   // For FVector
   // CPPFromBP: Ex. float const[3] <= FVector (decltype: float[3])
   // BPFromCPP: Ex. FVector <= float const[3] (decltype: FVector)
@@ -161,7 +174,7 @@ export enum DeclTypeSPRule {
 export type DeclTypeFuncData = {
   funcDecl: (decl_var: string, param: string) => string;
   funcUsage: (decl_var: string) => string;
-  funcFree: (bpTypeName?: string) => string;
+  funcFree: (bpTypeName?: string, decl_var?: string, param?: string) => string;
 };
 
 export type DeclTypeItemData = {
@@ -197,6 +210,31 @@ export const map_decltype_special_rule = new Map<
         funcUsage: (decl_var) => `${decl_var}`,
 
         funcFree: () => '',
+      },
+    },
+  ],
+
+  [
+    DeclTypeSPRule.SP_String_Output_512,
+    {
+      // decl: char Raw_DeviceId[512] = {0};
+      // usage: Raw_DeviceId;
+      // free: none
+      CppFromBP: {
+        funcDecl: (decl_var, param) => `char ${decl_var}[512] = {0};`,
+
+        funcUsage: (decl_var) => `${decl_var}`,
+
+        funcFree: (byType, decl_var, param) =>
+          `${param} = UTF8_TO_TCHAR(${decl_var});`,
+      },
+      BPFromCpp: {
+        funcDecl: (decl_var, param) => `FString ${decl_var};`,
+
+        funcUsage: (decl_var) => `${decl_var}`,
+
+        funcFree: (byType, decl_var, param) =>
+          `UABT::SetCharArray(${param}, ${decl_var}, 512);`,
       },
     },
   ],

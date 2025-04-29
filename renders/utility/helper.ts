@@ -217,10 +217,7 @@ export function genGeneralTerraData(
               valDefaultVal !== '' ? ' /* ' + valDefaultVal + ' */ ' : '';
             valDefaultVal = valDefaultVal !== '' ? ' = ' + valDefaultVal : '';
 
-            const bpType = BPHelper.genBPParameterType(
-              parameter.type,
-              parameter.is_output
-            );
+            const bpType = BPHelper.genBPParameterType(parameter);
             const basedata_parameter = genBaseUECommonUserData(parameter);
             const parameterUserData: CustomUserData.ParameterUserData = {
               ...basedata_parameter,

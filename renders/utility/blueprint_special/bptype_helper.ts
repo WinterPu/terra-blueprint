@@ -643,6 +643,11 @@ export function convertToBPType(
 
   result.bpConvDeclTypeSPRule =
     data_bptype_conv?.declTypeSPRule ?? DeclTypeSPRule.DefaultNoSP;
+  // special rule
+  if (result.name === 'FString' && isOutput) {
+    result.bpConvDeclTypeSPRule = DeclTypeSPRule.SP_String_Output_512;
+  }
+
   result.cppDeclType = data_bptype_conv?.cppDesignedDeclType ?? cppDeclTypeVal;
 
   return result;
