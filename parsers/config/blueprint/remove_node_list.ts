@@ -60,7 +60,7 @@ module.exports = [
   'agora::rtc::IRtcEngine.takeSnapshot.callback',
   'agora::rtc::ICloudSpatialAudioEngine.getTeammates.uids',
   'agora::rtc::ICloudSpatialAudioEngine.getTeammates.userCount',
-
+  'agora::rtc::ILocalSpatialAudioEngine.initialize.config',
   // remove
   // 'agora::rtc::IScreenCaptureSourceList',
 
