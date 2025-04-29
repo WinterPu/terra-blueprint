@@ -49,4 +49,384 @@ export const map_data: {
     }
       `,
   },
+
+  'agora::rtc::IRtcEngine.getVersion': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+    UFUNCTION(BlueprintCallable, Category = "Agora|IRtcEngine")
+    FString GetVersion();
+    `,
+    doReplceImpl: true,
+    impl: `
+      FString UAgoraBPuRtcEngine::GetVersion()
+  { 
+      return AgoraUERtcEngine::Get()->GetSDKVersion();
+  }
+    `,
+  },
+
+  // TBD(WinterPu)
+  // pointer treat as Array
+  'agora::rtc::IRtcEngine.leaveChannel': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int LeaveChannel(const FUABT_LeaveChannelOptions & options);
+    `,
+    doReplceImpl: true,
+    impl: `
+  int UAgoraBPuRtcEngine::LeaveChannel(const FUABT_LeaveChannelOptions & options)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+
+      // Convert UEBP to CppType
+      agora::rtc::LeaveChannelOptions Raw_options = options.CreateRawData();
+
+
+      // Call Native Method
+      
+      auto ret = AgoraUERtcEngine::Get()->leaveChannel(Raw_options);
+
+
+      // Free Data if neeeded
+      options.FreeRawData(Raw_options);
+
+      int ReturnVal = ret;
+      FinalReturnResult =  ReturnVal;
+
+      // Need to be optimized
+      return FinalReturnResult;
+
+  }
+    `,
+  },
+
+  'agora::rtc::IRtcEngine.setClientRole': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int SetClientRole(EUABT_CLIENT_ROLE_TYPE role, const FUABT_ClientRoleOptions & options);
+    `,
+    doReplceImpl: true,
+    impl: `
+ int UAgoraBPuRtcEngine::SetClientRole(EUABT_CLIENT_ROLE_TYPE role, const FUABT_ClientRoleOptions & options)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+
+      // Convert UEBP to CppType
+      agora::rtc::CLIENT_ROLE_TYPE Raw_role = UABTEnum::ToRawValue(role);
+
+      agora::rtc::ClientRoleOptions Raw_options = options.CreateRawData();
+
+
+      // Call Native Method
+      
+      auto ret = AgoraUERtcEngine::Get()->setClientRole(Raw_role, Raw_options);
+
+      // Free Data if neeeded
+      
+      options.FreeRawData(Raw_options);
+
+      int ReturnVal = ret;
+      FinalReturnResult =  ReturnVal;
+
+      // Need to be optimized
+      return FinalReturnResult;
+
+  }
+  `,
+  },
+
+  'agora::rtc::IRtcEngine.enableDualStreamMode': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int EnableDualStreamMode(bool enabled, const FUABT_SimulcastStreamConfig & streamConfig);
+    `,
+    doReplceImpl: true,
+    impl: `
+    int UAgoraBPuRtcEngine::EnableDualStreamMode(bool enabled, const FUABT_SimulcastStreamConfig & streamConfig)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+      // Convert UEBP to CppType
+      bool Raw_enabled = enabled;
+      agora::rtc::SimulcastStreamConfig Raw_streamConfig = streamConfig.CreateRawData();
+
+
+      // Call Native Method
+      
+      auto ret = AgoraUERtcEngine::Get()->enableDualStreamMode(Raw_enabled, Raw_streamConfig);
+
+      // Free Data if neeeded
+      
+      streamConfig.FreeRawData(Raw_streamConfig);
+
+      int ReturnVal = ret;
+      FinalReturnResult =  ReturnVal;
+
+      // Need to be optimized
+      return FinalReturnResult;
+
+  }
+    `,
+  },
+
+  'agora::rtc::IRtcEngine.setDualStreamMode': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int SetDualStreamMode(EUABT_SIMULCAST_STREAM_MODE mode, const FUABT_SimulcastStreamConfig & streamConfig); 
+    `,
+    doReplceImpl: true,
+    impl: `
+    int UAgoraBPuRtcEngine::SetDualStreamMode(EUABT_SIMULCAST_STREAM_MODE mode, const FUABT_SimulcastStreamConfig & streamConfig)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+
+      // Convert UEBP to CppType
+      agora::rtc::SIMULCAST_STREAM_MODE Raw_mode = UABTEnum::ToRawValue(mode);
+
+      agora::rtc::SimulcastStreamConfig Raw_streamConfig = streamConfig.CreateRawData();
+
+      // Call Native Method
+      
+      auto ret = AgoraUERtcEngine::Get()->setDualStreamMode(Raw_mode, Raw_streamConfig);
+
+      // Free Data if neeeded
+      
+      streamConfig.FreeRawData(Raw_streamConfig);
+
+      int ReturnVal = ret;
+      FinalReturnResult =  ReturnVal;
+
+      // Need to be optimized
+      return FinalReturnResult;
+
+  }
+    `,
+  },
+
+  // TBD(WinterPu)
+  // should be output
+  'agora::rtc::IRtcEngine.getExtensionProperty': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int GetExtensionProperty(const FString & provider, const FString & extension, const FString & key, FString & value, int buf_len, EUABT_MEDIA_SOURCE_TYPE type);
+    `,
+    doReplceImpl: true,
+    impl: `
+  int UAgoraBPuRtcEngine::GetExtensionProperty(const FString & provider, const FString & extension, const FString & key, FString & value, int buf_len, EUABT_MEDIA_SOURCE_TYPE type)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+      // // Convert UEBP to CppType
+      // std::string Raw_provider = TCHAR_TO_UTF8(*provider);
+      // std::string Raw_extension = TCHAR_TO_UTF8(*extension);
+      // std::string Raw_key = TCHAR_TO_UTF8(*key);
+      // std::string Raw_value = TCHAR_TO_UTF8(*value);
+      // int Raw_buf_len = buf_len;
+      // agora::media::MEDIA_SOURCE_TYPE Raw_type = UABTEnum::ToRawValue(type);
+
+
+      // // Call Native Method
+      
+      // auto ret = AgoraUERtcEngine::Get()->getExtensionProperty(Raw_provider.c_str(), Raw_extension.c_str(), Raw_key.c_str(), Raw_value.c_str(), Raw_buf_len, Raw_type);
+
+      // // Free Data if neeeded
+
+
+      // int ReturnVal = ret;
+      // FinalReturnResult =  ReturnVal;
+
+
+      // Need to be optimized
+      return FinalReturnResult;
+
+  }
+    `,
+  },
+
+  // TBD(WinterPu)
+  // FUABT macro scope problem
+
+  'agora::rtc::IRtcEngine.startScreenCapture': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int StartScreenCapture(const FUABT_ScreenCaptureParameters2 & captureParams);
+    `,
+    doReplceImpl: true,
+    impl: `
+      int UAgoraBPuRtcEngine::StartScreenCapture(const FUABT_ScreenCaptureParameters2 & captureParams)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+      // // Convert UEBP to CppType
+      // agora::rtc::ScreenCaptureParameters2 Raw_captureParams = captureParams.CreateRawData();
+
+
+      // // Call Native Method
+      
+      // auto ret = AgoraUERtcEngine::Get()->startScreenCapture(Raw_captureParams);
+
+      // // Free Data if neeeded
+      // captureParams.FreeRawData(Raw_captureParams);
+
+
+
+      // int ReturnVal = ret;
+      // FinalReturnResult =  ReturnVal;
+
+      // Need to be optimized
+      return FinalReturnResult;
+  }
+    `,
+  },
+
+  // TBD(WinterPu)
+  // remove node list removed streamId
+
+  'agora::rtc::IRtcEngine.createDataStream': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int CreateDataStream(int streamId,const FUABT_DataStreamConfig & config);
+    `,
+    doReplceImpl: true,
+    impl: `
+  int UAgoraBPuRtcEngine::CreateDataStream(int streamId, const FUABT_DataStreamConfig & config)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+      // // Convert UEBP to CppType
+      // agora::rtc::DataStreamConfig Raw_config = config.CreateRawData();
+
+      // // Call Native Method
+      
+      // auto ret = AgoraUERtcEngine::Get()->createDataStream(&streamId, Raw_config);
+
+      // // Free Data if neeeded
+      // config.FreeRawData(Raw_config);
+
+      // int ReturnVal = ret;
+      // FinalReturnResult =  ReturnVal;
+
+      // Need to be optimized
+      return FinalReturnResult;
+
+  }
+    `,
+  },
+
+  // TBD(WinterPu)
+  // pointer treat as Array
+  'agora::rtc::IRtcEngine.joinChannelWithUserAccount': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int JoinChannelWithUserAccount(const FString & token, const FString & channelId, const FString & userAccount, const FUABT_ChannelMediaOptions & options);
+    `,
+    doReplceImpl: true,
+    impl: `
+    int UAgoraBPuRtcEngine::JoinChannelWithUserAccount(const FString & token, const FString & channelId, const FString & userAccount, const FUABT_ChannelMediaOptions & options)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+      // Convert UEBP to CppType
+      std::string Raw_token = TCHAR_TO_UTF8(*token);
+      std::string Raw_channelId = TCHAR_TO_UTF8(*channelId);
+      std::string Raw_userAccount = TCHAR_TO_UTF8(*userAccount);
+      agora::rtc::ChannelMediaOptions Raw_options = options.CreateRawData();
+
+
+      // Call Native Method
+      
+      auto ret = AgoraUERtcEngine::Get()->joinChannelWithUserAccount(Raw_token.c_str(), Raw_channelId.c_str(), Raw_userAccount.c_str(), Raw_options);
+
+      // Free Data if neeeded
+      
+      options.FreeRawData(Raw_options);
+
+      int ReturnVal = ret;
+      FinalReturnResult =  ReturnVal;
+
+      // Need to be optimized
+      return FinalReturnResult;
+
+  }
+    `,
+  },
+
+  // TBD(WinterPu)
+  // lack eventhandler pointer
+  'agora::rtc::IRtcEngine.joinChannelWithUserAccountEx': {
+    ...rc_empty_data,
+    doReplceDecl: true,
+    declOp_IncludingComments: true,
+    decl: `
+  UFUNCTION(BlueprintCallable,Category = "Agora|IRtcEngine")
+  int JoinChannelWithUserAccountEx(const FString & token, const FString & channelId, const FString & userAccount, const FUABT_ChannelMediaOptions & options);
+    `,
+    doReplceImpl: true,
+    impl: `
+      int UAgoraBPuRtcEngine::JoinChannelWithUserAccountEx(const FString & token, const FString & channelId, const FString & userAccount, const FUABT_ChannelMediaOptions & options)
+  {
+      // Need to be optimized
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+
+      // // Convert UEBP to CppType
+      // std::string Raw_token = TCHAR_TO_UTF8(*token);
+      // std::string Raw_channelId = TCHAR_TO_UTF8(*channelId);
+      // std::string Raw_userAccount = TCHAR_TO_UTF8(*userAccount);
+      // agora::rtc::ChannelMediaOptions Raw_options = options.CreateRawData();
+
+
+      // // Call Native Method
+      
+      // auto ret = AgoraUERtcEngine::Get()->joinChannelWithUserAccountEx(Raw_token.c_str(), Raw_channelId.c_str(), Raw_userAccount.c_str(), Raw_options);
+
+      // // Free Data if neeeded
+      
+      // options.FreeRawData(Raw_options);
+
+      // int ReturnVal = ret;
+      // FinalReturnResult =  ReturnVal;
+
+      // Need to be optimized
+      return FinalReturnResult;
+
+  }
+    `,
+  },
 };

@@ -156,6 +156,8 @@ export function genGeneralTerraData(
             // bp
 
             bpContextReplacedDecl: replaced_context.doReplceDecl,
+            bpContextReplacedDecl_IncludingComments:
+              replaced_context.declOp_IncludingComments,
             bpContextReplcedMethodDeclaration: replaced_context.decl,
             bpContextReplacedImpl: replaced_context.doReplceImpl,
             bpContextReplcedMethodImplementation: replaced_context.impl,
@@ -192,7 +194,6 @@ export function genGeneralTerraData(
             bpNativePtr: BPHelper.genContext_BPMethod_NativePtr(method),
             ...method.user_data,
           };
-
           method.user_data = clazzMethodUserData;
 
           // Handle Variadic Params '....'

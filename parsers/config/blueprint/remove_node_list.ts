@@ -52,11 +52,6 @@ module.exports = [
   'agora::media::base::VideoFrame.d3d11Texture2d',
   'agora::media::base::MediaSource.provider',
   'agora::rtc::MusicContentCenterConfiguration.eventHandler',
-  'agora::rtc::IAudioDeviceManager.getPlaybackDeviceInfo.deviceId',
-  'agora::rtc::IAudioDeviceManager.getPlaybackDeviceInfo.deviceName',
-  'agora::rtc::IAudioDeviceManager.getRecordingDeviceInfo.deviceId',
-  'agora::rtc::IAudioDeviceManager.getRecordingDeviceInfo.deviceName',
-  'agora::rtc::IVideoDeviceManager.getDevice.deviceIdUTF8',
   'agora::rtc::IRtcEngineEx.joinChannelEx.eventHandler',
   'agora::rtc::IRtcEngine.joinChannelWithUserAccountEx.eventHandler',
   'agora::rtc::IRtcEngine.createDataStream.streamId',
@@ -65,7 +60,6 @@ module.exports = [
   'agora::rtc::IRtcEngine.takeSnapshot.callback',
   'agora::rtc::ICloudSpatialAudioEngine.getTeammates.uids',
   'agora::rtc::ICloudSpatialAudioEngine.getTeammates.userCount',
-  'agora::rtc::ILocalSpatialAudioEngine.initialize.config',
 
   // remove
   // 'agora::rtc::IScreenCaptureSourceList',

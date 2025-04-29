@@ -614,7 +614,7 @@ export function convertToBPType(
     // const
     if (type.is_const) {
       tmpTypeSource = 'const ' + tmpTypeSource + ' &';
-      tmpDelegateType = 'const ' + tmpTypeSource + ' &';
+      tmpDelegateType = tmpTypeSource;
     }
   }
 

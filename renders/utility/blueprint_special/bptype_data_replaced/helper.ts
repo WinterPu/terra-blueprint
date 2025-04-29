@@ -1,5 +1,6 @@
 export type ClazzMethodReplacedContext_ = {
   doReplceDecl: boolean;
+  declOp_IncludingComments: boolean;
   decl: string;
   doReplceImpl: boolean;
   impl: string;
@@ -8,6 +9,7 @@ export type ClazzMethodReplacedContext_ = {
 
 export const rc_empty_data: ClazzMethodReplacedContext_ = {
   doReplceDecl: false,
+  declOp_IncludingComments: false,
   decl: ``,
   doReplceImpl: false,
   impl: ``,

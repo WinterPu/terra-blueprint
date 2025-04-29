@@ -19,3 +19,9 @@ int64 uid = 0;
 
 };
 ```
+
+
+## How to resolve: FUABT macro scope problem
+
+
+

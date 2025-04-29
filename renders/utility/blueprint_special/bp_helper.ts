@@ -38,11 +38,8 @@ import {
   map_return_bptype_default_value,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
-import {
-  ClazzMethodReplacedContext_,
-  map_clazz_method_replaced_context,
-} from './bptype_data_replaced';
 import * as BPContextReplacedHelper from './bptype_data_replaced/helper';
+import { ClazzMethodReplacedContext_ } from './bptype_data_replaced/helper';
 import { UEBPType } from './bptype_helper';
 
 import * as BPTypeHelper from './bptype_helper';

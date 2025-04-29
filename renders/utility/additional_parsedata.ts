@@ -56,6 +56,7 @@ export class ClazzMethodUserData extends UECommonUserData {
 
   // bp
   bpContextReplacedDecl: boolean = false;
+  bpContextReplacedDecl_IncludingComments: boolean = false;
   bpContextReplcedMethodDeclaration: string = '';
   bpContextReplacedImpl: boolean = false;
   bpContextReplcedMethodImplementation: string = '';

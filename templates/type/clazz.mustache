@@ -8,6 +8,11 @@ public:
 
 {{#methods}}
 {{#user_data.bpContextReplacedDecl}}
+
+{{#user_data.bpContextReplacedDecl_IncludingComments}}
+{{{user_data.commentCppStyle}}}
+{{/user_data.bpContextReplacedDecl_IncludingComments}}
+
 // replaced method
 {{{user_data.bpContextReplcedMethodDeclaration}}}
 {{/user_data.bpContextReplacedDecl}}
