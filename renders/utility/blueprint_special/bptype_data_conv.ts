@@ -1127,3 +1127,6 @@ export const map_return_bptype_default_value: Record<string, string> = {
   //   'EUABT_VIDEO_FRAME_PROCESS_MODE::PROCESS_MODE_READ_WRITE',
   // 'EUABT_VIDEO_PIXEL_FORMAT': 'EUABT_VIDEO_PIXEL_FORMAT::VIDEO_PIXEL_DEFAULT',
 };
+
+
+export const map_return_bptype_fix: { [key: string]: string } = {};

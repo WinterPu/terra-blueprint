@@ -36,6 +36,7 @@ import {
   map_decltype_special_rule,
   map_method_param_size_count,
   map_return_bptype_default_value,
+  map_return_bptype_fix,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
 import * as BPContextReplacedHelper from './bptype_data_replaced/helper';
@@ -219,7 +220,12 @@ export function genBPReturnType(return_type: SimpleType): string {
     isReturnType,
     options
   );
-  return bp_type.source;
+
+  let result = bp_type.declType;
+  if (map_return_bptype_fix[result]) {
+    result = map_return_bptype_fix[result];
+  }
+  return result;
 }
 
 export function genBPParameterType(param: Variable): UEBPType {
