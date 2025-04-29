@@ -805,6 +805,10 @@ export function genContextBasedOnConversionWayType(
     return isCppFromBP ? res : STR_INVALID_CONV;
   };
 
+  const declIsBPFromCpp = function (res: string): string {
+    return isCppFromBP ? STR_INVALID_CONV : res;
+  };
+
   const defaultTmpl_AllInValidConv: Record<EBPContextGenType, string> = {
     [EBPContextGenType.Struct_Constructor]: STR_INVALID_CONV,
     [EBPContextGenType.Struct_CreateRawData]: STR_INVALID_CONV,

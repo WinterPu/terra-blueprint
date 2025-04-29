@@ -3,6 +3,15 @@ export type ClazzMethodReplacedContext_ = {
   decl: string;
   doReplceImpl: boolean;
   impl: string;
+  description: string;
+};
+
+export const rc_empty_data: ClazzMethodReplacedContext_ = {
+  doReplceDecl: false,
+  decl: ``,
+  doReplceImpl: false,
+  impl: ``,
+  description: ``,
 };
 
 // all data map
@@ -13,6 +22,8 @@ const _map_data_replaced_context: {
 // register module: avoid duplicate registration
 const registeredModules = new Set<string>();
 let isInitialized = false;
+
+const dir_name = 'agora_data';
 
 export function registerMapData(
   mapData: {
@@ -43,7 +54,7 @@ function initializeAllModules(): void {
     const path = require('path');
 
     try {
-      const dataDir = path.resolve(__dirname, 'data');
+      const dataDir = path.resolve(__dirname, dir_name);
       const files = fs.readdirSync(dataDir);
       // filter all .ts files
       const tsFiles = files.filter((file: string) => file.endsWith('.ts'));
@@ -56,7 +67,7 @@ function initializeAllModules(): void {
         if (!registeredModules.has(moduleName)) {
           try {
             // build module path (relative path)
-            const modulePath = `./data/${moduleName}`;
+            const modulePath = `./${dir_name}/${moduleName}`;
             const module = require(modulePath);
 
             if (module && module.map_data) {
@@ -107,7 +118,7 @@ function fallbackToKnownModules(): void {
     if (!registeredModules.has(moduleName)) {
       try {
         // try to import module
-        const module = require(`./data/${moduleName}`);
+        const module = require(`./${dir_name}/${moduleName}`);
 
         if (module && module.map_data) {
           registerMapData(module.map_data, moduleName);
@@ -138,7 +149,7 @@ export function registerModule(moduleName: string): boolean {
   }
 
   try {
-    const module = require(`./data/${moduleName}`);
+    const module = require(`./${dir_name}/${moduleName}`);
 
     if (module && module.map_data) {
       registerMapData(module.map_data, moduleName);

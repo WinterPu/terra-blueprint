@@ -1,9 +1,10 @@
-import { ClazzMethodReplacedContext_ } from '../helper';
+import { ClazzMethodReplacedContext_, rc_empty_data } from '../helper';
 
 export const map_data: {
   [key: string]: ClazzMethodReplacedContext_;
 } = {
   'agora::media::IMediaEngine.pushVideoFrame': {
+    ...rc_empty_data,
     doReplceDecl: false,
     decl: ``,
     doReplceImpl: true,
@@ -35,6 +36,7 @@ export const map_data: {
   },
 
   'agora::media::IMediaEngine.pushEncodedVideoImage': {
+    ...rc_empty_data,
     doReplceDecl: false,
     decl: ``,
     doReplceImpl: true,

@@ -1,9 +1,10 @@
-import { ClazzMethodReplacedContext_ } from '../helper';
+import { ClazzMethodReplacedContext_, rc_empty_data } from '../helper';
 
 export const map_data: {
   [key: string]: ClazzMethodReplacedContext_;
 } = {
   'agora::rtc::IRtcEngine.getScreenCaptureSources': {
+    ...rc_empty_data,
     doReplceDecl: false,
     decl: ``,
     doReplceImpl: true,

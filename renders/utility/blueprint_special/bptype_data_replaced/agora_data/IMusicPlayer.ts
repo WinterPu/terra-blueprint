@@ -1,9 +1,10 @@
-import { ClazzMethodReplacedContext_ } from '../helper';
+import { ClazzMethodReplacedContext_, rc_empty_data } from '../helper';
 
 export const map_data: {
   [key: string]: ClazzMethodReplacedContext_;
 } = {
   'agora::rtc::IMusicPlayer.openWithSongCode': {
+    ...rc_empty_data,
     doReplceDecl: false,
     decl: ``,
     doReplceImpl: true,
@@ -35,6 +36,29 @@ export const map_data: {
         return FinalReturnResult;
   
     }
-                  `,
+    `,
+  },
+
+  'agora::rtc::IMediaPlayerCacheManager.getCacheDir': {
+    ...rc_empty_data,
+    doReplceDecl: false,
+    decl: ``,
+    doReplceImpl: true,
+    impl: `
+      int UAgoraBPuMediaPlayerCacheManager::GetCacheDir(FString & path, int length)
+  {
+      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
+      char cache_dir[512] = {0};   
+      auto ret = _NativePtr->getCacheDir(cache_dir, sizeof(cache_dir));
+
+      // Free Data if neeeded
+      path = UTF8_TO_TCHAR(cache_dir);
+      
+      FinalReturnResult =  ret;
+
+      // Need to be optimized
+      return FinalReturnResult;
+  }
+    `,
   },
 };
