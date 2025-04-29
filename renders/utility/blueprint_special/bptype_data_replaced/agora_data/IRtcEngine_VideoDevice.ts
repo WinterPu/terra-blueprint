@@ -32,35 +32,4 @@ export const map_data: {
   }
     `,
   },
-
-  'agora::rtc::IVideoDeviceManager.getDevice': {
-    ...rc_empty_data,
-    doReplceDecl: false,
-    decl: ``,
-    doReplceImpl: true,
-    impl: `
-int UAgoraBPuVideoDeviceManager::GetDevice()
-  {
-      // Need to be optimized
-      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
-
-    //   // Convert UEBP to CppType
-
-    //   // Call Native Method
-      
-    //   auto ret = _NativePtr->getDevice();
-
-    //   // Free Data if neeeded
-
-
-    //   int ReturnVal = ret;
-    //   FinalReturnResult =  ReturnVal;
-
-
-      // Need to be optimized
-      return FinalReturnResult;
-
-  }
-    `,
-  },
 };

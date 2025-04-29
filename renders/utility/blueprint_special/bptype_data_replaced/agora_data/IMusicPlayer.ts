@@ -14,9 +14,6 @@ export const map_data: {
         // Need to be optimized
         int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
   
-  
-  
-  
         // Convert UEBP to CppType
         int64_t Raw_songCode = songCode;
         int64_t Raw_startPos = startPos;
@@ -36,29 +33,6 @@ export const map_data: {
         return FinalReturnResult;
   
     }
-    `,
-  },
-
-  'agora::rtc::IMediaPlayerCacheManager.getCacheDir': {
-    ...rc_empty_data,
-    doReplceDecl: false,
-    decl: ``,
-    doReplceImpl: true,
-    impl: `
-      int UAgoraBPuMediaPlayerCacheManager::GetCacheDir(FString & path, int length)
-  {
-      int FinalReturnResult = AGORA_UE_ERR_CODE(ERROR_NULLPTR);
-      char cache_dir[512] = {0};   
-      auto ret = _NativePtr->getCacheDir(cache_dir, sizeof(cache_dir));
-
-      // Free Data if neeeded
-      path = UTF8_TO_TCHAR(cache_dir);
-      
-      FinalReturnResult =  ret;
-
-      // Need to be optimized
-      return FinalReturnResult;
-  }
     `,
   },
 };
