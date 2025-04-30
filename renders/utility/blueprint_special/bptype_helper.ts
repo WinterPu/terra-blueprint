@@ -769,6 +769,11 @@ export function getBPMemberVariableDefaultValue(
     if (valDefaultVal === 'NULL') {
       valDefaultVal = '0';
     }
+    // remove warnings
+    if (bNeedDefaultValue == false) {
+      bNeedDefaultValue = true;
+      valDefaultVal = '0';
+    }
   }
 
   return [bNeedDefaultValue, valDefaultVal];
