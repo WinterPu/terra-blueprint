@@ -40,7 +40,7 @@ namespace agora{
             namespace UABTEnum{
 {{{user_data.macro_scope_start}}}
                 inline {{{fullName}}} ToRawValue({{{user_data.bpNodeName}}} Val){
-                    {{{fullName}}} Result;
+                    {{{fullName}}} Result = static_cast<{{{fullName}}}>(0);
     {{#enum_constants}}
     {{#user_data.isFirst}}
         if ( Val == {{{parent.user_data.bpNodeName}}}::{{{name}}} ){ Result = {{{fullName}}}; }
@@ -52,7 +52,7 @@ namespace agora{
                     return Result;
                 }
                 inline {{{user_data.bpNodeName}}} WrapWithUE({{{fullName}}} Val){
-                    {{{user_data.bpNodeName}}} Result;
+                    {{{user_data.bpNodeName}}} Result = static_cast<{{{user_data.bpNodeName}}}>(0);
     {{#enum_constants}}
     {{#user_data.isFirst}}
         if ( Val == {{{fullName}}} ){ Result = {{{parent.user_data.bpNodeName}}}::{{{name}}}; }

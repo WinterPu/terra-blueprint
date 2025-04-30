@@ -778,7 +778,6 @@ export const map_data: {
     `,
   },
 
-
   'agora::rtc::IRtcEngine.takeSnapshotWithConfigEx': {
     ...rc_empty_data,
     doReplceImpl: true,

@@ -28,10 +28,42 @@ export const map_class_initialization: {
   IRtcEngine: {
     NativePtr: `AgoraUERtcEngine::Get()`,
     Inst: `
+    	static UAgoraBPuRtcEngine* Instance;
         `,
     InitDecl: `
+    	void InitInstance();
+	    void UninitInstance();
+      
+      UFUNCTION(BlueprintPure, Category = "Agora|IRtcEngine")
+      static UAgoraBPuRtcEngine* GetAgoraRtcEngine();
         `,
     InitImpl: `
+
+      void UAgoraBPuRtcEngine::InitInstance()
+      {
+        // UserRtcEventHandler.Reset();
+        // UserRtcEventHandlerEx.Reset();
+        // UserScreenCaptureSourceList.Reset();
+      }
+
+      void UAgoraBPuRtcEngine::UninitInstance()
+      {
+        // UserRtcEventHandler.Reset();
+        // UserRtcEventHandlerEx.Reset();
+        // UserScreenCaptureSourceList.Reset();
+      }
+
+      UAgoraBPuRtcEngine* UAgoraBPuRtcEngine::Instance = nullptr;
+      UAgoraBPuRtcEngine* UAgoraBPuRtcEngine::GetAgoraRtcEngine()
+      {
+        if (Instance == nullptr)
+        {
+          Instance = NewObject<UAgoraBPuRtcEngine>();
+          Instance->AddToRoot();
+          Instance->InitInstance();
+        }
+        return Instance;
+      }
         `,
   },
   IAudioDeviceManager: {
