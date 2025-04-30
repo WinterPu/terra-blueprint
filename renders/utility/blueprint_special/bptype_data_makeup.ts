@@ -545,7 +545,11 @@ export const map_class_initialization: {
     Inst: `
       static UAgoraBPuScreenCaptureSourceList* InsScreenCaptureSourceList;
       
+      #if defined(_WIN32) || (defined(__APPLE__) && TARGET_OS_MAC && !TARGET_OS_IPHONE)
+
       agora::rtc::IScreenCaptureSourceList* _NativePtr = nullptr;
+      
+      #endif
       `,
     InitDecl: `
       UFUNCTION(BlueprintCallable,Category = "Agora|IScreenCaptureSourceList")
@@ -580,4 +584,27 @@ export const map_class_initialization: {
   // },
 
   // MusicCollection: {},
+};
+
+export type MacropScopeMakeup = {
+  start: string;
+  end: string;
+};
+// key : fullName
+export const map_macrop_scope_makeup: { [key: string]: MacropScopeMakeup } = {
+  'agora::rtc::IScreenCaptureSourceList.getCount': {
+    start:
+      '#if defined(_WIN32) || (defined(__APPLE__) && TARGET_OS_MAC && !TARGET_OS_IPHONE)',
+    end: '#endif',
+  },
+  'agora::rtc::IScreenCaptureSourceList.getSourceInfo': {
+    start:
+      '#if defined(_WIN32) || (defined(__APPLE__) && TARGET_OS_MAC && !TARGET_OS_IPHONE)',
+    end: '#endif',
+  },
+  'agora::rtc::IScreenCaptureSourceList.release': {
+    start:
+      '#if defined(_WIN32) || (defined(__APPLE__) && TARGET_OS_MAC && !TARGET_OS_IPHONE)',
+    end: '#endif',
+  },
 };

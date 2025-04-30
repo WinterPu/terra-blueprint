@@ -115,12 +115,13 @@ export function genGeneralTerraData(
 
         const basedata_clazz = genBaseUECommonUserData(node);
         const clazzUserData: CustomUserData.ClazzUserData = {
+          ...node.user_data,
           ...basedata_clazz,
           bpContextInst: context_clazz?.Inst ?? '',
           bpContextInitDecl: context_clazz?.InitDecl ?? '',
           bpContextInitImpl: context_clazz?.InitImpl ?? '',
         };
-        node.user_data = { ...node.user_data, ...clazzUserData };
+        node.user_data = clazzUserData;
 
         // Node - Clazz Method
         node.asClazz().methods.map((method, index) => {

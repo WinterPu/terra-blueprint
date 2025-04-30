@@ -37,6 +37,7 @@ import {
   map_method_param_size_count,
   map_return_bptype_default_value,
   map_return_bptype_fix,
+  map_return_context_default_value,
   map_struct_member_variable_size_count,
 } from './bptype_data_conv';
 import * as BPContextReplacedHelper from './bptype_data_replaced/helper';
@@ -502,7 +503,8 @@ function genContext_BPMethodReturnValBegin(
   // should be default value not a failed value.
   let defaultVal =
     bpTypeConvData?.defaultBPValue ??
-    map_return_bptype_default_value[return_type.source] ??
+    map_return_context_default_value[decl_type] ?? // ref bp
+    map_return_bptype_default_value[return_type.source] ?? // ref cpp
     '';
 
   if (Tools.IsNotEmptyStr(defaultVal)) {

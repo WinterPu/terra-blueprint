@@ -751,6 +751,7 @@ export function getBPMemberVariableDefaultValue(
 
   // TBD(WinterPu)
   // Special Case: FString
+  // some fix
   if (bpType.declType === 'FString') {
     if (
       valDefaultVal === '0' ||
@@ -760,6 +761,13 @@ export function getBPMemberVariableDefaultValue(
       valDefaultVal = '""';
     } else {
       valDefaultVal = `TEXT("${valDefaultVal}")`;
+    }
+  }
+
+  if (bpType.declType === 'int64') {
+    // For Android Compilation
+    if (valDefaultVal === 'NULL') {
+      valDefaultVal = '0';
     }
   }
 

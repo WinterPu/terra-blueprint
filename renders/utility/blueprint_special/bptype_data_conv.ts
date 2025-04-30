@@ -1041,6 +1041,10 @@ export const map_struct_member_variable_default_value: {
   // therefore it shows: EUABT_VIDEO_CONTENT_HINT contentHint = UABTEnum::WrapWithUE(undefined);
   'agora::rtc::ScreenVideoParameters.contentHint':
     'EUABT_VIDEO_CONTENT_HINT::CONTENT_HINT_NONE',
+
+  // for macro scope problem:
+  'agora::rtc::ScreenCaptureSourceInfo.type':
+    'EUABT_ScreenCaptureSourceType::ScreenCaptureSourceType_Unknown',
 };
 
 // In Struct, the corresponding size count variable to the target member variable
@@ -1129,3 +1133,7 @@ export const map_return_bptype_default_value: Record<string, string> = {
 };
 
 export const map_return_bptype_fix: { [key: string]: string } = {};
+
+export const map_return_context_default_value: { [key: string]: string } = {
+  int64: '0',
+};

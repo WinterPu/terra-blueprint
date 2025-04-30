@@ -18,6 +18,7 @@ import {
 } from '@agoraio-extensions/terra-core';
 import { List, map } from 'lodash';
 
+import { map_macrop_scope_makeup } from './blueprint_special/bptype_data_makeup';
 import * as Tools from './tools';
 export function formatAsCppComment(input: string): string {
   if (input == '' || input == undefined) {
@@ -71,6 +72,13 @@ export function createCompilationDirectivesContent(
   node: CXXTerraNode,
   isStart: boolean = true
 ): string {
+  // TBD(WinterPu)
+  // should be moved to bp helper.
+  const data_macrop_scope = map_macrop_scope_makeup[node.fullName];
+  if (data_macrop_scope) {
+    return isStart ? data_macrop_scope.start : data_macrop_scope.end;
+  }
+
   let directives = node.conditional_compilation_directives_infos;
   if (directives.length == 0) {
     return '';

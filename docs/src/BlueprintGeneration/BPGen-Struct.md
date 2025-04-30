@@ -25,3 +25,19 @@ int64 uid = 0;
 
 
 
+
+### USTRUCT 没法包在Macro Scope 内
+```
+#if PLATFORM_WINDOWS
+
+USTRUCT(BlueprintType)
+struct FUABT_Test{
+	GENERATED_BODY()
+public:
+
+}
+
+#endif
+
+Error: USTRUCT must not be inside preprocessor blocks, except for WITH_EDITORONLY_DATA
+```
