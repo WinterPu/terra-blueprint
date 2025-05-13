@@ -7,6 +7,12 @@ npm run test // unit test
 npm run lint // format
 ```
 
+## Quick Start
+```
+mkdir -p packages/cpp
+mkdir -p packages/blueprint
+bash build.sh
+```
 
 
 # terra
